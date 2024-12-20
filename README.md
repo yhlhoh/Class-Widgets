@@ -27,7 +27,7 @@
 
 
 ## 特性
-- *可加载Python语言的**插件**系统和插件广场（Plugin Plaza）——Coming Soon*
+- 由Python编写的**插件**系统和插件广场（详见最新构建）
 - 将今日的课程安排以**小组件**的样式为你呈现；
 - 具有 [上下课提醒](https://www.yuque.com/rinlit/class-widgets_help/fv2ou1i1ngap0hrl) 和预备铃；
 - 拥有主题系统支持你高度自定义。
@@ -64,7 +64,7 @@ Copyright © 2024 RinLit.
 
 ### 第三方库和框架
 
-- [PyQt6](https://www.riverbankcomputing.com/static/Docs/PyQt6/)
+- [PyQt5](https://www.riverbankcomputing.com/static/Docs/PyQt5/)
 - [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
 - [Loguru](https://github.com/Delgan/loguru)
 - [Request](https://github.com/psf/requests)
@@ -80,8 +80,8 @@ Copyright © 2024 RinLit.
 ### 贡献者
 
 <div align="center">
-<a href="https://github.com/RinLit-233-shiroko/Class-Widgets/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=RinLit-233-shiroko/Class-Widgets" />
+<a href="https://github.com/Class-Widgets/Class-Widgets/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Class-Widgets/Class-Widgets" />
 </a>
 </div>
 
