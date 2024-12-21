@@ -656,7 +656,6 @@ class FloatingWidget(QWidget):  # 浮窗
         self.animating = False
         self.focusing = False
         self.text_changed = False
-        self.zoom = 2
 
         self.current_lesson_name_text = self.findChild(QLabel, 'subject')
         self.activity_countdown = self.findChild(QLabel, 'activity_countdown')
@@ -738,20 +737,18 @@ class FloatingWidget(QWidget):  # 浮窗
     def showEvent(self, event):  # 窗口显示
         logger.info('显示浮窗')
         self.move((screen_width - self.width()) // 2, 50)
-        self.setMinimumSize(QSize(self.width() // self.zoom, self.height() // self.zoom))
-        if self.position:  # 最小化为浮窗
+        if self.position:  # 位置配置
             self.move(self.position)
-        self.animation = QPropertyAnimation(self, b'windowOpacity')
+        self.animation = QPropertyAnimation(self, b'windowOpacity')  # 透明度
         self.animation.setDuration(400)
         self.animation.setStartValue(0)
         self.animation.setEndValue(int(conf.read_conf('General', 'opacity')) / 100)
         self.animation.setEasingCurve(QEasingCurve.Type.InOutCirc)
 
-        self.animation_rect = QPropertyAnimation(self, b'geometry')
+        self.animation_rect = QPropertyAnimation(self, b'geometry')  # 位置
         self.animation_rect.setDuration(500)
         self.animation_rect.setStartValue(
-            QRect((screen_width - self.width() // self.zoom) // 2, -50, self.width() // self.zoom,
-                  self.height() // self.zoom))
+            QRect((screen_width - self.width()) // 2, 0, self.width(), self.height()))
         self.animation_rect.setEndValue(self.geometry())
         self.animation_rect.setEasingCurve(QEasingCurve.Type.InOutCirc)
 
@@ -775,8 +772,8 @@ class FloatingWidget(QWidget):  # 浮窗
         self.animation_rect = QPropertyAnimation(self, b'geometry')
         self.animation_rect.setDuration(400)
         self.animation_rect.setEndValue(
-            QRect((screen_width - self.width() // self.zoom) // 2, -50, self.width() // self.zoom,
-                  self.height() // self.zoom))
+            QRect((screen_width - self.width()) // 2, 0, self.width(),
+                  self.height()))
         self.animation_rect.setEasingCurve(QEasingCurve.Type.InOutCirc)
 
         self.animating = True
@@ -785,9 +782,10 @@ class FloatingWidget(QWidget):  # 浮窗
         self.animation_rect.finished.connect(self.hide)
 
     def hideEvent(self, event):
+        event.accept()
         logger.info('隐藏浮窗')
         self.animating = False
-        self.setMinimumSize(QSize(self.width() * self.zoom, self.height() * self.zoom))
+        self.setMinimumSize(QSize(self.width(), self.height()))
 
     def adjustSize_animation(self):
         if not self.text_changed:
