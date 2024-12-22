@@ -8,7 +8,7 @@ from qfluentwidgets import MSFluentWindow, FluentIcon as fIcon, NavigationItemPo
     ImageLabel, StrongBodyLabel, HyperlinkLabel, CaptionLabel, PrimaryPushButton, HorizontalFlipView, \
     InfoBar, InfoBarPosition, SplashScreen, MessageBoxBase, TransparentToolButton, BodyLabel, \
     PrimarySplitPushButton, RoundMenu, Action, PipsPager, TextBrowser, CardWidget, \
-    IndeterminateProgressRing, ComboBox, IndeterminateProgressBar, ProgressBar
+    IndeterminateProgressRing, ComboBox, IndeterminateProgressBar, ProgressBar, isDarkTheme
 
 from loguru import logger
 from datetime import datetime
@@ -34,11 +34,6 @@ plugins_data = []  # 仓库插件信息
 download_progress = []  # 下载线程
 
 installed_plugins = []  # 已安装插件（通过PluginPlaza获取）
-try:
-    with open(CONF_PATH, 'r', encoding='utf-8') as file:
-        installed_plugins = json.load(file).get('plugins')
-except Exception as e:
-    logger.error(f"读取已安装的插件失败: {e}")
 
 
 class downloadProgressBar(InfoBar):  # 下载进度条(创建下载进程)
@@ -57,8 +52,7 @@ class downloadProgressBar(InfoBar):  # 下载进度条(创建下载进程)
                          duration=-1,
                          parent=parent
                          )
-        # self.setCustomBackgroundColor('white', '#202020')
-        # self.bar = IndeterminateProgressBar()
+        self.setCustomBackgroundColor('white', '#202020')
         self.bar = ProgressBar()
         self.bar.setFixedWidth(300)
         self.cancelBtn = HyperlinkLabel()
@@ -278,6 +272,7 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
         self.iconWidget.setFixedSize(84, 84)
         self.iconWidget.setBorderRadius(5, 5, 5, 5)  # 圆角
         self.contentLabel.setTextColor("#606060", "#d2d2d2")
+        self.contentLabel.setWordWrap(True)
         self.versionLabel.setTextColor("#999999", "#999999")
         self.titleLabel.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
 
@@ -321,6 +316,11 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
             )
             di.show()
 
+    def set_img(self, img):
+        self.icon = img
+        self.iconWidget.setImage(img)
+        self.iconWidget.setFixedSize(84, 84)
+
     def show_detail(self):
         w = PluginDetailPage(
             icon=self.icon, title=self.title, content=self.contentLabel.text(),
@@ -333,6 +333,12 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
 class PluginPlaza(MSFluentWindow):
     def __init__(self):
         super().__init__()
+        global installed_plugins
+        try:
+            with open(CONF_PATH, 'r', encoding='utf-8') as file:
+                installed_plugins = json.load(file).get('plugins')
+        except Exception as e:
+            logger.error(f"读取已安装的插件失败: {e}")
         try:
             self.homeInterface = uic.loadUi('pp-home.ui')  # 首页
             self.homeInterface.setObjectName("homeInterface")
@@ -387,33 +393,29 @@ class PluginPlaza(MSFluentWindow):
         )
 
     def load_recommend_plugin(self, p_data):
+        def set_plugin_image(plugin_card, data):
+            pixmap = QPixmap()
+            pixmap.loadFromData(data)
+            plugin_card.set_img(pixmap)
+
         self.rec_plugin_grid = self.homeInterface.findChild(QGridLayout, 'rec_plugin_grid')  # 插件表格
         plugin_num = 0  # 计数
-        total_plugins = len(p_data)  # 总数
-        event_loop = QEventLoop()  # 事件循环
 
-        def load_plugin_card(img):  # 加载插件卡片
-            nonlocal plugin_num
-            pixmap = QPixmap()
-            pixmap.loadFromData(img)
-            plugin_card = PluginCard_Horizontal(icon=pixmap, title=data['name'], content=data['description'],
+        for plugin, data in p_data.items():  # 遍历插件数据
+            plugin_card = PluginCard_Horizontal(title=data['name'], content=data['description'],
                                                 tag=data['tag'], version=data['version'], url=data['url'],
                                                 author=data['author'], data=data, parent=self)
             plugin_card.clicked.connect(plugin_card.show_detail)  # 点击事件
+
+            # 启动线程加载图片
+            image_thread = nt.getImg(f"{replace_to_file_server(data['url'], data['branch'])}/icon.png")
+            image_thread.repo_signal.connect(lambda img_data, card=plugin_card: set_plugin_image(card, img_data))
+            image_thread.start()
+
             self.rec_plugin_grid.addWidget(plugin_card, plugin_num // 2, plugin_num % 2)  # 排列
-
             plugin_num += 1
-            if plugin_num == total_plugins:
-                load_plugin_progress = self.homeInterface.findChild(IndeterminateProgressRing, 'load_plugin_progress')
-                load_plugin_progress.hide()
-                event_loop.quit()
 
-        for plugin, data in p_data.items():  # 遍历插件data
-            img_thread = nt.getImg(f"{replace_to_file_server(data['url'], branch=data['branch'])}/icon.png")
-            img_thread.repo_signal.connect(load_plugin_card)
-            img_thread.start()
-
-        event_loop.exec_()
+        self.homeInterface.findChild(IndeterminateProgressRing, 'load_plugin_progress').hide()
 
     def get_banner_img(self):
         def display_banner(data, index=0):
