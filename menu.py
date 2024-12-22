@@ -12,7 +12,7 @@ import sys
 
 from PyQt5.QtGui import QIcon, QDesktopServices, QPixmap, QColor
 from PyQt5.QtWidgets import QApplication, QHeaderView, QTableWidgetItem, QLabel, QHBoxLayout, QSizePolicy, \
-    QSpacerItem, QFileDialog, QVBoxLayout, QWidget
+    QSpacerItem, QFileDialog, QVBoxLayout, QWidget, QScroller
 from qfluentwidgets import (
     Theme, setTheme, FluentWindow, FluentIcon as fIcon, ToolButton, ListWidget, ComboBox, CaptionLabel,
     SpinBox, LineEdit, PrimaryPushButton, TableWidget, Flyout, InfoBarIcon,
@@ -20,7 +20,7 @@ from qfluentwidgets import (
     CalendarPicker, BodyLabel, ColorDialog, isDarkTheme, TimeEdit, EditableComboBox, MessageBoxBase,
     SearchLineEdit, Slider, PlainTextEdit, ToolTipFilter, ToolTipPosition, RadioButton, HyperlinkLabel,
     PrimaryDropDownPushButton, Action, RoundMenu, CardWidget, ImageLabel, StrongBodyLabel,
-    TransparentDropDownToolButton, Dialog
+    TransparentDropDownToolButton, Dialog, SmoothScrollArea
 )
 from copy import deepcopy
 from network_thread import VersionThread
@@ -366,6 +366,9 @@ class SettingsMenu(FluentWindow):
 
     # 初始化界面
     def setup_plugin_mgr_interface(self):
+        pm_scroll = self.findChild(SmoothScrollArea, 'pm_scroll')
+        QScroller.grabGesture(pm_scroll.viewport(), QScroller.LeftMouseButtonGesture)  # 触摸屏适配
+
         global plugin_dict, enabled_plugins
         enabled_plugins = conf.load_plugin_config()  # 加载启用的插件
         plugin_dict = (conf.load_plugins())  # 加载插件信息
@@ -427,6 +430,9 @@ class SettingsMenu(FluentWindow):
         web_layout.addWidget(help_docu)
 
     def setup_sound_interface(self):
+        sd_scroll = self.findChild(SmoothScrollArea, 'sd_scroll')  # 触摸屏适配
+        QScroller.grabGesture(sd_scroll.viewport(), QScroller.LeftMouseButtonGesture)
+
         switch_enable_toast = self.findChild(SwitchButton, 'switch_enable_attend')
         switch_enable_toast.setChecked(int(conf.read_conf('Toast', 'attend_class')))
         switch_enable_toast.checkedChanged.connect(self.switch_enable_attend)  # 上课提醒开关
@@ -480,6 +486,9 @@ class SettingsMenu(FluentWindow):
         cf_open_schedule_folder.clicked.connect(lambda: open_dir(os.path.join(os.getcwd(), 'config/schedule')))
 
     def setup_customization_interface(self):
+        ct_scroll = self.findChild(SmoothScrollArea, 'ct_scroll')  # 触摸屏适配
+        QScroller.grabGesture(ct_scroll.viewport(), QScroller.LeftMouseButtonGesture)
+
         self.ct_update_preview()
 
         widgets_list_widgets = self.findChild(ListWidget, 'widgets_list')
@@ -588,6 +597,9 @@ class SettingsMenu(FluentWindow):
             'https://github.com/RinLit-233-shiroko/Class-Widgets?tab=readme-ov-file#致谢')))
 
     def setup_advance_interface(self):
+        adv_scroll = self.findChild(SmoothScrollArea, 'adv_scroll')  # 触摸屏适配
+        QScroller.grabGesture(adv_scroll.viewport(), QScroller.LeftMouseButtonGesture)
+
         margin_spin = self.findChild(SpinBox, 'margin_spin')
         margin_spin.setValue(int(conf.read_conf('General', 'margin')))
         margin_spin.valueChanged.connect(
@@ -688,6 +700,7 @@ class SettingsMenu(FluentWindow):
         se_schedule_list = self.findChild(ListWidget, 'schedule_list')
         se_schedule_list.addItems(schedule_dict[str(current_week)])
         se_schedule_list.itemChanged.connect(self.se_upload_item)
+        QScroller.grabGesture(se_schedule_list.viewport(), QScroller.LeftMouseButtonGesture)  # 触摸屏适配
 
         se_save_button = self.findChild(PrimaryPushButton, 'save_schedule')
         se_save_button.clicked.connect(self.se_save_item)
@@ -766,6 +779,9 @@ class SettingsMenu(FluentWindow):
         te_save_button = self.findChild(PrimaryPushButton, 'save')  # 保存
         te_save_button.clicked.connect(self.te_save_item)
 
+        part_list = self.findChild(ListWidget, 'part_list')
+        QScroller.grabGesture(te_timeline_list.viewport(), QScroller.LeftMouseButtonGesture)  # 触摸屏适配
+        QScroller.grabGesture(part_list.viewport(), QScroller.LeftMouseButtonGesture)  # 触摸屏适配
         self.te_detect_item()
         self.te_detect_part()  # 修复在启动时无法添加时段到下拉框的问题
 
@@ -786,6 +802,7 @@ class SettingsMenu(FluentWindow):
         schedule_view.setBorderVisible(True)
         schedule_view.verticalHeader().hide()
         schedule_view.setBorderRadius(8)
+        QScroller.grabGesture(schedule_view.viewport(), QScroller.LeftMouseButtonGesture)  # 触摸屏适配
         self.sp_fill_grid_row()
 
     def save_volume(self):

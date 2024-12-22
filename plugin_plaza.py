@@ -3,12 +3,13 @@ import json
 from PyQt5 import uic
 from PyQt5.QtCore import QSize, Qt, QTimer, QEventLoop, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QDesktopServices
-from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QGridLayout, QSpacerItem, QSizePolicy, QWidget
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QGridLayout, QSpacerItem, QSizePolicy, QWidget, \
+    QScroller
 from qfluentwidgets import MSFluentWindow, FluentIcon as fIcon, NavigationItemPosition, TitleLabel, \
     ImageLabel, StrongBodyLabel, HyperlinkLabel, CaptionLabel, PrimaryPushButton, HorizontalFlipView, \
     InfoBar, InfoBarPosition, SplashScreen, MessageBoxBase, TransparentToolButton, BodyLabel, \
     PrimarySplitPushButton, RoundMenu, Action, PipsPager, TextBrowser, CardWidget, \
-    IndeterminateProgressRing, ComboBox, IndeterminateProgressBar, ProgressBar, isDarkTheme
+    IndeterminateProgressRing, ComboBox, IndeterminateProgressBar, ProgressBar, isDarkTheme, SmoothScrollArea
 
 from loguru import logger
 from datetime import datetime
@@ -368,6 +369,7 @@ class PluginPlaza(MSFluentWindow):
 
     def setup_homeInterface(self):  # 初始化首页
         # 标题和副标题
+        home_scroll = self.homeInterface.findChild(SmoothScrollArea, 'home_scroll')
         time_today_label = self.homeInterface.findChild(TitleLabel, 'time_today_label')
         time_today_label.setText(f"{datetime.now().month}月{datetime.now().day}日 {l.week[datetime.now().weekday()]}")
 
@@ -391,6 +393,7 @@ class PluginPlaza(MSFluentWindow):
                      self.auto_play_timer.stop(),
                      self.auto_play_timer.start(2500))
         )
+        QScroller.grabGesture(home_scroll.viewport(), QScroller.LeftMouseButtonGesture)
 
     def load_recommend_plugin(self, p_data):
         def set_plugin_image(plugin_card, data):

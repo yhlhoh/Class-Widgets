@@ -37,14 +37,14 @@
     </widget>
    </item>
    <item>
-    <widget class="SmoothScrollArea" name="SmoothScrollArea">
+    <widget class="SmoothScrollArea" name="pm_scroll">
      <property name="styleSheet">
       <string notr="true">background: transparent; border: none</string>
      </property>
      <property name="widgetResizable">
       <bool>true</bool>
      </property>
-     <widget class="QWidget" name="scrollAreaWidgetContents">
+     <widget class="QWidget" name="widget">
       <property name="geometry">
        <rect>
         <x>0</x>

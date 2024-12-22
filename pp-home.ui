@@ -36,7 +36,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="SmoothScrollArea" name="homePageLayout">
+    <widget class="SmoothScrollArea" name="home_scroll">
      <property name="styleSheet">
       <string notr="true">background: transparent; border: none</string>
      </property>
@@ -137,6 +137,11 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <item/>
+           <item/>
+           <item/>
+           <item/>
+           <item/>
            <item/>
            <item/>
            <item/>

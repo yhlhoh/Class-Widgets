@@ -290,6 +290,10 @@ class DownloadAndExtract(QThread):  # 下载并解压插件
 
 
 if __name__ == '__main__':
-    version_thread = VersionThread()
-    version_thread.version_signal.connect(lambda data: print(data))
-    version_thread.start()
+    # version_thread = VersionThread()
+    # version_thread.version_signal.connect(lambda data: print(data))
+    # version_thread.start()
+    img_thread = getImg('https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Banner/banner_1.png')
+    img_thread.repo_signal.connect(lambda data: print(data))
+    img_thread.start()
+    time.sleep(2222)
