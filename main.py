@@ -28,7 +28,6 @@ import importlib
 import subprocess
 from pathlib import Path
 
-
 if os.name == 'nt':
     import pygetwindow
 
@@ -560,14 +559,14 @@ class openProgressDialog(QWidget):
         self.action_name.setText(action_title)
 
         self.opening_countdown = self.findChild(ProgressRing, 'opening_countdown')
-        self.opening_countdown.setRange(0, time-1)
+        self.opening_countdown.setRange(0, time - 1)
         self.progress_timer = QTimer(self)
         self.progress_timer.timeout.connect(self.update_progress)
         self.progress_timer.start(1000)
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.execute_action)
-        self.timer.start(time*1000)
+        self.timer.start(time * 1000)
 
         self.cancel_opening = self.findChild(QPushButton, 'cancel_opening')
         self.cancel_opening.clicked.connect(self.cancel_action)
@@ -587,7 +586,10 @@ class openProgressDialog(QWidget):
         self.close()
 
     def init_ui(self):
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint |
+            Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         if isDarkTheme():
@@ -631,9 +633,9 @@ class openProgressDialog(QWidget):
             QRect(self.x(), self.screen_height, self.width(), self.height())
         )
         self.animation_rect.setEndValue(
-            QRect((self.screen_width - (self.width()+label_width)) // 2,
+            QRect((self.screen_width - (self.width() + label_width)) // 2,
                   self.screen_height - 250,
-                  self.width()+label_width,
+                  self.width() + label_width,
                   self.height())
         )
         self.animation_rect.setEasingCurve(QEasingCurve.Type.InOutCirc)
@@ -692,7 +694,8 @@ class FloatingWidget(QWidget):  # 浮窗
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool |
+            Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
         )
 
         backgnd = self.findChild(QFrame, 'backgnd')
@@ -948,10 +951,13 @@ class DesktopWidget(QWidget):  # 主要小组件
         if int(conf.read_conf('General', 'pin_on_top')):  # 置顶
             self.setWindowFlags(
                 Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool |
-                Qt.WindowType.WindowDoesNotAcceptFocus
+                Qt.WindowType.WindowDoesNotAcceptFocus | Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
             )
         else:
-            self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+            self.setWindowFlags(
+                Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool |
+                Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
+            )
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -1264,6 +1270,7 @@ class DesktopWidget(QWidget):  # 主要小组件
             pass
         self.deleteLater()  # 销毁内存
         event.accept()
+
 
 def check_windows_maximize():  # 检查窗口是否最大化
     if os.name != 'nt':

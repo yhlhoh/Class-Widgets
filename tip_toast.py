@@ -41,10 +41,14 @@ class tip_toast(QWidget):
         # 窗口位置
         if conf.read_conf('Toast', 'pin_on_top') == '1':
             self.setWindowFlags(
-                Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+                Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool |
+                Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
+            )
         else:
             self.setWindowFlags(
-                Qt.WindowType.WindowStaysOnBottomHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+                Qt.WindowType.WindowStaysOnBottomHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool |
+                Qt.X11BypassWindowManagerHint
+            )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.move(pos[0], pos[1])
         self.resize(width, height)
@@ -208,10 +212,14 @@ class wave_Effect(QWidget):
 
         if conf.read_conf('Toast', 'pin_on_top') == '1':
             self.setWindowFlags(
-                Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+                Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool |
+                Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
+            )
         else:
             self.setWindowFlags(
-                Qt.WindowType.WindowStaysOnBottomHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+                Qt.WindowType.WindowStaysOnBottomHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool |
+                Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
+            )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self._radius = 0
