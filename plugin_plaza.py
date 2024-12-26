@@ -9,7 +9,7 @@ from qfluentwidgets import MSFluentWindow, FluentIcon as fIcon, NavigationItemPo
     ImageLabel, StrongBodyLabel, HyperlinkLabel, CaptionLabel, PrimaryPushButton, HorizontalFlipView, \
     InfoBar, InfoBarPosition, SplashScreen, MessageBoxBase, TransparentToolButton, BodyLabel, \
     PrimarySplitPushButton, RoundMenu, Action, PipsPager, TextBrowser, CardWidget, \
-    IndeterminateProgressRing, ComboBox, IndeterminateProgressBar, ProgressBar, isDarkTheme, SmoothScrollArea
+    IndeterminateProgressRing, ComboBox, IndeterminateProgressBar, ProgressBar, SmoothScrollArea
 
 from loguru import logger
 from datetime import datetime
@@ -38,11 +38,12 @@ installed_plugins = []  # 已安装插件（通过PluginPlaza获取）
 
 
 class downloadProgressBar(InfoBar):  # 下载进度条(创建下载进程)
-    def __init__(self, url=TEST_DOWNLOAD_LINK, name="Test", parent=None):
+    def __init__(self, url=TEST_DOWNLOAD_LINK, branch='main', name="Test", parent=None):
         global download_progress
         self.p_name = url.split('/')[4]  # repo
-        user = url.split('/')[3]
+        # user = url.split('/')[3]
         self.name = name
+        self.url = f'{url}/archive/refs/heads/{branch}.zip'
 
         super().__init__(icon=fIcon.DOWNLOAD,
                          title='',
@@ -65,19 +66,14 @@ class downloadProgressBar(InfoBar):  # 下载进度条(创建下载进程)
         # 开始下载
 
         download_progress.append(self.p_name)
-        self.get_url_thread = nt.getDownloadUrl(user, self.p_name)
-        self.get_url_thread.geturl_signal.connect(self.set_url)  # 获取下载链接
-        self.get_url_thread.start()
+        self.download(self.url)
 
-    def set_url(self, url):  # 接受下载连接并开始任务
-        if not url.startswith('ERROR'):
-            self.download_thread = nt.DownloadAndExtract(url, self.p_name)
-            # self.download_thread = nt.DownloadAndExtract(TEST_DOWNLOAD_LINK, self.p_name)
-            self.download_thread.progress_signal.connect(lambda progress: self.bar.setValue(int(progress)))  # 下载
-            self.download_thread.status_signal.connect(self.detect_status)  # 判断状态
-            self.download_thread.start()
-        else:
-            self.download_error(url[6:])
+    def download(self, url):  # 接受下载连接并开始任务
+        self.download_thread = nt.DownloadAndExtract(url, self.p_name)
+        # self.download_thread = nt.DownloadAndExtract(TEST_DOWNLOAD_LINK, self.p_name)
+        self.download_thread.progress_signal.connect(lambda progress: self.bar.setValue(int(progress)))  # 下载
+        self.download_thread.status_signal.connect(self.detect_status)  # 判断状态
+        self.download_thread.start()
 
     def cancelDownload(self):
         global download_progress
@@ -137,6 +133,7 @@ class PluginDetailPage(MessageBoxBase):  # 插件详情页面
         super().__init__(parent)
         self.url = url
         self.data = data
+        self.branch = data.get("branch")
         self.title = title
         self.parent = parent
         self.p_name = url.split('/')[-1]  # repo
@@ -191,7 +188,7 @@ class PluginDetailPage(MessageBoxBase):  # 插件详情页面
         ])
         self.installButton.setFlyout(menu)
 
-        self.readmePage = TextBrowser()
+        self.readmePage = TextBrowser(self)
         self.readmePage.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.readmePage.setReadOnly(True)
         scroll_area_widget.addWidget(self.readmePage)
@@ -200,7 +197,8 @@ class PluginDetailPage(MessageBoxBase):  # 插件详情页面
         self.installButton.setText("  安装中  ")
         self.installButton.setEnabled(False)
         di = downloadProgressBar(
-            url=f"{replace_to_file_server(self.url, self.data['branch'])}/releases/latest/download",
+            url=f"{self.url}",
+            branch=self.branch,
             name=self.title,
             parent=self.parent
         )
@@ -247,6 +245,7 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
         self.title = title
         self.parent = parent
         self.tag = tag
+        self.branch = data.get("branch")
         self.url = url
         self.p_name = url.split('/')[-1]  # repo
         self.data = data
@@ -311,7 +310,8 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
     def install(self):
         if self.p_name not in download_progress:  # 如果正在下载
             di = downloadProgressBar(
-                url=f"{replace_to_file_server(self.url, self.data['branch'])}/releases/latest/download",
+                url=f"{self.url}",
+                branch=self.branch,
                 name=self.title,
                 parent=self.parent
             )

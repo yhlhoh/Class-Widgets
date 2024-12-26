@@ -235,7 +235,7 @@ class DownloadAndExtract(QThread):  # 下载并解压插件
         print(self.download_url)
         self.cache_dir = "cache"
         self.plugin_name = plugin_name
-        self.extract_dir = f'Plugins/{plugin_name}'
+        self.extract_dir = f'Plugins'
 
     def run(self):
         try:
@@ -283,8 +283,17 @@ class DownloadAndExtract(QThread):  # 下载并解压插件
 
     def extract_zip(self, zip_path):
         try:
+            before = set(os.listdir(self.extract_dir))
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(self.extract_dir)
+            after_extract = set(os.listdir(self.extract_dir))
+
+            # 找出新增的文件夹
+            new_folder = after_extract - before
+            if new_folder:
+                folder_name = new_folder.pop()  # 取出集合中的一个元素
+                new_name = folder_name.rsplit('-', 1)[0]
+                os.rename(os.path.join(self.extract_dir, folder_name), os.path.join(self.extract_dir, new_name))
         except Exception as e:
             logger.error(f"解压失败: {e}")
 
