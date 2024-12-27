@@ -178,7 +178,6 @@ def get_countdown(toast=False):  # 重构好累aaaa
 
     if parts_start_time:
         c_time, part = get_part()
-        print(c_time, part)
 
         if current_dt >= c_time:
             for item_name, item_time in timeline_data.items():
