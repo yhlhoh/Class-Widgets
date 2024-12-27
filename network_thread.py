@@ -107,6 +107,38 @@ class getPluginInfo(QThread):  # 获取插件信息(json)
             return {}
 
 
+class getTags(QThread):  # 获取插件标签(json)
+    repo_signal = pyqtSignal(dict)
+
+    def __init__(
+            self, url='https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Plugins/tags.json'
+    ):
+        super().__init__()
+        self.download_url = url
+
+    def run(self):
+        try:
+            plugin_info_data = self.get_plugin_info()
+            self.repo_signal.emit(plugin_info_data)
+        except Exception as e:
+            logger.error(f"触发Tag信息失败: {e}")
+
+    def get_plugin_info(self):
+        try:
+            mirror_url = mirror_dict[conf.read_conf('Plugin', 'mirror')]
+            url = f"{mirror_url}{self.download_url}"
+            response = requests.get(url, proxies=proxies)  # 禁用代理
+            if response.status_code == 200:
+                data = response.json()
+                return data
+            else:
+                logger.error(f"获取Tag信息失败：{response.status_code}")
+                return {}
+        except Exception as e:
+            logger.error(f"获取Tag信息失败：{e}")
+            return {}
+
+
 class getImg(QThread):  # 获取图片
     repo_signal = pyqtSignal(bytes)
 
