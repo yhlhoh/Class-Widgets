@@ -237,7 +237,7 @@ class PluginDetailPage(MessageBoxBase):  # 插件详情页面
 
 class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
     def __init__(
-            self, icon='img/settings/plugin-icon.png', title='Plugin Name', content='Description...', tag='Unknown',
+            self, icon='img/plaza/plugin_pre.png', title='Plugin Name', content='Description...', tag='Unknown',
             version='1.0.0', author="CW Support",
             url="https://github.com/RinLit-233-shiroko/cw-example-plugin", data=None, parent=None):
         super().__init__(parent)

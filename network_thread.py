@@ -11,6 +11,8 @@ from loguru import logger
 import conf
 
 headers = {"User-Agent": "Mozilla/5.0"}
+proxies = {"http": "http://127.0.0.1:10809", "https": "http://127.0.0.1:10809"}  # 加速访问
+# proxies = {"http": None, "https": None}
 
 MIRROR_PATH = "config/mirror.json"
 PLAZA_REPO_URL = "https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/"
@@ -48,7 +50,7 @@ class getRepoFileList(QThread):  # 获取仓库文件目录
             # 获取目录内容
             url = f"{PLAZA_REPO_DIR}{self.path}"
             print(url)
-            response = requests.get(url, proxies={'http': None, 'https': None}, headers=headers)
+            response = requests.get(url, proxies=proxies, headers=headers)
             if response.status_code == 200:
                 response.raise_for_status()
                 files = response.json()
@@ -93,7 +95,7 @@ class getPluginInfo(QThread):  # 获取插件信息(json)
         try:
             mirror_url = mirror_dict[conf.read_conf('Plugin', 'mirror')]
             url = f"{mirror_url}{self.download_url}"
-            response = requests.get(url, proxies={'http': None, 'https': None})  # 禁用代理
+            response = requests.get(url, proxies=proxies)  # 禁用代理
             if response.status_code == 200:
                 data = response.json()
                 return data
@@ -127,7 +129,7 @@ class getImg(QThread):  # 获取图片
         try:
             mirror_url = mirror_dict[conf.read_conf('Plugin', 'mirror')]
             url = f"{mirror_url}{self.download_url}"
-            response = requests.get(url, proxies={'http': None, 'https': None})
+            response = requests.get(url, proxies=proxies)
             if response.status_code == 200:
                 return response.content
             else:
@@ -157,7 +159,7 @@ class getReadme(QThread):  # 获取README
             mirror_url = mirror_dict[conf.read_conf('Plugin', 'mirror')]
             url = f"{mirror_url}{self.download_url}"
             print(url)
-            response = requests.get(url, proxies={'http': None, 'https': None})
+            response = requests.get(url, proxies=proxies)
             if response.status_code == 200:
                 return response.text
             else:
@@ -181,7 +183,7 @@ class VersionThread(QThread):  # 获取最新版本号
     def get_latest_version(self):
         url = "https://api.github.com/repos/RinLit-233-shiroko/Class-Widgets/releases/latest"
         try:
-            response = requests.get(url, proxies={'http': None, 'https': None})
+            response = requests.get(url, proxies=proxies)
             if response.status_code == 200:
                 data = response.json()
                 return data.get("tag_name")
@@ -205,7 +207,7 @@ class getDownloadUrl(QThread):
     def run(self):
         try:
             url = f"https://api.github.com/repos/{self.username}/{self.repo}/releases/latest"
-            response = requests.get(url, proxies={'http': None, 'https': None})
+            response = requests.get(url, proxies=proxies)
             if response.status_code == 200:
                 data = response.json()
                 for asset in data['assets']:  # 遍历下载链接
@@ -214,7 +216,7 @@ class getDownloadUrl(QThread):
                         self.geturl_signal.emit(asset_url)
             elif response.status_code == 403:  # 触发API限制
                 logger.warning("到达Github API限制，请稍后再试")
-                response = requests.get('https://api.github.com/users/octocat', proxies={'http': None, 'https': None})
+                response = requests.get('https://api.github.com/users/octocat', proxies=proxies)
                 reset_time = response.headers.get('X-RateLimit-Reset')
                 reset_time = datetime.fromtimestamp(int(reset_time))
                 self.geturl_signal.emit(f"ERROR: 由于请求次数过多，到达Github API限制，请在{reset_time.minute}分钟后再试")
@@ -262,7 +264,7 @@ class DownloadAndExtract(QThread):  # 下载并解压插件
         try:
             self.download_url = mirror_dict[conf.read_conf('Plugin', 'mirror')] + self.download_url
             print(self.download_url)
-            response = requests.get(self.download_url, stream=True, proxies={'http': None, 'https': None})
+            response = requests.get(self.download_url, stream=True, proxies=proxies)
             if response.status_code != 200:
                 logger.error(f"插件下载失败，错误代码: {response.status_code}")
                 self.status_signal.emit(f'ERROR: 网络连接错误：{response.status_code}')
