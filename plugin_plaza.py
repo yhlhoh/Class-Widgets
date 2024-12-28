@@ -340,9 +340,12 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
             di.show()
 
     def set_img(self, img):
-        self.icon = img
-        self.iconWidget.setImage(img)
-        self.iconWidget.setFixedSize(84, 84)
+        try:
+            self.icon = img
+            self.iconWidget.setImage(img)
+            self.iconWidget.setFixedSize(84, 84)
+        except Exception as e:
+            logger.error(f"设置插件图片失败: {e}")
 
     def show_detail(self):
         w = PluginDetailPage(
