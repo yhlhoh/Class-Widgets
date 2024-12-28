@@ -6,14 +6,14 @@ import requests
 from PyQt5 import uic
 from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QProgressBar, QGraphicsBlurEffect, QPushButton, \
-    QGraphicsDropShadowEffect, QSystemTrayIcon, QFrame, QGraphicsOpacityEffect
+    QGraphicsDropShadowEffect, QSystemTrayIcon, QFrame, QGraphicsOpacityEffect, QHBoxLayout
 from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QRect, QEasingCurve, QSharedMemory, QThread, pyqtSignal, \
-    QSize
-from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter
+    QSize, QPoint, QUrl
+from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter, QDesktopServices
 from loguru import logger
 import sys
-from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Action, FluentIcon as FIcon, isDarkTheme, \
-    Dialog, ProgressRing
+from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Action, FluentIcon as fIcon, isDarkTheme, \
+    Dialog, ProgressRing, PlainTextEdit, ImageLabel, PushButton, InfoBarIcon, Flyout, FlyoutAnimationType, CheckBox
 import datetime as dt
 import list
 import conf
@@ -27,6 +27,7 @@ import weather_db as db
 import importlib
 import subprocess
 from pathlib import Path
+import traceback
 
 if os.name == 'nt':
     import pygetwindow
@@ -43,6 +44,7 @@ filename = conf.read_conf('General', 'schedule')
 # 存储窗口对象
 windows = []
 order = []
+error_dialog = None
 
 current_lesson_name = '课程表未加载'
 current_state = 0  # 0：课间 1：上课
@@ -64,6 +66,9 @@ city = 101010100  # 默认城市
 
 time_offset = 0  # 时差偏移
 first_start = True
+error_cooldown = dt.timedelta(seconds=2)  # 冷却时间(s)
+ignore_errors = []
+last_error_time = dt.datetime.now() - error_cooldown  # 上一次错误
 
 settings = None
 ex_menu = None
@@ -73,6 +78,28 @@ if conf.read_conf('Other', 'do_not_log') != '1':
     logger.info('未禁用日志输出')
 else:
     logger.info('已禁用日志输出功能，若需保存日志，请在“设置”->“高级选项”中关闭禁用日志功能')
+
+
+def global_exceptHook(exc_type, exc_value, exc_tb):  # 全局异常捕获
+    error_details = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))  # 异常详情
+    if error_details in ignore_errors:  # 忽略重复错误
+        return
+
+    global last_error_time, error_dialog, error_cooldown
+
+    current_time = dt.datetime.now()
+    if current_time - last_error_time > error_cooldown:  # 冷却时间
+        last_error_time = current_time
+        logger.error(f"全局异常捕获：{exc_type} {exc_value} {exc_tb}")
+        logger.error(f"详细堆栈信息：\n{error_details}")
+        w = ErrorDialog(error_details)
+        w.exec()
+    else:
+        # 忽略重复错误
+        pass
+
+
+sys.excepthook = global_exceptHook  # 设置全局异常捕获
 
 
 def get_timeline_data():
@@ -345,6 +372,97 @@ def check_fullscreen():  # 检查是否全屏
     if fw.focusing:  # 拖动浮窗时返回t
         return True
     return False
+
+
+class ErrorDialog(Dialog):  # 重大错误提示框
+    def __init__(self, error_details='Traceback (most recent call last):', parent=None):
+        super().__init__(
+            'Class Widgets 崩溃报告',
+            '抱歉！Class Widgets 发生了严重的错误从而无法正常运行。您可以保存下方的错误信息并向他人求助。'
+            '若您认为这是程序的Bug，请点击“报告此问题”或联系开发者。',
+            parent
+        )
+        self.is_dragging = False
+        self.drag_position = QPoint()
+        self.title_bar_height = 30
+
+        self.title_layout = QHBoxLayout()
+
+        self.iconLabel = ImageLabel()
+        self.iconLabel.setImage("img/logo/favicon-error.ico")
+        self.error_log = PlainTextEdit()
+        self.report_problem = PushButton(fIcon.FEEDBACK, '报告此问题')
+        self.copy_log_btn = PushButton(fIcon.COPY, '复制日志')
+        self.ignore_error_btn = PushButton(fIcon.INFO, '忽略错误')
+        self.ignore_same_error = CheckBox('在下次启动之前，忽略此错误')
+
+        self.iconLabel.setScaledContents(True)
+        self.iconLabel.setFixedSize(50, 50)
+        self.titleLabel.setText('出错啦！ヽ(*。>Д<)o゜')
+        self.titleLabel.setStyleSheet("font-family: Microsoft YaHei UI; font-size: 25px; font-weight: 500;")
+        self.error_log.setReadOnly(True)
+        self.error_log.setPlainText(error_details)
+        self.error_log.setFixedHeight(200)
+        self.yesButton.setText('关闭程序')
+        self.yesButton.setIcon(fIcon.CLOSE)
+        self.cancelButton.hide()  # 隐藏取消按钮
+        self.title_layout.setSpacing(12)
+
+        # 按钮事件
+        self.report_problem.clicked.connect(
+            lambda: QDesktopServices.openUrl(QUrl(
+                'https://github.com/Class-Widgets/Class-Widgets/issues/'
+                'new?assignees=&labels=Bug&projects=&template=BugReport.yml&title=[Bug]:'))
+        )
+        self.copy_log_btn.clicked.connect(self.copy_log)
+        self.ignore_error_btn.clicked.connect(self.ignore_error)
+
+        self.title_layout.addWidget(self.iconLabel)  # 标题布局
+        self.title_layout.addWidget(self.titleLabel)
+        self.textLayout.insertLayout(0, self.title_layout)  # 页面
+        self.textLayout.addWidget(self.error_log)
+        self.textLayout.addWidget(self.ignore_same_error)
+        self.buttonLayout.insertStretch(0, 1)  # 按钮布局
+        self.buttonLayout.insertWidget(0, self.copy_log_btn)
+        self.buttonLayout.insertWidget(1, self.report_problem)
+        self.buttonLayout.insertStretch(1)
+        self.buttonLayout.insertWidget(4, self.ignore_error_btn)
+
+    def copy_log(self):  # 复制日志
+        QApplication.clipboard().setText(self.error_log.toPlainText())
+        Flyout.create(
+            icon=InfoBarIcon.SUCCESS,
+            title='复制成功！ヾ(^▽^*)))',
+            content="日志已成功复制到剪贴板。",
+            target=self.copy_log_btn,
+            parent=self,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+        )
+
+    def ignore_error(self):
+        global ignore_errors
+        if self.ignore_same_error.isChecked():
+            ignore_errors.append(self.error_log.toPlainText())
+        self.close()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton and event.y() <= self.title_bar_height:
+            self.is_dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+
+    def mouseMoveEvent(self, event):
+        if self.is_dragging:
+            self.move(event.globalPos() - self.drag_position)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.is_dragging = False
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
+        self.deleteLater()
 
 
 class PluginLoader:  # 插件加载器
@@ -991,17 +1109,17 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         self.tray_menu = SystemTrayMenu(title='Class Widgets', parent=self)
         self.tray_menu.addActions([
-            Action(FIcon.HIDE, '完全隐藏/显示小组件', triggered=lambda: self.hide_show_widgets()),
-            Action(FIcon.BACK_TO_WINDOW, '最小化为浮窗', triggered=lambda: self.minimize_to_floating()),
+            Action(fIcon.HIDE, '完全隐藏/显示小组件', triggered=lambda: self.hide_show_widgets()),
+            Action(fIcon.BACK_TO_WINDOW, '最小化为浮窗', triggered=lambda: self.minimize_to_floating()),
         ])
         self.tray_menu.addSeparator()
         self.tray_menu.addActions([
-            Action(FIcon.SHOPPING_CART, '插件广场', triggered=open_plaza),
-            Action(FIcon.DEVELOPER_TOOLS, '额外选项', triggered=self.open_exact_menu),
-            Action(FIcon.SETTING, '设置', triggered=self.open_settings)
+            Action(fIcon.SHOPPING_CART, '插件广场', triggered=open_plaza),
+            Action(fIcon.DEVELOPER_TOOLS, '额外选项', triggered=self.open_exact_menu),
+            Action(fIcon.SETTING, '设置', triggered=self.open_settings)
         ])
         self.tray_menu.addSeparator()
-        self.tray_menu.addAction(Action(FIcon.CLOSE, '退出', triggered=lambda: sys.exit()))
+        self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=lambda: sys.exit()))
         self.tray_icon.setContextMenu(self.tray_menu)
 
         self.tray_icon.activated.connect(self.on_tray_icon_clicked)
@@ -1406,5 +1524,8 @@ if __name__ == '__main__':
             setThemeColor(f"#{conf.read_conf('Color', 'attend_class')}")
         else:
             setThemeColor(f"#{conf.read_conf('Color', 'finish_class')}")
+
+        # w = ErrorDialog()
+        # w.exec()
 
     sys.exit(app.exec())
