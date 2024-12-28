@@ -1,10 +1,10 @@
 import json
 
 from PyQt5 import uic
-from PyQt5.QtCore import QSize, Qt, QTimer, QUrl
+from PyQt5.QtCore import QSize, Qt, QTimer, QUrl, QEvent, QStringListModel
 from PyQt5.QtGui import QIcon, QPixmap, QDesktopServices
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QGridLayout, QSpacerItem, QSizePolicy, QWidget, \
-    QScroller
+    QScroller, QCompleter
 from qfluentwidgets import MSFluentWindow, FluentIcon as fIcon, NavigationItemPosition, TitleLabel, \
     ImageLabel, StrongBodyLabel, HyperlinkLabel, CaptionLabel, PrimaryPushButton, HorizontalFlipView, \
     InfoBar, InfoBarPosition, SplashScreen, MessageBoxBase, TransparentToolButton, BodyLabel, \
@@ -13,6 +13,7 @@ from qfluentwidgets import MSFluentWindow, FluentIcon as fIcon, NavigationItemPo
 
 from loguru import logger
 from datetime import datetime
+from random import shuffle
 
 import conf
 import list as l
@@ -35,7 +36,9 @@ plugins_data = []  # 仓库插件信息
 download_progress = []  # 下载线程
 
 installed_plugins = []  # 已安装插件（通过PluginPlaza获取）
-tags = ['示例', '信息展示', '学习', '测试', '工具', '自动化']  # TAG
+tags = ['示例', '信息展示', '学习', '测试', '工具', '自动化']  # 测试用TAG
+search_items = []
+SEARCH_FIELDS = ["name", "description", "tag", "author"]  # 搜索字段
 
 
 class TagLink(HyperlinkButton):  # 标签链接
@@ -51,6 +54,7 @@ class TagLink(HyperlinkButton):  # 标签链接
 
     def search_tag(self):
         self.parent.search_plugin.setText(self.tag)
+        self.parent.search_plugin.searchSignal.emit(self.tag)  # 发射搜索信号
 
 
 class downloadProgressBar(InfoBar):  # 下载进度条(创建下载进程)
@@ -282,6 +286,7 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setFixedHeight(110)
+        self.setMinimumWidth(250)
         self.authorLabel.setText(author)
         self.authorLabel.setUrl(author_url)
         self.authorLabel.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
@@ -293,7 +298,8 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
         self.titleLabel.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
 
         self.installButton.setText("安装")
-        self.installButton.setFixedSize(115, 36)
+        self.installButton.setMaximumSize(100, 36)
+        self.installButton.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.installButton.setIcon(fIcon.DOWNLOAD)
         self.installButton.clicked.connect(self.install)
         if self.p_name in installed_plugins:  # 如果已安装
@@ -385,27 +391,28 @@ class PluginPlaza(MSFluentWindow):
         def search(keyword):  # 搜索
             result = {}
             for key, value in plugins_data.items():
-                if any(keyword.lower() in str(v).lower() for v in value.values()):  # 是否包含关键字
+                if any(keyword.lower() in str(value.get(field, "")).lower() for field in SEARCH_FIELDS):
                     result[key] = value
             return result
 
         def clear_results():
-            for i in reversed(range(self.search_plugin_grid.count())):  # 从后向前移除
+            for i in reversed(range(self.search_plugin_grid.count())):
                 widget = self.search_plugin_grid.itemAt(i).widget()
                 if widget:
-                    widget.setParent(None)  # 移除控件的父级
+                    widget.setParent(None)  # 移除控件
+                    widget.deleteLater()
 
         def search_plugins():  # 搜索插件
             if not plugins_data:
                 return
             clear_results()
 
-            def set_plugin_image(plugin_card, data):
-                pixmap = QPixmap()
-                pixmap.loadFromData(data)
-                plugin_card.set_img(pixmap)
-
             if self.search_plugin.text():
+                def set_plugin_image(plugin_card, data):
+                    pixmap = QPixmap()
+                    pixmap.loadFromData(data)
+                    plugin_card.set_img(pixmap)
+
                 keyword = self.search_plugin.text()
                 print(search(keyword))  # 结果
                 plugin_num = 0  # 计数
@@ -425,9 +432,19 @@ class PluginPlaza(MSFluentWindow):
                     plugin_num += 1
 
         self.search_plugin_grid = self.searchInterface.findChild(QGridLayout, 'search_plugin_grid')  # 插件表格
+        self.tags_layout = self.searchInterface.findChild(QGridLayout, 'tags_layout')  # tag 布局
         self.search_plugin = self.searchInterface.findChild(SearchLineEdit, 'search_plugin')
-        self.search_plugin.textChanged.connect(search_plugins)
+        self.search_plugin.searchSignal.connect(search_plugins)
+        self.search_plugin.returnPressed.connect(search_plugins)
         self.search_plugin.clearSignal.connect(clear_results)
+        self.search_completer = QCompleter(search_items, self.search_plugin)
+        # 设置显示的选项数
+        self.search_completer.setMaxVisibleItems(10)
+        self.search_completer.setFilterMode(Qt.MatchContains)  # 内容匹配
+        self.search_completer.setCaseSensitivity(Qt.CaseInsensitive)  # 不区分大小写
+        self.search_completer.activated.connect(search_plugins)
+        self.search_plugin.setCompleter(self.search_completer)
+
         QScroller.grabGesture(search_scroll.viewport(), QScroller.LeftMouseButtonGesture)
 
     def setup_settingsInterface(self):  # 初始化设置
@@ -467,10 +484,13 @@ class PluginPlaza(MSFluentWindow):
         QScroller.grabGesture(home_scroll.viewport(), QScroller.LeftMouseButtonGesture)
 
     def set_tags_data(self, data):
-        global tags
+        global tags, search_items
         if data:
             tags = data.get('tags')
-        self.tags_layout = self.searchInterface.findChild(QGridLayout, 'tags_layout')
+            shuffle(tags)  # 随机
+        for tag in tags:
+            search_items.append(tag)
+            self.search_completer.setModel(QStringListModel(search_items))  # 设置搜索提示
         tag_num = 0  # 计数
         for tag in tags[:6]:
             tag_link = TagLink(tag, self)
@@ -479,8 +499,14 @@ class PluginPlaza(MSFluentWindow):
 
 
     def load_recommend_plugin(self, p_data):
-        global plugins_data
-        plugins_data = p_data
+        global plugins_data, search_items
+        plugins_data = p_data  # 保存插件数据
+
+        for plugin in p_data.values():  # 遍历插件数据
+            search_items.append(plugin['name'])
+            if plugin['author'] not in search_items:
+                search_items.append(plugin['author'])
+        self.search_completer.setModel(QStringListModel(search_items))  # 设置搜索提示
 
         def set_plugin_image(plugin_card, data):
             pixmap = QPixmap()
@@ -590,8 +616,8 @@ class PluginPlaza(MSFluentWindow):
         self.load_all_interface()
         self.init_font()
 
-        self.setMinimumWidth(950)
-        self.setMinimumHeight(400)
+        self.setMinimumWidth(850)
+        self.setMinimumHeight(500)
         self.setMicaEffectEnabled(True)
         self.setWindowTitle('插件广场')
         self.setWindowIcon(QIcon('img/pp_favicon.png'))
