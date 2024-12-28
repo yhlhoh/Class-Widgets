@@ -79,7 +79,7 @@
        <item>
         <widget class="BodyLabel" name="BodyLabel">
          <property name="text">
-          <string>这就到底了吗……(っ °Д °;)っ</string>
+          <string>Coming Soon~</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
