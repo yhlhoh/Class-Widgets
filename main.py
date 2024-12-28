@@ -1105,7 +1105,7 @@ class DesktopWidget(QWidget):  # 主要小组件
                 """)
 
     def init_tray_menu(self):
-        self.tray_icon = QSystemTrayIcon(QIcon("img/favicon.png"), self)
+        self.tray_icon = QSystemTrayIcon(QIcon("img/logo/favicon.png"), self)
 
         self.tray_menu = SystemTrayMenu(title='Class Widgets', parent=self)
         self.tray_menu.addActions([
