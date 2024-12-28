@@ -124,9 +124,6 @@ class tip_toast(QWidget):
         else:
             bg_color = ['rgba(110, 190, 210, 255)', 'rgba(110, 190, 210, 255)', 'rgba(90, 210, 215, 255)']
 
-        if detect_enable_toast(state):
-            return
-
         backgnd.setStyleSheet(f'font-weight: bold; border-radius: {radius}; '
                               'background-color: qlineargradient('
                               'spread:pad, x1:0, y1:0, x2:1, y2:1,'
@@ -386,10 +383,12 @@ def main(state=1, lesson_name='', title='通知示例', subtitle='副标题',
 def detect_enable_toast(state=0):
     if conf.read_conf('Toast', 'attend_class') != '1' and state == 1:
         return True
-    if conf.read_conf('Toast', 'finish_class') != '1' and state == 0 or state == 2:
+    if conf.read_conf('Toast', 'finish_class') != '1' and state == 0:
         return True
     if conf.read_conf('Toast', 'prepare_class') != '1' and state == 3:
         return True
+    else:
+        return False
 
 
 def push_notification(state=1, lesson_name='', title=None, subtitle=None,
@@ -410,10 +409,10 @@ def push_notification(state=1, lesson_name='', title=None, subtitle=None,
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     main(
-        state=4,
-        title='测试通知喵',
-        subtitle='By Rin.',
-        content='欢迎使用 ClassWidgets',
-        icon='img/favicon.png'
+        state=2,
+        # title='测试通知喵',
+        # subtitle='By Rin.',
+        # content='欢迎使用 ClassWidgets',
+        # icon='img/favicon.png'
     )
     sys.exit(app.exec())
