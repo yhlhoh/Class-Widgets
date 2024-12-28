@@ -70,7 +70,8 @@ jobs:
             --add-data *.ui:. \
             --add-data LICENSE:. \
             --add-data plugins:plugins \
-            --hidden-import numpy.core._ufunc
+            --hidden-import numpy.core._ufunc \
+            --hidden-import numpy.core._multiarray_umath
       - name: Upload
         uses: actions/upload-artifact@v4.4.2
         with:
