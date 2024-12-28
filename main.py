@@ -92,8 +92,9 @@ def global_exceptHook(exc_type, exc_value, exc_tb):  # 全局异常捕获
         last_error_time = current_time
         logger.error(f"全局异常捕获：{exc_type} {exc_value} {exc_tb}")
         logger.error(f"详细堆栈信息：\n{error_details}")
-        w = ErrorDialog(error_details)
-        w.exec()
+        if not error_dialog:
+            w = ErrorDialog(error_details)
+            w.exec()
     else:
         # 忽略重复错误
         pass
@@ -382,6 +383,9 @@ class ErrorDialog(Dialog):  # 重大错误提示框
             '若您认为这是程序的Bug，请点击“报告此问题”或联系开发者。',
             parent
         )
+        global error_dialog
+        error_dialog = True
+
         self.is_dragging = False
         self.drag_position = QPoint()
         self.title_bar_height = 30
@@ -460,6 +464,8 @@ class ErrorDialog(Dialog):  # 重大错误提示框
             self.is_dragging = False
 
     def closeEvent(self, event):
+        global error_dialog
+        error_dialog = False
         event.ignore()
         self.hide()
         self.deleteLater()
