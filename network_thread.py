@@ -29,6 +29,10 @@ except Exception as e:
 for name in mirror_dict:
     mirror_list.append(name)
 
+if conf.read_conf('Plugin', 'mirror') not in mirror_list:  # 如果当前配置不在镜像列表中，则设置为默认镜像
+    logger.warning(f"当前配置不在镜像列表中，设置为默认镜像: {mirror_list[0]}")
+    conf.write_conf('Plugin', 'mirror', mirror_list[0])
+
 
 class getRepoFileList(QThread):  # 获取仓库文件目录
     repo_signal = pyqtSignal(list)
