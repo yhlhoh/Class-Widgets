@@ -1180,7 +1180,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         get_current_lesson_name()
         get_next_lessons()
 
-        if not self.animation:
+        if not first_start:
             self.setWindowOpacity(int(conf.read_conf('General', 'opacity')) / 100)  # 设置窗口透明度
 
         cd_list = get_countdown()
