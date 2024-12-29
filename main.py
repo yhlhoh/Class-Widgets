@@ -153,12 +153,16 @@ def get_part():
 
     current_dt = dt.datetime.now()
     for i in range(len(parts_start_time)):  # 遍历每个Part
+        time_len = dt.timedelta(minutes=0)  # Part长度
+        for item_name, item_time in timeline_data.items():
+            if item_name.startswith(f'a{str(order[i])}') or item_name.startswith(f'f{str(order[i])}'):
+                time_len += dt.timedelta(minutes=int(item_time))  # 累计Part长度
+
         if i == len(parts_start_time) - 1:  # 最后一个Part
-            if parts_start_time[i] - dt.timedelta(minutes=30) <= current_dt or current_dt > parts_start_time[i]:
-                return return_data()
+            return return_data()
         else:
-            if (parts_start_time[i] - dt.timedelta(minutes=30) <= current_dt < parts_start_time[i + 1]
-                    - dt.timedelta(minutes=30)):
+            print(parts_start_time[i], parts_start_time[i] + time_len)
+            if current_dt <= parts_start_time[i] + time_len:
                 return return_data()
     return parts_start_time[0] + dt.timedelta(seconds=time_offset), 0
 
@@ -225,6 +229,7 @@ def get_countdown(toast=False):  # 重构好累aaaa
                             if not current_state:  # 课间
                                 notification.push_notification(3, next_lessons[0])  # 准备上课（预备铃）
 
+                    # 放学
                     if c_time + dt.timedelta(minutes=int(item_time)) == current_dt and not next_lessons and toast:
                         notification.push_notification(2)  # 放学
 
@@ -275,7 +280,8 @@ def get_next_lessons():
             if part == 0:
                 return True
             else:
-                if current_dt >= parts_start_time[part] - dt.timedelta(minutes=30):
+                print(current_dt, parts_start_time[part])
+                if current_dt >= parts_start_time[part] - dt.timedelta(minutes=60):
                     return True
                 else:
                     return False
