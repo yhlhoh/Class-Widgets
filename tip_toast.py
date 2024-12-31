@@ -65,6 +65,9 @@ class tip_toast(QWidget):
             pixmap = pixmap.scaled(48, 48)
             icon_label.setPixmap(pixmap)
 
+        if conf.read_conf('General', 'color_mode') == '2':
+            setTheme(Theme.AUTO)
+
         if state == 1:
             logger.info('上课铃声显示')
             title_label.setText('活动开始')  # 修正文本，以适应不同场景
