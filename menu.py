@@ -251,7 +251,7 @@ class PluginCard(CardWidget):  # 插件卡片
         self.vBoxLayout.addLayout(self.hBoxLayout_Title)
         self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignVCenter)
         self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-        self.hBoxLayout.addLayout(self.vBoxLayout)
+        self.hBoxLayout.addLayout(self.vBoxLayout, 1)  # !!!
 
         # 标题栏
         self.hBoxLayout_Title.setSpacing(12)
@@ -393,6 +393,9 @@ class SettingsMenu(FluentWindow):
 
         open_pp = self.findChild(PushButton, 'open_plugin_plaza')
         open_pp.clicked.connect(open_plaza)  # 打开插件广场
+
+        open_pp2 = self.findChild(PushButton, 'open_plugin_plaza_2')
+        open_pp2.clicked.connect(open_plaza)  # 打开插件广场
 
         auto_delay = self.findChild(SpinBox, 'auto_delay')
         auto_delay.setValue(int(conf.read_conf('Plugin', 'auto_delay')))
