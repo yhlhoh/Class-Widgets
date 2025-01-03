@@ -13,7 +13,8 @@ from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter, QDesktopServices
 from loguru import logger
 import sys
 from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Action, FluentIcon as fIcon, isDarkTheme, \
-    Dialog, ProgressRing, PlainTextEdit, ImageLabel, PushButton, InfoBarIcon, Flyout, FlyoutAnimationType, CheckBox
+    Dialog, ProgressRing, PlainTextEdit, ImageLabel, PushButton, InfoBarIcon, Flyout, FlyoutAnimationType, CheckBox, \
+    SystemThemeListener
 import datetime as dt
 import list
 import conf
@@ -527,11 +528,11 @@ class PluginManager:  # 插件管理器
             "Current_Lesson": current_lesson_name,  # 当前课程名
             "State": current_state,  # 0：课间 1：上课（上下课状态）
 
-            "Weather": weather_name,
-            "Temp": temperature,  # 天气数据
-            "Notification": notification.notification_contents,  # 通知内容
+            "Weather": weather_name,  # 天气情况
+            "Temp": temperature,  # 温度
+            "Notification": notification.notification_contents,  # 检测到的通知内容
 
-            "PLUGIN_PATH": f'{conf.PLUGINS_DIR}/{path}',  # 插件目录
+            "PLUGIN_PATH": f'{conf.PLUGINS_DIR}/{path}',  # 传递插件目录
         }
         return self.cw_contexts
 
@@ -981,9 +982,12 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         init_config()
         self.init_ui(path)
+        self.init_font()
+
         if enable_tray:
             self.init_tray_menu()  # 初始化托盘菜单
-        self.init_font()
+            self.themeListener = SystemThemeListener(self)  # 系统主题监听器
+            self.themeListener.start()
 
         if path == 'widget-time.ui':  # 日期显示
             self.date_text = self.findChild(QLabel, 'date_text')
@@ -1084,8 +1088,7 @@ class DesktopWidget(QWidget):  # 主要小组件
             )
         else:
             self.setWindowFlags(
-                Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool |
-                Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
+                Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool
             )
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -1103,6 +1106,13 @@ class DesktopWidget(QWidget):  # 主要小组件
                 backgnd.setGraphicsEffect(shadow_effect)
             except:
                 backgnd_frame.setGraphicsEffect(shadow_effect)
+    #
+    # def _onThemeChangedFinished(self):  # 主题切换
+    #     super()._onThemeChangedFinished()
+    #
+    #     # 云母特效启用时需要增加重试机制
+    #     if self.isMicaEffectEnabled():
+    #         QTimer.singleShot(100, lambda: self.windowEffect.setMicaEffect(self.winId(), isDarkTheme()))
 
     def init_font(self):
         font_path = 'font/HarmonyOS_Sans_SC_Bold.ttf'
