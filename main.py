@@ -39,6 +39,10 @@ QApplication.setHighDpiScaleFactorRoundingPolicy(
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
+base_directory = os.path.dirname(os.path.abspath(__file__))
+if base_directory.endswith('MacOS'):
+    base_directory = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)), 'Resources')
+
 today = dt.date.today()
 filename = conf.read_conf('General', 'schedule')
 
@@ -76,7 +80,7 @@ settings = None
 ex_menu = None
 
 if conf.read_conf('Other', 'do_not_log') != '1':
-    logger.add("log/ClassWidgets_main_{time}.log", rotation="1 MB", encoding="utf-8", retention="1 minute")
+    logger.add(f"{base_directory}/log/ClassWidgets_main_{{time}}.log", rotation="1 MB", encoding="utf-8", retention="1 minute")
     logger.info('未禁用日志输出')
 else:
     logger.info('已禁用日志输出功能，若需保存日志，请在“设置”->“高级选项”中关闭禁用日志功能')
@@ -418,7 +422,7 @@ class ErrorDialog(Dialog):  # 重大错误提示框
         self.title_layout = QHBoxLayout()
 
         self.iconLabel = ImageLabel()
-        self.iconLabel.setImage("img/logo/favicon-error.ico")
+        self.iconLabel.setImage(f"{base_directory}/img/logo/favicon-error.ico")
         self.error_log = PlainTextEdit()
         self.report_problem = PushButton(fIcon.FEEDBACK, '报告此问题')
         self.copy_log_btn = PushButton(fIcon.COPY, '复制日志')
@@ -741,9 +745,9 @@ class openProgressDialog(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         if isDarkTheme():
-            uic.loadUi('ui/default/dark/toast-open_dialog.ui', self)
+            uic.loadUi(f'{base_directory}/ui/default/dark/toast-open_dialog.ui', self)
         else:
-            uic.loadUi('ui/default/toast-open_dialog.ui', self)
+            uic.loadUi(f'{base_directory}/ui/default/toast-open_dialog.ui', self)
 
         backgnd = self.findChild(QFrame, 'backgnd')
         shadow_effect = QGraphicsDropShadowEffect(self)
@@ -754,7 +758,7 @@ class openProgressDialog(QWidget):
         backgnd.setGraphicsEffect(shadow_effect)
 
     def init_font(self):
-        font_path = 'font/HarmonyOS_Sans_SC_Bold.ttf'
+        font_path = f'{base_directory}/font/HarmonyOS_Sans_SC_Bold.ttf'
         font_id = QFontDatabase.addApplicationFont(font_path)
         if font_id != -1:
             font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
@@ -827,16 +831,16 @@ class FloatingWidget(QWidget):  # 浮窗
         else:
             setTheme(Theme.LIGHT)
 
-        if os.path.exists(f'ui/{theme}/widget-floating.ui'):
+        if os.path.exists(f'{base_directory}/ui/{theme}/widget-floating.ui'):
             if isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']:
-                uic.loadUi(f'ui/{theme}/dark/widget-floating.ui', self)
+                uic.loadUi(f'{base_directory}/ui/{theme}/dark/widget-floating.ui', self)
             else:
-                uic.loadUi(f'ui/{theme}/widget-floating.ui', self)
+                uic.loadUi(f'{base_directory}/ui/{theme}/widget-floating.ui', self)
         else:
             if isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']:
-                uic.loadUi('ui/default/dark/widget-floating.ui', self)
+                uic.loadUi(f'{base_directory}/ui/default/dark/widget-floating.ui', self)
             else:
-                uic.loadUi('ui/default/widget-floating.ui', self)
+                uic.loadUi(f'{base_directory}/ui/default/widget-floating.ui', self)
 
         # 设置窗口无边框和透明背景
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -855,7 +859,7 @@ class FloatingWidget(QWidget):  # 浮窗
         backgnd.setGraphicsEffect(shadow_effect)
 
     def init_font(self):
-        font_path = 'font/HarmonyOS_Sans_SC_Bold.ttf'
+        font_path = f'{base_directory}/font/HarmonyOS_Sans_SC_Bold.ttf'
         font_id = QFontDatabase.addApplicationFont(font_path)
         if font_id != -1:
             font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
@@ -1076,21 +1080,21 @@ class DesktopWidget(QWidget):  # 主要小组件
             setTheme(Theme.LIGHT)
 
         if conf.load_theme_config(theme)['support_dark_mode']:
-            if os.path.exists(f'ui/{theme}/{path}'):
+            if os.path.exists(f'{base_directory}/ui/{theme}/{path}'):
                 if isDarkTheme():
-                    uic.loadUi(f'ui/{theme}/dark/{path}', self)
+                    uic.loadUi(f'{base_directory}/ui/{theme}/dark/{path}', self)
                 else:
-                    uic.loadUi(f'ui/{theme}/{path}', self)
+                    uic.loadUi(f'{base_directory}/ui/{theme}/{path}', self)
             else:
                 if isDarkTheme():
-                    uic.loadUi(f'ui/{theme}/dark/widget-base.ui', self)
+                    uic.loadUi(f'{base_directory}/ui/{theme}/dark/widget-base.ui', self)
                 else:
-                    uic.loadUi(f'ui/{theme}/widget-base.ui', self)
+                    uic.loadUi(f'{base_directory}/ui/{theme}/widget-base.ui', self)
         else:
-            if os.path.exists(f'ui/{theme}/{path}'):
-                uic.loadUi(f'ui/{theme}/{path}', self)
+            if os.path.exists(f'{base_directory}/ui/{theme}/{path}'):
+                uic.loadUi(f'{base_directory}/ui/{theme}/{path}', self)
             else:
-                uic.loadUi(f'ui/{theme}/widget-base.ui', self)
+                uic.loadUi(f'{base_directory}/ui/{theme}/widget-base.ui', self)
 
         # 设置窗口无边框和透明背景
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -1133,7 +1137,7 @@ class DesktopWidget(QWidget):  # 主要小组件
     #         QTimer.singleShot(100, lambda: self.windowEffect.setMicaEffect(self.winId(), isDarkTheme()))
 
     def init_font(self):
-        font_path = 'font/HarmonyOS_Sans_SC_Bold.ttf'
+        font_path = f'{base_directory}/font/HarmonyOS_Sans_SC_Bold.ttf'
         font_id = QFontDatabase.addApplicationFont(font_path)
         if font_id != -1:
             font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
@@ -1145,7 +1149,7 @@ class DesktopWidget(QWidget):  # 主要小组件
                 """)
 
     def init_tray_menu(self):
-        self.tray_icon = QSystemTrayIcon(QIcon("img/logo/favicon.png"), self)
+        self.tray_icon = QSystemTrayIcon(QIcon(f"{base_directory}/img/logo/favicon.png"), self)
 
         self.tray_menu = SystemTrayMenu(title='Class Widgets', parent=self)
         self.tray_menu.addActions([
@@ -1446,7 +1450,7 @@ def check_windows_maximize():  # 检查窗口是否最大化
 def init_config():  # 重设配置文件
     conf.write_conf('Temp', 'set_week', '')
     if conf.read_conf('Temp', 'temp_schedule') != '':  # 修复换课重置
-        copy('config/schedule/backup.json', f'config/schedule/{filename}')
+        copy(f'{base_directory}/config/schedule/backup.json', f'{base_directory}/config/schedule/{filename}')
         conf.write_conf('Temp', 'temp_schedule', '')
 
 
@@ -1541,8 +1545,8 @@ if __name__ == '__main__':
     else:
         if conf.read_conf('Other', 'initialstartup') == '1':  # 首次启动
             try:
-                conf.add_shortcut('ClassWidgets.exe', 'img/favicon.ico')
-                conf.add_shortcut_to_startmenu('ClassWidgets.exe', 'img/favicon.ico')
+                conf.add_shortcut('ClassWidgets.exe', f'{base_directory}/img/favicon.ico')
+                conf.add_shortcut_to_startmenu(f'{base_directory}/ClassWidgets.exe', f'{base_directory}/img/favicon.ico')
                 conf.write_conf('Other', 'initialstartup', '')
             except Exception as e:
                 logger.error(f'添加快捷方式失败：{e}')
