@@ -48,11 +48,12 @@ order = []
 error_dialog = None
 
 current_lesson_name = '课程表未加载'
-current_state = 0  # 0：课间 1：上课
+current_state = 0  # 0：课间 1：上课 2: 休息段
 current_time = dt.datetime.now().strftime('%H:%M:%S')
 current_week = dt.datetime.now().weekday()
 current_lessons = {}
 loaded_data = {}
+parts_type= []
 notification = tip_toast
 update_timer = QTimer()
 
@@ -116,7 +117,7 @@ def get_timeline_data():
 
 # 获取Part开始时间
 def get_start_time():
-    global parts_start_time, timeline_data, loaded_data, order
+    global parts_start_time, timeline_data, loaded_data, order, parts_type
     loaded_data = conf.load_from_json(filename)
     timeline = get_timeline_data()
     part = loaded_data['part']
@@ -126,9 +127,18 @@ def get_start_time():
 
     for item_name, item_value in part.items():
         try:
-            h, m = item_value
+            h, m = item_value[:2]
+            try:
+                part_type = item_value[2]
+            except IndexError:
+                part_type = 'part'
+            except Exception as e:
+                logger.error(f'加载课程表文件[节点类型]出错：{e}')
+                part_type = 'part'
+
             parts_start_time.append(dt.datetime.combine(today, dt.time(h, m)))
             order.append(item_name)
+            parts_type.append(part_type)
         except Exception as e:
             logger.error(f'加载课程表文件[起始时间]出错：{e}')
 
@@ -162,10 +172,10 @@ def get_part():
         if i == len(parts_start_time) - 1:  # 最后一个Part
             return return_data()
         else:
-            print(parts_start_time[i], parts_start_time[i] + time_len)
             if current_dt <= parts_start_time[i] + time_len:
                 return return_data()
-    return parts_start_time[0] + dt.timedelta(seconds=time_offset), 0
+
+    return parts_start_time[0] + dt.timedelta(seconds=time_offset), 0, 'part'
 
 
 # 获取当前活动
@@ -281,7 +291,6 @@ def get_next_lessons():
             if part == 0:
                 return True
             else:
-                print(current_dt, parts_start_time[part])
                 if current_dt >= parts_start_time[part] - dt.timedelta(minutes=60):
                     return True
                 else:
@@ -330,6 +339,10 @@ def get_current_lesson_name():
         c_time, part = get_part()
 
         if current_dt >= c_time:
+            if parts_type[part] == 'break':  # 休息段
+                current_lesson_name = loaded_data['part_name'][str(part)]
+                current_state = 2
+
             for item_name, item_time in timeline_data.items():
                 if item_name.startswith(f'a{str(part)}') or item_name.startswith(f'f{str(part)}'):
                     add_time = int(item_time)
@@ -341,7 +354,7 @@ def get_current_lesson_name():
                         else:
                             current_lesson_name = '课间'
                             current_state = 0
-                        break
+                        return
 
 
 # 定义 RECT 结构体
@@ -1201,7 +1214,16 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         elif path == 'widget-current-activity.ui':  # 当前活动
             self.current_subject.setText(f'  {current_lesson_name}')
-            render = QSvgRenderer(list.get_subject_icon(current_lesson_name))
+            if current_state != 2:  # 非休息段
+                render = QSvgRenderer(list.get_subject_icon(current_lesson_name))
+                self.blur_effect_label.setStyleSheet(
+                    f'background-color: rgba{list.subject_color(current_lesson_name)}, 200);'
+                )
+            else:  # 休息段
+                render = QSvgRenderer(list.get_subject_icon('课间'))
+                self.blur_effect_label.setStyleSheet(
+                    f'background-color: rgba{list.subject_color("课间")}, 200);'
+                )
             pixmap = QPixmap(render.defaultSize())
             pixmap.fill(Qt.GlobalColor.transparent)
             painter = QPainter(pixmap)
@@ -1212,9 +1234,6 @@ class DesktopWidget(QWidget):  # 主要小组件
             painter.end()
             self.current_subject.setIcon(QIcon(pixmap))
             self.blur_effect.setBlurRadius(25)  # 模糊半径
-            self.blur_effect_label.setStyleSheet(
-                f'background-color: rgba{list.subject_color(current_lesson_name)}, 200);'
-            )
             self.blur_effect_label.setGraphicsEffect(self.blur_effect)
 
         elif path == 'widget-next-activity.ui':  # 接下来的活动
