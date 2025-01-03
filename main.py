@@ -168,6 +168,7 @@ def get_part():
         for item_name, item_time in timeline_data.items():
             if item_name.startswith(f'a{str(order[i])}') or item_name.startswith(f'f{str(order[i])}'):
                 time_len += dt.timedelta(minutes=int(item_time))  # 累计Part长度
+            time_len += dt.timedelta(seconds=1)
 
         if i == len(parts_start_time) - 1:  # 最后一个Part
             return return_data()
@@ -241,8 +242,12 @@ def get_countdown(toast=False):  # 重构好累aaaa
                                 notification.push_notification(3, next_lessons[0])  # 准备上课（预备铃）
 
                     # 放学
-                    if c_time + dt.timedelta(minutes=int(item_time)) == current_dt and not next_lessons and toast:
-                        notification.push_notification(2)  # 放学
+                    if (c_time + dt.timedelta(minutes=int(item_time)) == current_dt and not next_lessons and
+                            not current_state and toast):
+                        if parts_type[part] == 'break':  # 休息段
+                            notification.push_notification(0, current_lesson_name)  # 下课
+                        else:
+                            notification.push_notification(2)  # 放学
 
                     add_time = int(item_time)
                     c_time += dt.timedelta(minutes=add_time)
