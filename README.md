@@ -62,7 +62,7 @@
 ## 协议
 此项目 (Class Widgets) 基于 GPL-3.0 许可证授权发布，详情请参阅 [LICENSE](./LICENSE) 文件。
 
-Copyright © 2024 RinLit.
+Copyright © 2025 RinLit.
 
 ## 致谢
 
