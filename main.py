@@ -514,7 +514,6 @@ class PluginLoader:  # 插件加载器
                         continue
                     relative_path = conf.PLUGINS_DIR.split('\\')[-1]
                     module_name = f"{relative_path}.{folder.name}"
-                    print(module_name)
                     try:
                         module = importlib.import_module(module_name)
                         if hasattr(module, 'Plugin'):

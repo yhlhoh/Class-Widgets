@@ -412,7 +412,8 @@ class SettingsMenu(FluentWindow):
         open_plugin_folder.clicked.connect(lambda: open_dir(os.path.join(os.getcwd(), conf.PLUGINS_DIR)))  # 打开插件目录
         for plugin in plugin_dict:
             try:
-                module = importlib.import_module(f'{conf.PLUGINS_DIR}.{plugin}')
+                relative_path = conf.PLUGINS_DIR.split('\\')[-1]
+                module = importlib.import_module(f'{relative_path}.{plugin}')
                 if hasattr(module, 'Settings'):
                     plugin_class = getattr(module, "Settings")  # 获取 Plugin 类
                     # 实例化插件
