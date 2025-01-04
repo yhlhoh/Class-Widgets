@@ -56,7 +56,7 @@ current_time = dt.datetime.now().strftime('%H:%M:%S')
 current_week = dt.datetime.now().weekday()
 current_lessons = {}
 loaded_data = {}
-parts_type= []
+parts_type = []
 notification = tip_toast
 update_timer = QTimer()
 
@@ -79,7 +79,8 @@ settings = None
 ex_menu = None
 
 if conf.read_conf('Other', 'do_not_log') != '1':
-    logger.add(f"{base_directory}/log/ClassWidgets_main_{{time}}.log", rotation="1 MB", encoding="utf-8", retention="1 minute")
+    logger.add(f"{base_directory}/log/ClassWidgets_main_{{time}}.log", rotation="1 MB", encoding="utf-8",
+               retention="1 minute")
     logger.info('未禁用日志输出')
 else:
     logger.info('已禁用日志输出功能，若需保存日志，请在“设置”->“高级选项”中关闭禁用日志功能')
@@ -511,7 +512,9 @@ class PluginLoader:  # 插件加载器
                 if folder.is_dir() and (folder / 'plugin.json').exists():
                     if folder.name not in conf.load_plugin_config()['enabled_plugins']:
                         continue
-                    module_name = f"{conf.PLUGINS_DIR}.{folder.name}"
+                    relative_path = conf.PLUGINS_DIR.split('\\')[-1]
+                    module_name = f"{relative_path}.{folder.name}"
+                    print(module_name)
                     try:
                         module = importlib.import_module(module_name)
                         if hasattr(module, 'Plugin'):
@@ -1230,7 +1233,8 @@ class DesktopWidget(QWidget):  # 主要小组件
             pixmap.fill(Qt.GlobalColor.transparent)
             painter = QPainter(pixmap)
             render.render(painter)
-            if isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']:  # 在暗色模式显示亮色图标
+            if (isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']
+                    or isDarkTheme() and conf.load_theme_config(theme)['default_theme'] == 'dark'):  # 在暗色模式显示亮色图标
                 painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
                 painter.fillRect(pixmap.rect(), QColor("#FFFFFF"))
             painter.end()
@@ -1544,7 +1548,8 @@ if __name__ == '__main__':
         if conf.read_conf('Other', 'initialstartup') == '1':  # 首次启动
             try:
                 conf.add_shortcut('ClassWidgets.exe', f'{base_directory}/img/favicon.ico')
-                conf.add_shortcut_to_startmenu(f'{base_directory}/ClassWidgets.exe', f'{base_directory}/img/favicon.ico')
+                conf.add_shortcut_to_startmenu(f'{base_directory}/ClassWidgets.exe',
+                                               f'{base_directory}/img/favicon.ico')
                 conf.write_conf('Other', 'initialstartup', '')
             except Exception as e:
                 logger.error(f'添加快捷方式失败：{e}')

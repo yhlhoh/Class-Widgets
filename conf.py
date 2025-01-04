@@ -20,7 +20,8 @@ path = f'{base_directory}/config.ini'
 conf = config.ConfigParser()
 name = 'Class Widgets'
 
-PLUGINS_DIR = f'{base_directory}/plugins'
+PLUGINS_DIR = f'{base_directory}\\plugins'
+
 
 # CONFIG
 # 读取config
