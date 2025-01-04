@@ -4,7 +4,7 @@
         "widget-countdown.ui",
         "widget-countdown-custom.ui",
         "widget-current-activity.ui",
-        "widget-next-activity.ui",
-        "widget_test.ui"
+        "widget_yiyan.ui",
+        "widget-next-activity.ui"
     ]
 }

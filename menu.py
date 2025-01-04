@@ -672,7 +672,11 @@ class SettingsMenu(FluentWindow):
 
         switch_enable_alt_schedule = self.findChild(SwitchButton, 'switch_enable_alt_schedule')
         switch_enable_alt_schedule.setChecked(int(conf.read_conf('General', 'enable_alt_schedule')))
-        switch_enable_alt_schedule.checkedChanged.connect(self.switch_enable_alt_schedule)  # 单双周开关
+        switch_enable_alt_schedule.checkedChanged.connect(self.switch_safe_mode)  # 单双周开关
+
+        switch_enable_safe_mode = self.findChild(SwitchButton, 'switch_safe_mode')
+        switch_enable_safe_mode.setChecked(int(conf.read_conf('Other', 'safe_mode')))
+        switch_enable_safe_mode.checkedChanged.connect(self.switch_enable_alt_schedule)  # 单双周开关
 
         switch_enable_multiple_programs = self.findChild(SwitchButton, 'switch_multiple_programs')
         switch_enable_multiple_programs.setChecked(int(conf.read_conf('Other', 'multiple_programs')))
@@ -916,6 +920,13 @@ class SettingsMenu(FluentWindow):
         else:
             conf.write_conf('General', 'enable_alt_schedule', '0')
 
+    def switch_safe_mode(self):
+        switch_safe_mode = self.findChild(SwitchButton,'switch_safe_mode')
+        if switch_safe_mode.isChecked():
+            conf.write_conf('Other', 'safe_mode', '1')
+        else:
+            conf.write_conf('Other', 'safe_mode', '0')
+
     def switch_enable_multiple_programs(self):
         switch_enable_multiple_programs = self.findChild(SwitchButton, 'switch_multiple_programs')
         if switch_enable_multiple_programs.isChecked():
@@ -1105,14 +1116,21 @@ class SettingsMenu(FluentWindow):
 
             left_spacer = QSpacerItem(20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             widgets_preview.addItem(left_spacer)
+
+            theme_folder = conf.read_conf("General", "theme")
             for i in range(len(widget_config)):
                 widget_name = widget_config[i]
-                if isDarkTheme() and conf.load_theme_config(conf.read_conf("General", "theme"))['support_dark_mode']:
-                    path = f'ui/{conf.read_conf("General", "theme")}/dark/preview/{widget_name[:-3]}.png'
+                if isDarkTheme() and conf.load_theme_config(theme_folder)['support_dark_mode']:
+                    if os.path.exists(f'ui/{theme_folder}/dark/preview/{widget_name[:-3]}.png'):
+                        path = f'ui/{theme_folder}/dark/preview/{widget_name[:-3]}.png'
+                    else:
+                        path = f'ui/{theme_folder}/dark/preview/widget-custom.png'
                 else:
-                    path = f'ui/{conf.read_conf("General", "theme")}/preview/{widget_name[:-3]}.png'
-                label = QLabel()
-                label.setPixmap(QPixmap(path))
+                    if os.path.exists(f'ui/{theme_folder}/preview/{widget_name[:-3]}.png'):
+                        path = f'ui/{theme_folder}/preview/{widget_name[:-3]}.png'
+                    else:
+                        path = f'ui/{theme_folder}/preview/widget-custom.png'
+                label = ImageLabel(path)
                 widgets_preview.addWidget(label)
                 widget_config[i] = label
             right_spacer = QSpacerItem(20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)

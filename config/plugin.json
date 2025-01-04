@@ -1,4 +1,5 @@
 {
     "enabled_plugins": [
+        "cw-yiyan-plugin"
     ]
 }

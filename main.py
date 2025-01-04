@@ -13,8 +13,7 @@ from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter, QDesktopServices
 from loguru import logger
 import sys
 from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Action, FluentIcon as fIcon, isDarkTheme, \
-    Dialog, ProgressRing, PlainTextEdit, ImageLabel, PushButton, InfoBarIcon, Flyout, FlyoutAnimationType, CheckBox, \
-    SystemThemeListener
+    Dialog, ProgressRing, PlainTextEdit, ImageLabel, PushButton, InfoBarIcon, Flyout, FlyoutAnimationType, CheckBox
 import datetime as dt
 import list
 import conf
@@ -83,6 +82,9 @@ else:
 
 
 def global_exceptHook(exc_type, exc_value, exc_tb):  # 全局异常捕获
+    if conf.read_conf('Other', 'safe_mode') == '1':  # 安全模式
+        return
+
     error_details = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))  # 异常详情
     if error_details in ignore_errors:  # 忽略重复错误
         return
@@ -98,7 +100,7 @@ def global_exceptHook(exc_type, exc_value, exc_tb):  # 全局异常捕获
             w = ErrorDialog(error_details)
             w.exec()
     else:
-        # 忽略重复错误
+        # 忽略冷却时间
         pass
 
 
@@ -985,6 +987,7 @@ class FloatingWidget(QWidget):  # 浮窗
 class DesktopWidget(QWidget):  # 主要小组件
     def __init__(self, path='widget-time.ui', pos=(100, 50), enable_tray=False):
         super().__init__()
+        self.last_widgets = list.get_widget_config()
         self.path = path
         self.last_code = 101010100
         self.last_theme = conf.read_conf('General', 'theme')
@@ -1021,7 +1024,7 @@ class DesktopWidget(QWidget):  # 主要小组件
             self.current_subject.mouseReleaseEvent = self.rightReleaseEvent
 
             self.d_t_timer = QTimer(self)
-            self.d_t_timer.setInterval(500)
+            self.d_t_timer.setInterval(1000)
             self.d_t_timer.timeout.connect(self.detect_theme_changed)
             self.d_t_timer.start()
         elif path == 'widget-next-activity.ui':  # 接下来的活动
@@ -1266,9 +1269,11 @@ class DesktopWidget(QWidget):  # 主要小组件
     def detect_theme_changed(self):
         theme = conf.read_conf('General', 'theme')
         color_mode = conf.read_conf('General', 'color_mode')
-        if theme != self.last_theme or color_mode != self.last_color_mode:
+        widgets = list.get_widget_config()
+        if theme != self.last_theme or color_mode != self.last_color_mode or widgets != self.last_widgets:
             self.last_theme = theme
             self.last_color_mode = color_mode
+            self.last_widgets = widgets
             logger.info(f'切换主题：{theme}，颜色模式{color_mode}')
             mgr.clear_widgets()
 
