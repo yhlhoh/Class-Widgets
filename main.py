@@ -157,14 +157,13 @@ def get_start_time():
 def get_part():
     def return_data():
         c_time = parts_start_time[i] + dt.timedelta(seconds=time_offset)
-        # if any(f'a{int(order[i])}' in key or f'f{int(order[i])}' in key for key in timeline_data.keys()):
         return c_time, int(order[i])
-        # else:
-        #     return c_time, 0  # 默认
 
     current_dt = dt.datetime.now()
+
     for i in range(len(parts_start_time)):  # 遍历每个Part
         time_len = dt.timedelta(minutes=0)  # Part长度
+
         for item_name, item_time in timeline_data.items():
             if item_name.startswith(f'a{str(order[i])}') or item_name.startswith(f'f{str(order[i])}'):
                 time_len += dt.timedelta(minutes=int(item_time))  # 累计Part长度
@@ -1004,8 +1003,6 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         if enable_tray:
             self.init_tray_menu()  # 初始化托盘菜单
-            self.themeListener = SystemThemeListener(self)  # 系统主题监听器
-            self.themeListener.start()
 
         if path == 'widget-time.ui':  # 日期显示
             self.date_text = self.findChild(QLabel, 'date_text')
@@ -1124,13 +1121,6 @@ class DesktopWidget(QWidget):  # 主要小组件
                 backgnd.setGraphicsEffect(shadow_effect)
             except:
                 backgnd_frame.setGraphicsEffect(shadow_effect)
-    #
-    # def _onThemeChangedFinished(self):  # 主题切换
-    #     super()._onThemeChangedFinished()
-    #
-    #     # 云母特效启用时需要增加重试机制
-    #     if self.isMicaEffectEnabled():
-    #         QTimer.singleShot(100, lambda: self.windowEffect.setMicaEffect(self.winId(), isDarkTheme()))
 
     def init_font(self):
         font_path = 'font/HarmonyOS_Sans_SC_Bold.ttf'
@@ -1493,14 +1483,17 @@ def init():
     start_x = (screen_width - total_width) // 2
     start_y = int(conf.read_conf('General', 'margin'))
 
-    def cal_start_width(num):
-        try:
-            return int(start_x + spacing * num + sum(conf.load_theme_width(theme)[widgets[i]] for i in range(num)))
-        except KeyError:
-            return int(start_x + spacing * num + sum(list.widget_width[widgets[i]] for i in range(num)))
-        except Exception as e:
-            logger.error(f'计算窗口位置出错：{e}')
-            return 0
+    def cal_start_width(num):  # 计算每个组件的起始位置
+        w_start_x = 0
+        w_start_x += start_x + spacing * num
+        for i in range(num):
+            try:
+                w_start_x += conf.load_theme_width(theme)[widgets[i]]
+            except KeyError:
+                w_start_x += list.widget_width[widgets[i]]
+            except:
+                w_start_x += 0
+        return w_start_x
 
     for w in range(len(widgets)):
         show_window(widgets[w], (cal_start_width(w), start_y), w == 0)
@@ -1564,7 +1557,7 @@ if __name__ == '__main__':
         get_current_lesson_name()
         get_next_lessons()
 
-        if current_state:
+        if current_state == 1:
             setThemeColor(f"#{conf.read_conf('Color', 'attend_class')}")
         else:
             setThemeColor(f"#{conf.read_conf('Color', 'finish_class')}")
