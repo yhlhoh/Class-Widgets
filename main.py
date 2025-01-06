@@ -20,9 +20,8 @@ import conf
 import tip_toast
 from PyQt5.QtGui import QFontDatabase
 
-from menu import SettingsMenu
 from menu import open_plaza
-from exact_menu import ExactMenu
+from exact_menu import ExactMenu, open_settings
 import weather_db as db
 import importlib
 import subprocess
@@ -75,7 +74,6 @@ error_cooldown = dt.timedelta(seconds=2)  # 冷却时间(s)
 ignore_errors = []
 last_error_time = dt.datetime.now() - error_cooldown  # 上一次错误
 
-settings = None
 ex_menu = None
 
 if conf.read_conf('Other', 'do_not_log') != '1':
@@ -1155,7 +1153,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         self.tray_menu.addActions([
             Action(fIcon.SHOPPING_CART, '插件广场', triggered=open_plaza),
             Action(fIcon.DEVELOPER_TOOLS, '额外选项', triggered=self.open_exact_menu),
-            Action(fIcon.SETTING, '设置', triggered=self.open_settings)
+            Action(fIcon.SETTING, '设置', triggered=open_settings)
         ])
         self.tray_menu.addSeparator()
         self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=lambda: sys.exit()))
@@ -1305,20 +1303,6 @@ class DesktopWidget(QWidget):  # 主要小组件
                 logger.error(f'天气组件出错：{e}')
         else:
             logger.error(f'获取天气数据出错：{weather_data}')
-
-    def open_settings(self):
-        global settings
-        try:
-            if settings is None or not settings.isVisible():
-                settings = SettingsMenu()
-                settings.show()
-                logger.info('打开“设置”')
-            else:
-                settings.raise_()
-                settings.activateWindow()
-        except Exception as e:
-            settings.show()
-            logger.info('打开“设置”')
 
     def open_exact_menu(self):
         global ex_menu
