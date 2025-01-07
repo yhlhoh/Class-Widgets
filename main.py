@@ -67,6 +67,7 @@ temperature = '未设置'
 weather_icon = 0
 weather_name = ''
 city = 101010100  # 默认城市
+theme = None
 
 time_offset = 0  # 时差偏移
 first_start = True
@@ -1447,10 +1448,15 @@ def init():
     update_timer.setInterval(1000)
     update_time()
 
+    theme = conf.read_conf('General', 'theme')  # 主题
+
+    if not os.path.exists(f'{base_directory}/config/theme/{theme}.json'):
+        logger.warning(f'主题 {theme} 不存在，使用默认主题')
+        theme = 'default'
+
     mgr = WidgetsManager()
     fw = FloatingWidget()
 
-    theme = conf.read_conf('General', 'theme')  # 主题
     logger.info(f'应用主题：{theme}')
     # 获取屏幕横向分辨率
     screen_geometry = app.primaryScreen().availableGeometry()
@@ -1541,12 +1547,8 @@ if __name__ == '__main__':
             except Exception as e:
                 logger.error(f'创建新课表失败：{e}')
 
-        theme = conf.read_conf('General', 'theme')  # 主题
-
-        fw = FloatingWidget()
         p_loader = PluginLoader()
         p_mgr = PluginManager()
-
         p_loader.load_plugins()
         init()
         get_start_time()
