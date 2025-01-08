@@ -10,9 +10,9 @@ from PyQt5.QtCore import Qt, QTime, QUrl, QDate
 from qframelesswindow.webengine import FramelessWebEngineView
 import sys
 
-from PyQt5.QtGui import QIcon, QDesktopServices, QPixmap, QColor
+from PyQt5.QtGui import QIcon, QDesktopServices, QColor
 from PyQt5.QtWidgets import QApplication, QHeaderView, QTableWidgetItem, QLabel, QHBoxLayout, QSizePolicy, \
-    QSpacerItem, QFileDialog, QVBoxLayout, QWidget, QScroller
+    QSpacerItem, QFileDialog, QVBoxLayout, QScroller
 from qfluentwidgets import (
     Theme, setTheme, FluentWindow, FluentIcon as fIcon, ToolButton, ListWidget, ComboBox, CaptionLabel,
     SpinBox, LineEdit, PrimaryPushButton, TableWidget, Flyout, InfoBarIcon,
@@ -853,7 +853,7 @@ class SettingsMenu(FluentWindow):
 
     def getThemeName(self):
         theme = conf.read_conf('General', 'theme')
-        if os.path.exists(f'{base_directory}/ui/{theme}/{theme}.json'):
+        if not os.path.exists(f'{base_directory}/ui/{theme}/theme.json'):
             return theme
         else:
             return 'default'
@@ -1128,7 +1128,7 @@ class SettingsMenu(FluentWindow):
             widgets_preview.addItem(left_spacer)
 
             theme_folder = conf.read_conf("General", "theme")
-            if not os.path.exists(f'{base_directory}/ui/{theme_folder}/preview/'):
+            if not os.path.exists(f'{base_directory}/ui/{theme_folder}/theme.json'):
                 theme_folder = 'default'  # 主题文件夹不存在，使用默认主题
                 logger.warning(f'主题文件夹不存在，使用默认主题：{theme_folder}')
 

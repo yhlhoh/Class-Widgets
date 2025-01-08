@@ -1459,7 +1459,7 @@ def init():
 
     theme = conf.read_conf('General', 'theme')  # 主题
 
-    if not os.path.exists(f'{base_directory}/config/theme/{theme}.json'):
+    if not os.path.exists(f'{base_directory}/ui/{theme}/theme.json'):
         logger.warning(f'主题 {theme} 不存在，使用默认主题')
         theme = 'default'
 
