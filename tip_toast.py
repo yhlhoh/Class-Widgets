@@ -1,6 +1,7 @@
 import sys
 
 import pygame
+import os
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QTimer, QPoint, pyqtProperty
 from PyQt5.QtGui import QColor, QPainter, QBrush, QPixmap
