@@ -4,9 +4,7 @@ from copy import deepcopy
 from shutil import copy
 
 from loguru import logger
-
-import conf
-from conf import base_directory
+from file import read_conf, write_conf, save_data_to_json, base_directory
 
 week = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 week_type = ['单周', '双周']
@@ -109,7 +107,7 @@ try:  # 加载课程/主题配置文件
     theme_names = []
 except Exception as e:
     logger.error(f'加载课程/主题配置文件发生错误，使用默认配置：{e}')
-    conf.write_conf('General', 'theme', 'default')
+    write_conf('General', 'theme', 'default')
     subject_icon = {
         '语文': 'chinese',
         '数学': 'math',
@@ -165,7 +163,7 @@ def get_current_theme_num():
     for i in range(len(theme_folder)):
         if not os.path.exists(f'{base_directory}/config/schedule/{theme_folder[i]}.json'):
             return "default"
-        if theme_folder[i] == conf.read_conf('General', 'theme'):
+        if theme_folder[i] == read_conf('General', 'theme'):
             return i
 
 
@@ -237,8 +235,8 @@ def import_schedule(filepath, filename):  # 导入课表
     try:
         print(check_data)
         copy(filepath, f'{base_directory}/config/schedule/{filename}')
-        conf.save_data_to_json(check_data, filename)
-        conf.write_conf('General', 'schedule', filename)
+        save_data_to_json(check_data, filename)
+        write_conf('General', 'schedule', filename)
         return True
     except Exception as e:
         logger.error(f"保存数据时出错: {e}")
