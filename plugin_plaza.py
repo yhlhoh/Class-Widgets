@@ -495,7 +495,7 @@ class PluginPlaza(MSFluentWindow):
         self.banner_view.setItemSize(QSize(900, 450))  # 设置图片大小（banner图片尺寸比）
         self.banner_view.setBorderRadius(8)
         self.banner_view.setSpacing(5)
-        self.banner_view.clicked.connect(lambda: print("tt"))
+        self.banner_view.clicked.connect(self.open_banner_link)
 
         self.auto_play_timer = QTimer(self)  # 自动轮播
         self.auto_play_timer.timeout.connect(lambda: self.switch_banners())
@@ -511,6 +511,14 @@ class PluginPlaza(MSFluentWindow):
         )
         QScroller.grabGesture(home_scroll.viewport(), QScroller.LeftMouseButtonGesture)
 
+    def open_banner_link(self):
+        if self.img_list[self.banner_view.currentIndex()] in self.banners_data:
+            if not self.banners_data[self.img_list[self.banner_view.currentIndex()]]['link']:
+                return False # 无链接
+            QDesktopServices.openUrl(QUrl(
+                self.banners_data[self.img_list[self.banner_view.currentIndex()]]['link']
+            ))
+
     def set_tags_data(self, data):
         global tags, search_items
         if data:
@@ -524,7 +532,6 @@ class PluginPlaza(MSFluentWindow):
             tag_link = TagLink(tag, self)
             self.tags_layout.addWidget(tag_link, tag_num // 3, tag_num % 3)  # 排列
             tag_num += 1
-
 
     def load_recommend_plugin(self, p_data):
         global plugins_data, search_items
@@ -572,10 +579,14 @@ class PluginPlaza(MSFluentWindow):
 
         def get_banner(data):
             try:
-                if data and data[0] != 'ERROR':  # 返回data值有效
+                if 'error' not in data:
+                    self.banners_data = data
+                    self.img_list = self.img_links = list(data.keys())
+                    self.img_links = [f'https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Banner/'
+                                      f'{img}.png' for img in self.img_links]
                     self.banner_pager.setPageNumber(len(data))
-                    self.banners = ["img/plaza/banner_pre.png" for _ in range(len(data))]
-                    self.banner_view.addImages(self.banners)
+                    banner_placeholders = ["img/plaza/banner_pre.png" for _ in range(len(data))]
+                    self.banner_view.addImages(banner_placeholders)
                 else:
                     self.findChild(BodyLabel, 'tips').setText(f'错误原因：{data[1]}')
                     self.banner_view.addImage("img/plaza/banner_network-failed.png")
@@ -586,7 +597,7 @@ class PluginPlaza(MSFluentWindow):
                 # 定义一个内部函数来启动下一个线程
                 def start_next_banner(index):
                     if index < len(data):
-                        self.banner_thread = nt.getImg(data[index])
+                        self.banner_thread = nt.getImg(self.img_links[index])
                         self.banner_thread.repo_signal.connect(lambda data: display_banner(data, index))
                         self.banner_thread.repo_signal.connect(lambda: start_next_banner(index + 1))  # 连接完成信号
                         self.banner_thread.start()
@@ -596,7 +607,7 @@ class PluginPlaza(MSFluentWindow):
             except Exception as e:
                 logger.error(f"获取Banner失败：{e}")
 
-        self.banner_list_thread = nt.getRepoFileList(path="Banner", endswith=".png")
+        self.banner_list_thread = nt.getRepoFileList()
         self.banner_list_thread.repo_signal.connect(get_banner)
         self.banner_list_thread.start()
 
@@ -629,7 +640,7 @@ class PluginPlaza(MSFluentWindow):
         self.get_tags_list_thread.start()
 
     def switch_banners(self):  # 切换Banner
-        if self.banner_view.currentIndex() == len(self.banners) - 1:
+        if self.banner_view.currentIndex() == len(self.img_list) - 1:
             self.banner_view.scrollToIndex(0)
             self.banner_pager.setCurrentIndex(0)
         else:
