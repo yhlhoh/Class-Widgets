@@ -1,6 +1,6 @@
 name: 功能请求
 description: 提出一项新的功能。
-title: [FEATURE]:
+title: "[FEATURE]:"
 labels: ["新功能"]
 body:
   - type: markdown
