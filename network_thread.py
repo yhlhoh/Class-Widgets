@@ -206,18 +206,18 @@ class VersionThread(QThread):  # 获取最新版本号
         self.version_signal.emit(version)
 
     def get_latest_version(self):
-        url = "https://api.github.com/repos/RinLit-233-shiroko/Class-Widgets/releases/latest"
+        url = "https://classwidgets.rinlit.cn/version"
         try:
             response = requests.get(url, proxies=proxies)
             if response.status_code == 200:
-                data = response.json()
-                return data.get("tag_name")
+                data = response.text
+                return data
             else:
                 logger.error(f"无法获取版本信息 错误代码：{response.status_code}")
-                return "请求失败"
+                return f"请求失败，错误代码：{response.status_code}"
         except requests.exceptions.RequestException as e:
             logger.error(f"请求失败，错误代码：{e}")
-            return f"请求失败"
+            return f"请求失败\n{e}"
 
 
 class getDownloadUrl(QThread):
