@@ -9,9 +9,13 @@ from file import read_conf, write_conf, save_data_to_json, base_directory
 week = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 week_type = ['单周', '双周']
 part_type = ['节点', '休息段']
+window_status = ['无', '置于顶部', '置于底部']
 color_mode = ['浅色', '深色', '跟随系统']
 hide_mode = ['无', '上课时自动隐藏', '窗口最大化时隐藏']
 non_nt_hide_mode = ['无', '上课时自动隐藏']
+
+theme_folder = []
+theme_names = []
 
 subject = {
     '语文': '(255, 151, 135',  # 红
@@ -104,7 +108,6 @@ try:  # 加载课程/主题配置文件
     subject_abbreviation = subject_info['subject_abbreviation']
     theme_folder = [f for f in os.listdir(f'{base_directory}/ui/')
                     if os.path.isdir(os.path.join(f'{base_directory}/ui/', f))]
-    theme_names = []
 except Exception as e:
     logger.error(f'加载课程/主题配置文件发生错误，使用默认配置：{e}')
     write_conf('General', 'theme', 'default')
@@ -137,12 +140,18 @@ except Exception as e:
         '历史': '史'
     }
 
+not_exist_themes = []
+
 for folder in theme_folder:
     try:
         json_file = json.load(open(f'{base_directory}/ui/{folder}/theme.json', 'r', encoding='utf-8'))
         theme_names.append(json_file['name'])
     except Exception as e:
         logger.error(f'加载主题文件 theme.json {folder} 发生错误，跳过：{e}')
+        not_exist_themes.append(folder)
+
+for folder in not_exist_themes:
+    theme_folder.remove(folder)
 
 
 def get_widget_list():

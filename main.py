@@ -1133,10 +1133,15 @@ class DesktopWidget(QWidget):  # 主要小组件
                 or conf.read_conf('General', 'hide') == '1'):
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        if int(conf.read_conf('General', 'pin_on_top')):  # 置顶
+        if conf.read_conf('General', 'pin_on_top') == '1':  # 置顶
             self.setWindowFlags(
                 Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool |
                 Qt.WindowType.WindowDoesNotAcceptFocus | Qt.X11BypassWindowManagerHint  # 绕过窗口管理器以在全屏显示通知
+            )
+        elif conf.read_conf('General', 'pin_on_top') == '2':  # 置底
+            self.setWindowFlags(
+                Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnBottomHint | Qt.WindowType.Tool |
+                Qt.WindowType.WindowDoesNotAcceptFocus
             )
         else:
             self.setWindowFlags(
@@ -1315,10 +1320,12 @@ class DesktopWidget(QWidget):  # 主要小组件
         global weather_name, temperature
         if type(weather_data) is dict and hasattr(self, 'weather_icon'):
             logger.success('已获取天气数据')
-            weather_icon = self.findChild(QLabel, 'weather_icon')
             weather_name = db.get_weather_by_code(db.get_weather_data('icon', weather_data))
             current_city = self.findChild(QLabel, 'current_city')
             try:  # 天气组件
+                self.weather_icon.setPixmap(
+                    QPixmap(db.get_weather_icon_by_code(db.get_weather_data('icon', weather_data)))
+                )
                 self.temperature.setText(f"{db.get_weather_data('temp', weather_data)}")
                 current_city.setText(f"{db.search_by_num(conf.read_conf('Weather', 'city'))} · "
                                      f"{weather_name}")
