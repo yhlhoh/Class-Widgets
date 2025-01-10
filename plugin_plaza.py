@@ -577,7 +577,7 @@ class PluginPlaza(MSFluentWindow):
                 self.banner_view.setItemImage(index, pixmap)
             self.splashScreen.hide()
 
-        def get_banner(data):
+        def get_banner(data=dict):
             try:
                 if 'error' not in data:
                     self.banners_data = data
@@ -588,7 +588,8 @@ class PluginPlaza(MSFluentWindow):
                     banner_placeholders = ["img/plaza/banner_pre.png" for _ in range(len(data))]
                     self.banner_view.addImages(banner_placeholders)
                 else:
-                    self.findChild(BodyLabel, 'tips').setText(f'错误原因：{data[1]}')
+                    logger.error(f'PluginPlaza 无法联网，错误：{data["error"]}')
+                    self.findChild(BodyLabel, 'tips').setText(f'错误原因：{data["error"]}')
                     self.banner_view.addImage("img/plaza/banner_network-failed.png")
                     self.splashScreen.hide()
                     self.homeInterface.findChild(SubtitleLabel, 'SubtitleLabel_3').hide()  # 隐藏副标题
