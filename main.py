@@ -1435,6 +1435,8 @@ class DesktopWidget(QWidget):  # 主要小组件
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.RightButton:
             return  # 右键不执行
+        if conf.read_conf('General', 'pin_on_top') == '2':  # 置底
+            return  # 置底不执行
         if conf.read_conf('General', 'hide') != '2':  # 置顶
             if mgr.state:
                 mgr.decide_to_hide()
