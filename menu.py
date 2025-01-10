@@ -561,7 +561,7 @@ class SettingsMenu(FluentWindow):
         widgets_combo = self.findChild(ComboBox, 'widgets_combo')  # 组件选择
         widgets_combo.addItems(list.get_widget_names())
 
-        search_city_button = self.findChild(PushButton, 'select_city')
+        search_city_button = self.findChild(PushButton, 'select_city')  # 查找城市
         search_city_button.clicked.connect(self.show_search_city)
 
         add_widget_button = self.findChild(PrimaryPushButton, 'add_widget')
