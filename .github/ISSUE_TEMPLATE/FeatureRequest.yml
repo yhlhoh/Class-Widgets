@@ -14,7 +14,8 @@ body:
   - type: checkboxes
     id: checklist
     attributes:
-      label: 检查清单
+      value: |
+        ## 检查清单
       description: 在提出建议之前，请先确认以下所有事项：
       options:
         - label: |
@@ -30,7 +31,7 @@ body:
   - type: textarea
     id: back
     attributes:
-      label: | 
+      value: | 
         ## 背景与动机
       description: 添加此功能的理由。（可选）
     validations:
@@ -39,7 +40,7 @@ body:
   - type: textarea
     id: req
     attributes:
-      label: | 
+      value: | 
         ## 想要实现或优化的功能
       description: 详细地描述一下你想要的功能，描述的越具体，采纳的可能性越高；也可以提供图片等附件，以使开发者更好理解您的意图。
     validations:
@@ -47,7 +48,7 @@ body:
   - type: checkboxes
     id: revision
     attributes:
-      label: | 
+      value: | 
         ## 最后一步
       description: 回顾您的回答
       options:
