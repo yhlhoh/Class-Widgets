@@ -16,8 +16,7 @@ body:
   - type: checkboxes
     id: checklist
     attributes:
-      value: | 
-        ## 检查清单
+      label: 检查清单
       description: 在反馈此问题之前，请先确认一下事项是否满足：
       options:
          - label: | 
@@ -37,24 +36,21 @@ body:
   - type: textarea
     id: excepted
     attributes:
-      value: | 
-        ## 期望的行为
+      label: 期望的行为
       description: 详细的描述你期望发生的行为，突出与目前（可能不正确的）行为的不同。（选填）
     validations:
       required: false
   - type: textarea
     id: what-happened
     attributes:
-      value: |
-        ## 实际结果
+      label: 实际结果
       description: 实际发生的行为，尽量包含如截图、录屏、文本描述等信息，便于开发者追踪问题。
     validations:
       required: true
   - type: textarea
     id: reproduce-steps
     attributes:
-      value: | 
-        ## 重现步骤
+      label: 重现步骤
       description: |
         详细描述需要怎么操作才能再次触发这个 Bug，可包含如截图、录屏等附件。
       placeholder: |
@@ -66,8 +62,7 @@ body:
   - type: textarea
     id: stacktrace
     attributes:
-      value: | 
-        ## 堆栈跟踪
+      label: 堆栈跟踪
       description: 如果在遇到这个 Bug 时发生了崩溃（弹出崩溃提示），或者产生了错误日志，请将产生的堆栈跟踪信息粘贴到此处，便于开发者定位 Bug。（可选）
       render: shell
   - type: input
@@ -89,8 +84,7 @@ body:
   - type: checkboxes
     id: revision
     attributes:
-      value: | 
-        ## 最后一步
+      label: 最后一步
       description: 回顾您的回答
       options:
         - label: 我认为上述的描述已经足以详细，以允许开发人员能复现该问题。如果我的 issue 没有按照上述的要求填写，可能会被 **无条件关闭**。
