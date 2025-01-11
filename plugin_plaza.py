@@ -202,6 +202,7 @@ class PluginDetailPage(MessageBoxBase):  # 插件详情页面
         self.branch = data.get("branch")
         self.title = title
         self.parent = parent
+        self.url = url
         self.p_name = url.split('/')[-1]  # repo
         author_url = '/'.join(url.rsplit('/', 2)[:-1])
         self.init_ui()
@@ -561,6 +562,7 @@ class PluginPlaza(MSFluentWindow):
     def load_recommend_plugin(self, p_data):
         global plugins_data, search_items
         plugins_data = p_data  # 保存插件数据
+        print(plugins_data)
 
         for plugin in p_data.values():  # 遍历插件数据
             search_items.append(plugin['name'])
