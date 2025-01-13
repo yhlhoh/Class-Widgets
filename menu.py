@@ -660,7 +660,7 @@ class SettingsMenu(FluentWindow):
         window_status_combo.addItems(list.window_status)
         window_status_combo.setCurrentIndex(int(conf.read_conf('General', 'pin_on_top')))
         window_status_combo.currentIndexChanged.connect(
-            lambda: conf.write_conf('General', 'window_status', str(self.window_status_combo.currentIndex()))
+            lambda: conf.write_conf('General', 'pin_on_top', str(window_status_combo.currentIndex()))
         )  # 窗口状态
 
         switch_startup = self.adInterface.findChild(SwitchButton, 'switch_startup')
@@ -695,7 +695,7 @@ class SettingsMenu(FluentWindow):
 
         switch_enable_alt_schedule = self.adInterface.findChild(SwitchButton, 'switch_enable_alt_schedule')
         switch_enable_alt_schedule.setChecked(int(conf.read_conf('General', 'enable_alt_schedule')))
-        switch_enable_alt_schedule.checkedChanged.connect(self.switch_safe_mode)  # 单双周开关
+        switch_enable_alt_schedule.checkedChanged.connect(self.switch_safe_mode)  # 安全模式
 
         switch_enable_safe_mode = self.adInterface.findChild(SwitchButton, 'switch_safe_mode')
         switch_enable_safe_mode.setChecked(int(conf.read_conf('Other', 'safe_mode')))
