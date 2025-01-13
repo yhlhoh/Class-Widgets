@@ -832,7 +832,7 @@
                 </property>
                 <property name="text">
                  <string>更改小组件的窗口状态（重启后生效）
-*开启”置底“功能时，将会禁用”单击隐藏小组件“</string>
+*开启“置底”功能时，将会禁用“单击隐藏小组件”</string>
                 </property>
                 <property name="wordWrap">
                  <bool>false</bool>

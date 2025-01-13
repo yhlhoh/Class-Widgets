@@ -19,6 +19,14 @@ name = 'Class Widgets'
 
 PLUGINS_DIR = Path(base_directory) / 'plugins'
 
+# app 图标
+if os.name == 'nt':
+    app_icon = os.path.join(base_directory, 'img', 'favicon.ico')
+elif os.name == 'darwin':
+    app_icon = os.path.join(base_directory, 'img', 'favicon.icns')
+else:
+    app_icon = os.path.join(base_directory, 'img', 'favicon.png')
+
 
 def load_from_json(filename):
     """
