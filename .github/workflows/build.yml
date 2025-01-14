@@ -51,7 +51,7 @@ jobs:
             --add-data font:font `
             --add-data *.ui:. `
             --add-data LICENSE:. `
-            --add-data plugins:plugins
+            --add-data plugins:plugins `
             --hidden-import=plyer.platforms.win.notification
 
       - name: Run Linux build
@@ -73,7 +73,7 @@ jobs:
             --add-data font:font \
             --add-data *.ui:. \
             --add-data LICENSE:. \
-            --add-data plugins:plugins
+            --add-data plugins:plugins \
             --hidden-import=plyer.platforms.linux.notification
 
       - name: Run macOS build
@@ -95,7 +95,7 @@ jobs:
             --add-data font:font \
             --add-data *.ui:. \
             --add-data LICENSE:. \
-            --add-data plugins:plugins
+            --add-data plugins:plugins \
             --hidden-import=plyer.platforms.macosx.notification
 
       - name: Upload
