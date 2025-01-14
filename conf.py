@@ -355,6 +355,20 @@ def check_config():
                 write_conf('General', 'schedule', schedule_config[0])
         print(os.path.join(os.getcwd(), 'config', 'schedule'))
 
+    # 判断是否存在 Plugins 文件夹
+    plugins_dir = Path(base_directory) / 'plugins'
+    if not plugins_dir.exists():
+        plugins_dir.mkdir()
+        logger.info("Plugins 文件夹不存在，已创建。")
+
+    # 判断 Plugins 文件夹内是否存在 plugins_from_pp.json 文件
+    plugins_file = plugins_dir / 'plugins_from_pp.json'
+    if not plugins_file.exists():
+        with open(plugins_file, 'w', encoding='utf-8') as file:
+            # 使用 indent=4 来缩进，并确保数组元素在多行显示
+            json.dump({"plugins": []}, file, ensure_ascii=False, indent=4)
+        logger.info("plugins_from_pp.json 文件不存在，已创建。")
+
 
 check_config()
 
