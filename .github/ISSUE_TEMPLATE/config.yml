@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: 功能请求
-    url: https://github.com/RinLit-233-shiroko/Class-Widgets/discussions/categories/新功能
+    url: https://github.com/RinLit-233-shiroko/Class-Widgets/discussions/categories/Feature
     about: 提出一项新的功能。
   - name: 讨论区
     url: https://github.com/RinLit-233-shiroko/Class-Widgets/discussions/
