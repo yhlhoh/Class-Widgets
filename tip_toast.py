@@ -37,7 +37,7 @@ pygame.mixer.init()
 class tip_toast(QWidget):
     def __init__(self, pos, width, state=1, lesson_name=None, title=None, subtitle=None, content=None, icon=None):
         super().__init__()
-        uic.loadUi(f"{base_directory}/widget-toast-bar.ui", self)
+        uic.loadUi(f"{base_directory}/view/widget-toast-bar.ui", self)
 
         # 窗口位置
         if conf.read_conf('Toast', 'pin_on_top') == '1':

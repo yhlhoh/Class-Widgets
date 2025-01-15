@@ -49,7 +49,7 @@ jobs:
             --add-data img:img `
             --add-data ui:ui `
             --add-data font:font `
-            --add-data *.ui:. `
+            --add-data view:view `
             --add-data LICENSE:. `
             --add-data plugins:plugins `
             --hidden-import PyQt5.QtWebEngine `
@@ -72,7 +72,7 @@ jobs:
             --add-data img:img \
             --add-data ui:ui \
             --add-data font:font \
-            --add-data *.ui:. \
+            --add-data view:view \
             --add-data LICENSE:. \
             --add-data plugins:plugins \
             --hidden-import PyQt5.QtWebEngine \
@@ -95,7 +95,7 @@ jobs:
             --add-data img:img \
             --add-data ui:ui \
             --add-data font:font \
-            --add-data *.ui:. \
+            --add-data view:view \
             --add-data LICENSE:. \
             --add-data plugins:plugins \
             --hidden-import PyQt5.QtWebEngine \
@@ -131,19 +131,19 @@ jobs:
         run: |
           source ./venv/bin/activate
           pyinstaller main.py \
-          -w \
-          -n ClassWidgets \
-          --contents-directory . \
-          --add-data config:config \
-          --add-data audio:audio \
-          --add-data img:img \
-          --add-data ui:ui \
-          --add-data font:font \
-          --add-data *.ui:. \
-          --add-data LICENSE:. \
-          --add-data plugins:plugins \
-          --hidden-import PyQt5.QtWebEngine \
-          --hidden-import plyer.platforms.linux.notification
+            -w \
+            -n ClassWidgets \
+            --contents-directory . \
+            --add-data config:config \
+            --add-data audio:audio \
+            --add-data img:img \
+            --add-data ui:ui \
+            --add-data font:font \
+            --add-data *.ui:. \
+            --add-data LICENSE:. \
+            --add-data plugins:plugins \
+            --hidden-import PyQt5.QtWebEngine \
+            --hidden-import plyer.platforms.linux.notification
 
       - name: Upload
         uses: actions/upload-artifact@v4.4.2
