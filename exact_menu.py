@@ -6,11 +6,10 @@ from shutil import copy
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QScroller
+from PyQt5.QtWidgets import QApplication
 from loguru import logger
 from qfluentwidgets import FluentWindow, FluentIcon as fIcon, ComboBox, \
-    PrimaryPushButton, Flyout, FlyoutAnimationType, InfoBarIcon, ListWidget, LineEdit, ToolButton, HyperlinkButton, \
-    SmoothScroll, SmoothScrollArea
+    PrimaryPushButton, Flyout, FlyoutAnimationType, InfoBarIcon, ListWidget, LineEdit, ToolButton, HyperlinkButton
 
 import conf
 from conf import base_directory
@@ -57,8 +56,6 @@ class ExactMenu(FluentWindow):
         self.init_interface()
 
     def init_interface(self):
-        ex_scroll = self.findChild(SmoothScrollArea, 'ex_scroll')
-        QScroller.grabGesture(ex_scroll, QScroller.LeftMouseButtonGesture)
         select_temp_week = self.findChild(ComboBox, 'select_temp_week')  # 选择替换日期
         select_temp_week.addItems(list.week)
         select_temp_week.setCurrentIndex(current_week)
