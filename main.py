@@ -87,6 +87,7 @@ else:
 
 def restart():
     logger.debug('重启程序')
+    share.detach()  # 释放共享内存
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 
@@ -1578,8 +1579,16 @@ if __name__ == '__main__':
     scale_factor = float(conf.read_conf('General','scale'))
     os.environ['QT_SCALE_FACTOR'] = str(scale_factor)
     logger.info(f"当前缩放系数：{scale_factor * 100}%")
+
     if scale_factor > 1.8 or scale_factor < 1.0:
         logger.warning("当前缩放系数可能导致显示异常，建议使缩放系数在 100% 到 180% 之间")
+        msg_box = Dialog('缩放系数过大', f"当前缩放系数为 {scale_factor * 100}%，可能导致显示异常。\n建议将缩放系数设置为 100% 到 180% 之间。")
+        msg_box.yesButton.setText('好')
+        msg_box.cancelButton.hide()
+        msg_box.buttonLayout.insertStretch(0, 1)
+        msg_box.setFixedWidth(550)
+        msg_box.exec()
+
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     share = QSharedMemory('ClassWidgets')
