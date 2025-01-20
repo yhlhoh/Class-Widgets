@@ -604,8 +604,8 @@ class PluginMethod:  # 插件方法
             return False
 
     def send_notification(self, state=1, lesson_name='示例课程', title='通知示例', subtitle='副标题',
-                          content='这是一条通知示例', icon=None):  # 发送通知
-        notification.main(state, lesson_name, title, subtitle, content, icon)
+                          content='这是一条通知示例', icon=None, duration=2000):  # 发送通知
+        notification.main(state, lesson_name, title, subtitle, content, icon, duration)
 
     def subprocess_exec(self, title, action):  # 执行系统命令
         w = openProgressDialog(title, action)
@@ -1191,11 +1191,16 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         self.update_data('')
 
-    def update_widget_for_plugin(self, context=['title', 'desc']):
-        title = self.findChild(QLabel, 'title')
-        desc = self.findChild(QLabel, 'content')
-        title.setText(context[0])
-        desc.setText(context[1])
+    def update_widget_for_plugin(self, context=None):
+        if context is None:
+            context = ['title', 'desc']
+        try:
+            title = self.findChild(QLabel, 'title')
+            desc = self.findChild(QLabel, 'content')
+            title.setText(context[0])
+            desc.setText(context[1])
+        except Exception as e:
+            logger.error(f"更新插件小组件时出错：{e}")
 
     def init_ui(self, path):
         if conf.read_conf('General', 'color_mode') == '2':
