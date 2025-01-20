@@ -539,9 +539,15 @@ class PluginPlaza(MSFluentWindow):
         QScroller.grabGesture(home_scroll.viewport(), QScroller.LeftMouseButtonGesture)
 
     def open_banner_link(self):
+        if not hasattr(self, 'img_list'):
+            QDesktopServices.openUrl(QUrl(
+                'https://www.yuque.com/rinlit/class-widgets_help/ez4vv7tv8wikxc0s#Se2Bb'
+            ))
+            return False  # 没有图片
+
         if self.img_list[self.banner_view.currentIndex()] in self.banners_data:
             if not self.banners_data[self.img_list[self.banner_view.currentIndex()]]['link']:
-                return False # 无链接
+                return False  # 无链接
             QDesktopServices.openUrl(QUrl(
                 self.banners_data[self.img_list[self.banner_view.currentIndex()]]['link']
             ))
