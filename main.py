@@ -587,6 +587,7 @@ class PluginMethod:  # 插件方法
         for widget in mgr.widgets:
             if widget.path == widget_code:
                 return widget
+        return None
 
     def change_widget_content(self, widget_code, title, content):  # 修改小组件内容
         for widget in mgr.widgets:
@@ -665,6 +666,7 @@ class WidgetsManager:
 
     def init_widgets(self):  # 初始化小组件
         self.widgets_list = list.get_widget_config()
+        self.check_widgets_exist()
         self.spacing = conf.load_theme_config(theme)['spacing']
 
         self.get_start_pos()
@@ -675,6 +677,11 @@ class WidgetsManager:
             self.widgets.append(widget)
 
         self.create_widgets()
+
+    def check_widgets_exist(self):
+        for widget in self.widgets_list:
+            if widget not in list.widget_width.keys():
+                self.widgets_list.remove(widget)
 
     def get_widget_width(self, path):
         try:
