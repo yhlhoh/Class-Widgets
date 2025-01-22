@@ -1128,7 +1128,7 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         stylesheet = self.backgnd.styleSheet()  # 应用圆角
         updated_stylesheet = re.sub(r'border-radius:\d+px;', f'border-radius:{self.radius}px;', stylesheet)
-        self.setStyleSheet(updated_stylesheet)
+        self.backgnd.setStyleSheet(updated_stylesheet)
 
         if path == 'widget-time.ui':  # 日期显示
             self.date_text = self.findChild(QLabel, 'date_text')
