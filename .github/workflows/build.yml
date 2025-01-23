@@ -14,8 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86, x64]
-        os: [ubuntu-20.04, windows-latest, macos-13]
+        arch: [ x86, x64 ]
+        os: [ ubuntu-20.04, windows-latest, macos-13 ]
         exclude:
           - os: ubuntu-20.04
             arch: x86
@@ -32,11 +32,24 @@ jobs:
           architecture: ${{ matrix.arch }}
       - name: Setup uv
         uses: astral-sh/setup-uv@v4
+      - name: Setup upx (win32)
+        if: ${{ matrix.os == 'windows-latest' && matrix.arch == 'x86' }}
+        run: |
+          curl -o upx.zip -L https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win32.zip
+          tar -xvzf upx.zip
+          ren upx-4.2.4-win32 upx
+      - name: Setup upx (win64)
+        if: ${{ matrix.os == 'windows-latest' && matrix.arch == 'x64' }}
+        run: |
+          curl -o upx.zip -L https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win64.zip
+          tar -xvzf upx.zip
+          ren upx-4.2.4-win64 upx
       - name: Run Windows build
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           uv venv
           .venv\Scripts\activate
+          copy upx/upx.exe .venv/Scripts/
           uv pip install -r requirements.txt
           uv pip install pyinstaller
           pyinstaller main.py `
