@@ -113,18 +113,20 @@ jobs:
             --add-data plugins:plugins \
             --hidden-import PyQt5.QtWebEngine \
             --hidden-import=plyer.platforms.macosx.notification
+          mkdir bundle
+          mv dist/ClassWidgets.app bundle/Class\ Widgets.app
 
       - name: Upload
         uses: actions/upload-artifact@v4.4.2
         with:
           name: ${{ matrix.os }}-${{ matrix.arch }}
-          path: ./dist/ClassWidgets
+          path: ./dist
       - name: Upload macOS Bundle
         if: ${{ matrix.os == 'macos-13' }}
         uses: actions/upload-artifact@v4.4.2
         with:
           name: macos-13-bundle
-          path: ./dist/ClassWidgets.app
+          path: ./bundle
 
   self-hosted:
     runs-on: self-hosted
@@ -162,4 +164,4 @@ jobs:
         uses: actions/upload-artifact@v4.4.2
         with:
           name: debian10-x64
-          path: ./dist/ClassWidgets/
+          path: ./dist
