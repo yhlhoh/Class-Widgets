@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QProgressBar, QGraphi
 from loguru import logger
 from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Action, FluentIcon as fIcon, isDarkTheme, \
     Dialog, ProgressRing, PlainTextEdit, ImageLabel, PushButton, InfoBarIcon, Flyout, FlyoutAnimationType, CheckBox, \
-    PrimaryPushButton
+    PrimaryPushButton, SystemThemeListener
 
 import conf
 import list
@@ -512,24 +512,18 @@ class PluginLoader:  # 插件加载器
         self.plugins = []
 
     def load_plugins(self):
-        try:
-            for folder in Path(conf.PLUGINS_DIR).iterdir():
-                if folder.is_dir() and (folder / 'plugin.json').exists():
-                    if folder.name not in conf.load_plugin_config()['enabled_plugins']:
-                        continue
-                    relative_path = conf.PLUGINS_DIR.name
-                    module_name = f"{relative_path}.{folder.name}"
-                    try:
-                        module = importlib.import_module(module_name)
-                        if hasattr(module, 'Plugin'):
-                            plugin_class = getattr(module, "Plugin")  # 获取 Plugin 类
-                            # 实例化插件
-                            self.plugins.append(plugin_class(p_mgr.get_app_contexts(folder.name), p_mgr.method))
-                        logger.success(f"加载插件成功：{module_name}")
-                    except Exception as e:
-                        logger.error(f"加载插件失败：{e}")
-        except Exception as e:
-            logger.error(f"加载插件失败!：{e}")
+        for folder in Path(conf.PLUGINS_DIR).iterdir():
+            if folder.is_dir() and (folder / 'plugin.json').exists():
+                if folder.name not in conf.load_plugin_config()['enabled_plugins']:
+                    continue
+                relative_path = conf.PLUGINS_DIR.name
+                module_name = f"{relative_path}.{folder.name}"
+                module = importlib.import_module(module_name)
+                if hasattr(module, 'Plugin'):
+                    plugin_class = getattr(module, "Plugin")  # 获取 Plugin 类
+                    # 实例化插件
+                    self.plugins.append(plugin_class(p_mgr.get_app_contexts(folder.name), p_mgr.method))
+                logger.success(f"加载插件成功：{module_name}")
         return self.plugins
 
     def run_plugins(self):
@@ -1119,6 +1113,11 @@ class DesktopWidget(QWidget):  # 主要小组件
         self.init_font()
 
         if enable_tray:
+            # 创建主题监听器
+            self.themeListener = SystemThemeListener(self)
+            # 启动监听器
+            self.themeListener.start()
+            
             self.init_tray_menu()  # 初始化托盘菜单
 
         # 样式
@@ -1193,6 +1192,9 @@ class DesktopWidget(QWidget):  # 主要小组件
             self.resize(self.w, self.height())
 
         self.update_data('')
+
+    def _onThemeChangedFinished(self):
+        print('theme_changed')
 
     def update_widget_for_plugin(self, context=None):
         if context is None:

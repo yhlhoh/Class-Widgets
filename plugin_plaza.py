@@ -14,7 +14,7 @@ from qfluentwidgets import MSFluentWindow, FluentIcon as fIcon, NavigationItemPo
     InfoBar, InfoBarPosition, SplashScreen, MessageBoxBase, TransparentToolButton, BodyLabel, \
     PrimarySplitPushButton, RoundMenu, Action, PipsPager, TextBrowser, CardWidget, \
     IndeterminateProgressRing, ComboBox, ProgressBar, SmoothScrollArea, SearchLineEdit, HyperlinkButton, SubtitleLabel, \
-    MessageBox
+    MessageBox, SwitchButton
 
 import conf
 import list as l
@@ -176,7 +176,7 @@ def install_plugin(parent, p_name, data=dict):
     if p_name not in download_progress:  # 如果正在下载
         url = data.get("url")
         branch = data.get("branch")
-        title = data.get("title")
+        title = data.get("name")
 
         di = downloadProgressBar(
             url=f"{url}",
@@ -502,6 +502,13 @@ class PluginPlaza(MSFluentWindow):
         select_mirror.setCurrentIndex(nt.mirror_list.index(conf.read_conf('Plugin', 'mirror')))
         select_mirror.currentIndexChanged.connect(
             lambda: conf.write_conf('Plugin', 'mirror', select_mirror.currentText()))
+
+        # 开关自动启用插件
+        auto_enable_plugin = self.settingsInterface.findChild(SwitchButton, 'auto_enable_plugin')
+        auto_enable_plugin.setChecked(int(conf.read_conf('Plugin', 'auto_enable_plugin')))
+        auto_enable_plugin.checkedChanged.connect(
+            lambda: conf.write_conf('Plugin', 'auto_enable_plugin', int(auto_enable_plugin.isChecked()))
+        )
 
     def setup_homeInterface(self):  # 初始化首页
         # 标题和副标题

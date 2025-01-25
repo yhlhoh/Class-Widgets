@@ -36,7 +36,8 @@
   "Plugin": {
     "version": 1,
     "mirror": "gh_proxy",
-    "auto_delay": 5
+    "auto_delay": 5,
+    "auto_enable_plugin": 1
   },
   "Date": {
     "start_date": "",

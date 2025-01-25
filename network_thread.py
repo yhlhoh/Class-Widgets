@@ -20,7 +20,6 @@ proxies = {"http": None, "https": None}
 MIRROR_PATH = f"{base_directory}/config/mirror.json"
 PLAZA_REPO_URL = "https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/"
 PLAZA_REPO_DIR = "https://api.github.com/repos/Class-Widgets/plugin-plaza/contents/"
-
 threads = []
 
 # 读取镜像配置
@@ -265,10 +264,12 @@ class DownloadAndExtract(QThread):  # 下载并解压插件
         print(self.download_url)
         self.cache_dir = "cache"
         self.plugin_name = plugin_name
-        self.extract_dir = f'Plugins'
+        self.extract_dir = conf.PLUGINS_DIR  # 插件目录
 
     def run(self):
         try:
+            enabled_plugins = conf.load_plugin_config()  # 加载启用的插件
+
             os.makedirs(self.cache_dir, exist_ok=True)
             os.makedirs(self.extract_dir, exist_ok=True)
 
@@ -279,6 +280,13 @@ class DownloadAndExtract(QThread):  # 下载并解压插件
             self.status_signal.emit("EXATRACTING")
             self.extract_zip(zip_path)
             os.remove(zip_path)
+            print(enabled_plugins)
+
+            if self.plugin_name not in enabled_plugins['enabled_plugins'] and conf.read_conf('Plugin', 'auto_enable_plugin') == '1':
+                logger.info(f"自动启用插件: {self.plugin_name}")
+                enabled_plugins['enabled_plugins'].append(self.plugin_name)
+                conf.save_plugin_config(enabled_plugins)
+
             self.status_signal.emit("DONE")
         except Exception as e:
             self.status_signal.emit(f"错误: {e}")
