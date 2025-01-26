@@ -224,6 +224,12 @@ def get_current_lessons():  # 获取当前课程
 
 # 获取倒计时、弹窗提示
 def get_countdown(toast=False):  # 重构好累aaaa
+    def after_school():  # 放学
+        if parts_type[part] == 'break':  # 休息段
+            notification.push_notification(0, current_lesson_name)  # 下课
+        else:
+            notification.push_notification(2)  # 放学
+
     current_dt = dt.datetime.combine(today, dt.datetime.strptime(current_time, '%H:%M:%S').time())  # 当前时间
     return_text = []
     got_return_data = False
@@ -242,7 +248,7 @@ def get_countdown(toast=False):  # 重构好累aaaa
                             if next_lessons:  # 下课/放学
                                 notification.push_notification(0, next_lessons[0])  # 下课
                             else:
-                                notification.push_notification(2)  # 放学
+                                after_school()
 
                     if current_dt == c_time - dt.timedelta(minutes=int(conf.read_conf('Toast', 'prepare_minutes'))):
                         if conf.read_conf('Toast', 'prepare_minutes') != '0' and toast and item_name.startswith('a'):
@@ -252,10 +258,7 @@ def get_countdown(toast=False):  # 重构好累aaaa
                     # 放学
                     if (c_time + dt.timedelta(minutes=int(item_time)) == current_dt and not next_lessons and
                             not current_state and toast):
-                        if parts_type[part] == 'break':  # 休息段
-                            notification.push_notification(0, current_lesson_name)  # 下课
-                        else:
-                            notification.push_notification(2)  # 放学
+                        after_school()
 
                     add_time = int(item_time)
                     c_time += dt.timedelta(minutes=add_time)
