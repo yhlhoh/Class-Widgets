@@ -27,6 +27,7 @@ from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Actio
 import conf
 import list
 import tip_toast
+import utils
 import weather_db as db
 from conf import base_directory
 from exact_menu import ExactMenu, open_settings
@@ -1092,6 +1093,8 @@ class FloatingWidget(QWidget):  # 浮窗
 class DesktopWidget(QWidget):  # 主要小组件
     def __init__(self, parent=WidgetsManager, path='widget-time.ui', enable_tray=False):
         super().__init__()
+        self.tray_menu = None
+
         self.last_widgets = list.get_widget_config()
         self.path = path
 
@@ -1282,8 +1285,7 @@ class DesktopWidget(QWidget):  # 主要小组件
                 """)
 
     def init_tray_menu(self):
-        self.tray_icon = QSystemTrayIcon(QIcon(f"{base_directory}/img/logo/favicon.png"), self)
-
+        utils.tray_icon = utils.TrayIcon(self)
         self.tray_menu = SystemTrayMenu(title='Class Widgets', parent=self)
         self.tray_menu.addActions([
             Action(fIcon.HIDE, '完全隐藏/显示小组件', triggered=lambda: self.hide_show_widgets()),
@@ -1298,11 +1300,10 @@ class DesktopWidget(QWidget):  # 主要小组件
         self.tray_menu.addSeparator()
         self.tray_menu.addAction(Action(fIcon.SYNC, '重新启动', triggered=restart))
         self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=lambda: sys.exit()))
-        self.tray_icon.setContextMenu(self.tray_menu)
+        utils.tray_icon.setContextMenu(self.tray_menu)
 
-        self.tray_icon.activated.connect(self.on_tray_icon_clicked)
-        # 显示托盘图标
-        self.tray_icon.show()
+        utils.tray_icon.activated.connect(self.on_tray_icon_clicked)
+        utils.tray_icon.show()
 
     def on_tray_icon_clicked(self, reason):  # 点击托盘图标隐藏
         if reason == QSystemTrayIcon.ActivationReason.Trigger:

@@ -8,9 +8,9 @@ from datetime import datetime
 import requests
 from PyQt5.QtCore import QThread, pyqtSignal
 from loguru import logger
-from plyer import notification
 
 import conf
+import utils
 from conf import base_directory
 
 headers = {"User-Agent": "Mozilla/5.0", "Cache-Control": "no-cache"}  # 设置请求头
@@ -352,12 +352,9 @@ def check_version(version):  # 检查更新
         thread.terminate()
     threads = []
     if 'error' in version:
-        notification.notify(
-            title="检查更新失败！",
-            message=f"检查更新失败！\n{version['error']}",
-            app_name="Class Widgets",
-            app_icon=conf.app_icon,
-            timeout=25  # 通知显示时间（秒）
+        utils.tray_icon.push_error_notification(
+            "检查更新失败！",
+            f"检查更新失败！\n{version['error']}"
         )
         return False
 
@@ -365,20 +362,4 @@ def check_version(version):  # 检查更新
     new_version = version['version_release' if channel == 0 else 'version_beta']
 
     if new_version != conf.read_conf("Other", "version"):
-        notification.notify(
-            title="发现 Class Widgets 新版本！",
-            message=f"新版本速递：{new_version}\n请在“设置”中了解更多。",
-            app_name="Class Widgets",
-            app_icon=conf.app_icon,
-            timeout=10  # 通知显示时间（秒）
-        )
-
-
-if __name__ == '__main__':
-    # version_thread = VersionThread()
-    # version_thread.version_signal.connect(lambda data: print(data))
-    # version_thread.start()
-    img_thread = getImg('https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Banner/banner_1.png')
-    img_thread.repo_signal.connect(lambda data: print(data))
-    img_thread.start()
-    time.sleep(2222)
+        utils.tray_icon.push_update_notification(f"新版本速递：{new_version}\n请在“设置”中了解更多。")
