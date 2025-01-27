@@ -1119,7 +1119,7 @@ class SettingsMenu(FluentWindow):
             self.version.setText(f'当前版本：{conf.read_conf("Other", "version")}\n最新版本：{new_version}')
 
             if new_version != conf.read_conf("Other", "version"):
-                utils.tray_icon.push_update_notification(f"新版本速递：{new_version}\n请在“设置”中了解更多。")
+                utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
 
     def cf_import_schedule(self):  # 导入课程表
         file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "Json 配置文件 (*.json)")
