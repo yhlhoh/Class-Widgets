@@ -73,7 +73,7 @@ Copyright © 2025 RinLit.
 - [PyQt5](https://www.riverbankcomputing.com/static/Docs/PyQt5/)
 - [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
 - [Loguru](https://github.com/Delgan/loguru)
-- [Request](https://github.com/psf/requests)
+- [Requests](https://github.com/psf/requests)
 
 ### 资源
 
