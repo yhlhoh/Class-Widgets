@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+import platform
 import traceback
 from pathlib import Path
 from shutil import copy
@@ -927,13 +928,6 @@ class FloatingWidget(QWidget):  # 浮窗
         timer.start(1000)
 
     def init_ui(self):
-        if conf.read_conf('General', 'color_mode') == '2':
-            setTheme(Theme.AUTO)
-        elif conf.read_conf('General', 'color_mode') == '1':
-            setTheme(Theme.DARK)
-        else:
-            setTheme(Theme.LIGHT)
-
         if os.path.exists(f'{base_directory}/ui/{theme}/widget-floating.ui'):
             if isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']:
                 uic.loadUi(f'{base_directory}/ui/{theme}/dark/widget-floating.ui', self)
@@ -1213,13 +1207,21 @@ class DesktopWidget(QWidget):  # 主要小组件
         except Exception as e:
             logger.error(f"更新插件小组件时出错：{e}")
 
-    def init_ui(self, path):
+    def setTheme(self):
         if conf.read_conf('General', 'color_mode') == '2':
+            if platform.system() == 'Darwin' and platform.version() < '10.14':
+                return
+            if platform.system() == 'Windows' and platform.release() < '10':
+                return
+            
             setTheme(Theme.AUTO)
         elif conf.read_conf('General', 'color_mode') == '1':
             setTheme(Theme.DARK)
         else:
             setTheme(Theme.LIGHT)
+
+    def init_ui(self, path):
+        self.setTheme()
 
         if conf.load_theme_config(theme)['support_dark_mode']:
             if os.path.exists(f'{base_directory}/ui/{theme}/{path}'):
@@ -1669,6 +1671,7 @@ if __name__ == '__main__':
     share = QSharedMemory('ClassWidgets')
     share.create(1)  # 创建共享内存
     logger.info(f"共享内存：{share.isAttached()} 是否允许多开实例：{conf.read_conf('Other', 'multiple_programs')}")
+    logger.info(f"操作系统：{platform.system()}，版本：{platform.version()}/{platform.release()}")
 
     if share.attach() and conf.read_conf('Other', 'multiple_programs') != '1':
         msg_box = Dialog('Class Widgets 正在运行', 'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
