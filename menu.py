@@ -14,7 +14,6 @@ from PyQt5.QtGui import QIcon, QDesktopServices, QColor
 from PyQt5.QtWidgets import QApplication, QHeaderView, QTableWidgetItem, QLabel, QHBoxLayout, QSizePolicy, \
     QSpacerItem, QFileDialog, QVBoxLayout, QScroller
 from loguru import logger
-from plyer import notification
 from qfluentwidgets import (
     Theme, setTheme, FluentWindow, FluentIcon as fIcon, ToolButton, ListWidget, ComboBox, CaptionLabel,
     SpinBox, LineEdit, PrimaryPushButton, TableWidget, Flyout, InfoBarIcon,
@@ -29,6 +28,7 @@ from qframelesswindow.webengine import FramelessWebEngineView
 import conf
 import list
 import tip_toast
+import utils
 import weather_db
 import weather_db as wd
 from conf import base_directory
@@ -1105,12 +1105,9 @@ class SettingsMenu(FluentWindow):
         if 'error' in version:
             self.version.setText(f'当前版本：{conf.read_conf("Other", "version")}\n{version["error"]}')
 
-            notification.notify(
-                title="检查更新失败！",
-                message=f"检查更新失败！\n{version['error']}",
-                app_name="Class Widgets",
-                app_icon=conf.app_icon,
-                timeout=10  # 通知显示时间（秒）
+            utils.tray_icon.push_error_notification(
+                "检查更新失败！",
+                f"检查更新失败！\n{version['error']}"
             )
             return False
         channel = int(conf.read_conf("Other", "version_channel"))
@@ -1121,13 +1118,8 @@ class SettingsMenu(FluentWindow):
         else:
             self.version.setText(f'当前版本：{conf.read_conf("Other", "version")}\n最新版本：{new_version}')
 
-            notification.notify(
-                title="发现 Class Widgets 新版本！",
-                message=f"新版本速递：{new_version}",
-                app_name="Class Widgets",
-                app_icon=conf.app_icon,
-                timeout=10  # 通知显示时间（秒）
-            )
+            if new_version != conf.read_conf("Other", "version"):
+                utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
 
     def cf_import_schedule(self):  # 导入课程表
         file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "Json 配置文件 (*.json)")
