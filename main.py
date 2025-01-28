@@ -1666,7 +1666,7 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    share = utils.share
+    share = QSharedMemory('ClassWidgets')
     share.create(1)  # 创建共享内存
     logger.info(f"共享内存：{share.isAttached()} 是否允许多开实例：{conf.read_conf('Other', 'multiple_programs')}")
 
