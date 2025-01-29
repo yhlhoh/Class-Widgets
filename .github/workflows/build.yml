@@ -36,7 +36,7 @@ jobs:
       #   if: ${{ matrix.os == 'windows-latest' && matrix.arch == 'x86' }}
       #   run: |
       #     curl -o upx.zip -L https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win32.zip
-          tar -xvzf upx.zip
+      #     tar -xvzf upx.zip
       #     ren upx-4.2.4-win32 upx
       # - name: Setup upx (win64)
       #   if: ${{ matrix.os == 'windows-latest' && matrix.arch == 'x64' }}
@@ -49,7 +49,6 @@ jobs:
         run: |
           uv venv
           .venv\Scripts\activate
-          # copy upx/upx.exe .venv/Scripts/
           uv pip install -r requirements.txt
           uv pip install pyinstaller
           pyinstaller main.py `
