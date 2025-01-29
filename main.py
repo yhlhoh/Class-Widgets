@@ -115,6 +115,20 @@ def global_exceptHook(exc_type, exc_value, exc_tb):  # 全局异常捕获
 sys.excepthook = global_exceptHook  # 设置全局异常捕获
 
 
+def setTheme_():
+    if conf.read_conf('General', 'color_mode') == '2':
+        if platform.system() == 'Darwin' and platform.version() < '10.14':
+            return
+        if platform.system() == 'Windows' and platform.release() < '10':
+            return
+
+        setTheme(Theme.AUTO)
+    elif conf.read_conf('General', 'color_mode') == '1':
+        setTheme(Theme.DARK)
+    else:
+        setTheme(Theme.LIGHT)
+
+
 def get_timeline_data():
     if len(loaded_data['timeline']) == 1:
         return loaded_data['timeline']['default']
@@ -928,6 +942,7 @@ class FloatingWidget(QWidget):  # 浮窗
         timer.start(1000)
 
     def init_ui(self):
+        setTheme_()
         if os.path.exists(f'{base_directory}/ui/{theme}/widget-floating.ui'):
             if isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']:
                 uic.loadUi(f'{base_directory}/ui/{theme}/dark/widget-floating.ui', self)
@@ -1214,22 +1229,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         except Exception as e:
             logger.error(f"更新插件小组件时出错：{e}")
 
-    def setTheme(self):
-        if conf.read_conf('General', 'color_mode') == '2':
-            if platform.system() == 'Darwin' and platform.version() < '10.14':
-                return
-            if platform.system() == 'Windows' and platform.release() < '10':
-                return
-            
-            setTheme(Theme.AUTO)
-        elif conf.read_conf('General', 'color_mode') == '1':
-            setTheme(Theme.DARK)
-        else:
-            setTheme(Theme.LIGHT)
-
     def init_ui(self, path):
-        self.setTheme()
-
         if conf.load_theme_config(theme)['support_dark_mode']:
             if os.path.exists(f'{base_directory}/ui/{theme}/{path}'):
                 if isDarkTheme():
@@ -1492,7 +1492,7 @@ class DesktopWidget(QWidget):  # 主要小组件
     def clear_animation(self):  # 清除动画
         self.animation = None
 
-    def animate_window(self, target_pos):  # 窗口动画！
+    def animate_window(self, target_pos):  # **初次**启动动画
         # 创建位置动画
         self.animation = QPropertyAnimation(self, b"geometry")
         self.animation.setDuration(525)  # 持续时间
@@ -1522,7 +1522,7 @@ class DesktopWidget(QWidget):  # 主要小组件
             self.animation.setEndValue(QRect(self.x(), 0, self.width(), self.height()))
             self.animation.finished.connect(lambda: self.hide())
 
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutCirc)  # 设置动画效果
+        self.animation.setEasingCurve(QEasingCurve.Type.OutExpo)  # 设置动画效果
         self.animation.start()
         self.animation.finished.connect(self.clear_animation)
 
