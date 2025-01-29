@@ -169,12 +169,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
-      - name: Setup Python
-        uses: actions/setup-python@v5.3.0
-        with:
-          python-version: '3.8.10'
-      - name: Setup uv
+      - name: Setup uv & python
         uses: astral-sh/setup-uv@v4
+        with:
+          python-version: 3.8.10
       - name: Run Linux (Debian 10) build
         run: |
           uv venv
