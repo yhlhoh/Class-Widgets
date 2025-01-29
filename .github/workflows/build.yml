@@ -115,17 +115,52 @@ jobs:
           mkdir bundle
           mv dist/Class\ Widgets.app bundle/Class\ Widgets.app
 
-      - name: Upload
+      - name: Upload unsigned application
         uses: actions/upload-artifact@v4.4.2
         with:
-          name: ${{ matrix.os }}-${{ matrix.arch }}
+          name: ${{ matrix.os }}-${{ matrix.arch }} (Unsigned)
           path: ./dist
+      - name: Upload unsigned single file
+        if: ${{ matrix.os == 'windows-latest' }}
+        id: upload-unsigned-artifact
+        uses: actions/upload-artifact@v4.4.2
+        with:
+          name: windows-${{ matrix.arch }} (Unsigned single)
+          path: ./dist/ClassWidgets/ClassWidgets.exe
       - name: Upload macOS Bundle
         if: ${{ matrix.os == 'macos-13' }}
         uses: actions/upload-artifact@v4.4.2
         with:
           name: macos-13-bundle
           path: ./bundle
+      - name: Sign application (Test)
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: signpath/github-action-submit-signing-request@v1.1
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '2e13633d-4e7d-4462-9091-27536751c84c'
+          project-slug: 'Class-Widgets.git'
+          signing-policy-slug: 'test-signing'
+          github-artifact-id: '${{ steps.upload-unsigned-artifact.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: './dist/ClassWidgets'
+      - name: Sign application (Release)
+        if: ${{ matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/') }}
+        uses: signpath/github-action-submit-signing-request@v1.1
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '2e13633d-4e7d-4462-9091-27536751c84c'
+          project-slug: 'Class-Widgets.git'
+          signing-policy-slug: 'release-signing'
+          github-artifact-id: '${{ steps.upload-unsigned-artifact.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: './dist/ClassWidgets'
+      - name: Upload signed application
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: actions/upload-artifact@v4.4.2
+        with:
+          name: windows-${{ matrix.arch }} (Signed)
+          path: ./dist
 
   self-hosted:
     runs-on: self-hosted
