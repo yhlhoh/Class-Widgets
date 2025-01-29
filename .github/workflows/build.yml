@@ -162,23 +162,25 @@ jobs:
           name: windows-${{ matrix.arch }} (Signed)
           path: ./dist
 
-  self-hosted:
-    runs-on: self-hosted
-
+  debian:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
-
-      - name: Set up python
-        run: |
-          /home/actions/.pyenv/versions/3.8.10/bin/python -m venv venv
-          source ./venv/bin/activate
-          pip install -r requirements.linux.txt
-          pip install pyinstaller
-
+      - name: Setup Python
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: '3.8.10'
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
       - name: Run Linux (Debian 10) build
         run: |
-          source ./venv/bin/activate
+          uv venv
+          source .venv/bin/activate
+          uv pip install -r  requirements.linux.txt
+          uv pip install pyinstaller
           pyinstaller main.py \
             -w \
             -n ClassWidgets \
