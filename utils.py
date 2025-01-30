@@ -2,7 +2,7 @@ import os
 import sys
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QSystemTrayIcon
+from PyQt5.QtWidgets import QSystemTrayIcon, QApplication
 from loguru import logger
 from PyQt5.QtCore import QSharedMemory
 
@@ -15,6 +15,17 @@ def restart():
     logger.debug('重启程序')
     share.detach()  # 释放共享内存
     os.execl(sys.executable, sys.executable, *sys.argv)
+
+
+def calculate_size(p_w=0.6, p_h=0.7):  # 计算尺寸
+    screen_geometry = QApplication.primaryScreen().geometry()
+    screen_width = screen_geometry.width()
+    screen_height = screen_geometry.height()
+
+    width = int(screen_width * p_w)
+    height = int(screen_height * p_h)
+
+    return (width, height), (int(screen_width / 2 - width / 2), 150)
 
 
 tray_icon = None
@@ -35,10 +46,10 @@ class TrayIcon(QSystemTrayIcon):
         )
 
     def push_error_notification(self, title='检查更新失败！', text=''):
-        self.setIcon(QIcon(f"{base_directory}/img/logo/favicon-error.png"))  # tray
+        self.setIcon(QIcon(f"{base_directory}/img/logo/favicon-error.ico"))  # tray
         self.showMessage(
             title,
             text,
-            QIcon(f"{base_directory}/img/logo/favicon-error.png"),
+            QIcon(f"{base_directory}/img/logo/favicon-error.ico"),
             5000
         )
