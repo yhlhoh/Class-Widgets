@@ -143,7 +143,7 @@ def load_schedule_dict(schedule, part, part_name):
                     prefix = item[int(item_name[-1]) - 1 + count_num]
                     period = part_name[str(item_name[1])]
                     all_class.append(f'{prefix}-{period}')
-                except ValueError:  # 未设置值
+                except IndexError or ValueError:  # 未设置值
                     prefix = '未添加'
                     period = part_name[str(item_name[1])]
                     all_class.append(f'{prefix}-{period}')
@@ -795,7 +795,7 @@ class SettingsMenu(FluentWindow):
         switch_enable_multiple_programs.setChecked(int(conf.read_conf('Other', 'multiple_programs')))
         switch_enable_multiple_programs.checkedChanged.connect(
             lambda checked: switch_checked('Other', 'multiple_programs', checked)
-        )  # 多开
+        )  # 多开程序
 
         switch_disable_log = self.adInterface.findChild(SwitchButton, 'switch_disable_log')
         switch_disable_log.setChecked(int(conf.read_conf('Other', 'do_not_log')))
