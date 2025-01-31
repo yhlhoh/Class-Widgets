@@ -115,11 +115,11 @@ def global_exceptHook(exc_type, exc_value, exc_tb):  # 全局异常捕获
 sys.excepthook = global_exceptHook  # 设置全局异常捕获
 
 
-def setTheme_():
-    if conf.read_conf('General', 'color_mode') == '2':
-        if platform.system() == 'Darwin' and platform.version() < '10.14':
+def setTheme_():  # 设置主题
+    if conf.read_conf('General', 'color_mode') == '2':  # 自动
+        if platform.system() == 'Darwin' and float(platform.version()) < 10.14:
             return
-        if platform.system() == 'Windows' and platform.release() < '10':
+        if platform.system() == 'Windows' and platform.release() != '10':
             return
 
         setTheme(Theme.AUTO)
@@ -1447,7 +1447,7 @@ class DesktopWidget(QWidget):  # 主要小组件
             current_city = self.findChild(QLabel, 'current_city')
             try:  # 天气组件
                 self.weather_icon.setPixmap(
-                    QPixmap(db.get_weather_icon_by_code(db.get_weather_data('icon', weather_data)))
+                    QPixmap(db.get_weather_icon_by_code('18'))
                 )
                 self.temperature.setText(f"{db.get_weather_data('temp', weather_data)}")
                 current_city.setText(f"{db.search_by_num(conf.read_conf('Weather', 'city'))} · "
