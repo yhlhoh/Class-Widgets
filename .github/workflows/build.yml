@@ -113,13 +113,13 @@ jobs:
           mv dist/Class\ Widgets.app bundle/Class\ Widgets.app
 
       - name: Upload unsigned application
-        if: ${{ matrix.os != 'windows-latest' }}
+        if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4.4.2
         with:
           name: ${{ matrix.os }}-${{ matrix.arch }}
           path: ./dist
       - name: Upload unsigned single file
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
         id: upload-unsigned-artifact
         uses: actions/upload-artifact@v4.4.2
         with:
@@ -132,7 +132,7 @@ jobs:
           name: macos-13-bundle
           path: ./bundle
       - name: Sign application (Test)
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
         uses: signpath/github-action-submit-signing-request@v1.1
         with:
           api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
@@ -154,7 +154,7 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: './dist/ClassWidgets'
       - name: Upload signed application
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4.4.2
         with:
           name: windows-latest-${{ matrix.arch }}
