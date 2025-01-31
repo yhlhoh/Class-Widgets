@@ -9,7 +9,7 @@ from pathlib import Path
 from shutil import rmtree
 
 from PyQt5 import uic, QtCore
-from PyQt5.QtCore import Qt, QTime, QUrl, QDate
+from PyQt5.QtCore import Qt, QTime, QUrl, QDate, pyqtSignal
 from PyQt5.QtGui import QIcon, QDesktopServices, QColor
 from PyQt5.QtWidgets import QApplication, QHeaderView, QTableWidgetItem, QLabel, QHBoxLayout, QSizePolicy, \
     QSpacerItem, QFileDialog, QVBoxLayout, QScroller
@@ -23,7 +23,6 @@ from qfluentwidgets import (
     PrimaryDropDownPushButton, Action, RoundMenu, CardWidget, ImageLabel, StrongBodyLabel,
     TransparentDropDownToolButton, Dialog, SmoothScrollArea, TransparentToolButton
 )
-from qframelesswindow.webengine import FramelessWebEngineView
 
 import conf
 import list
@@ -67,6 +66,7 @@ def open_plaza():
     if plugin_plaza is None or not plugin_plaza.isVisible():
         plugin_plaza = PluginPlaza()
         plugin_plaza.show()
+        plugin_plaza.closed.connect(cleanup_plaza)
         logger.info('打开“插件广场”')
     else:
         plugin_plaza.raise_()
@@ -75,8 +75,9 @@ def open_plaza():
 
 def cleanup_plaza():
     global plugin_plaza
-    plugin_plaza = None
+    logger.info('关闭“插件广场”')
     del plugin_plaza
+    plugin_plaza = None
 
 
 def get_timeline():
@@ -101,15 +102,93 @@ def open_dir(path: str):
         msg_box.exec()
 
 
+def switch_checked(section, key, checked):
+    if checked:
+        conf.write_conf(section, key, '1')
+    else:
+        conf.write_conf(section, key, '0')
+
+
+def get_theme_name():
+    theme = conf.read_conf('General', 'theme')
+    if os.path.exists(f'{base_directory}/ui/{theme}/theme.json'):
+        return theme
+    else:
+        return 'default'
+
+
+def load_schedule_dict(schedule, part, part_name):
+    """
+    加载课表字典
+    """
+    schedule_dict_ = {}
+    for week, item in schedule.items():
+        all_class = []
+        count = []  # 初始化计数器
+        for i in range(len(part)):
+            count.append(0)
+        if str(week) in loaded_data['timeline'] and loaded_data['timeline'][str(week)]:
+            timeline = get_timeline()[str(week)]
+        else:
+            timeline = get_timeline()['default']
+
+        for item_name, item_time in timeline.items():
+            if item_name.startswith('a'):
+                try:
+                    if int(item_name[1]) == 0:
+                        count_num = 0
+                    else:
+                        count_num = sum(count[:int(item_name[1])])
+
+                    prefix = item[int(item_name[-1]) - 1 + count_num]
+                    period = part_name[str(item_name[1])]
+                    all_class.append(f'{prefix}-{period}')
+                except ValueError:  # 未设置值
+                    prefix = '未添加'
+                    period = part_name[str(item_name[1])]
+                    all_class.append(f'{prefix}-{period}')
+                count[int(item_name[1])] += 1
+        schedule_dict_[week] = all_class
+    return schedule_dict_
+
+
+def convert_to_dict(data_dict_):
+    data_dict = {}
+    for week, item in data_dict_.items():
+        cache_list = item
+        replace_list = []
+        for activity_num in range(len(cache_list)):
+            item_info = cache_list[int(activity_num)].split('-')
+            replace_list.append(item_info[0])
+        data_dict[str(week)] = replace_list
+    return data_dict
+
+
+def se_load_item():
+    global schedule_dict
+    global schedule_even_dict
+    global loaded_data
+    loaded_data = conf.load_from_json(filename)
+    part_name = loaded_data.get('part_name')
+    part = loaded_data.get('part')
+    schedule = loaded_data.get('schedule')
+    schedule_even = loaded_data.get('schedule_even')
+
+    schedule_dict = load_schedule_dict(schedule, part, part_name)
+    schedule_even_dict = load_schedule_dict(schedule_even, part, part_name)
+
+
 class selectCity(MessageBoxBase):  # 选择城市
     def __init__(self, parent=None):
         super().__init__(parent)
-        title_label = SubtitleLabel('搜索城市')
-        subtitle_label = BodyLabel('请输入当地城市名进行搜索')
+        title_label = SubtitleLabel()
+        subtitle_label = BodyLabel()
+        self.search_edit = SearchLineEdit()
+
+        title_label.setText('搜索城市')
+        subtitle_label.setText('请输入当地城市名进行搜索')
         self.yesButton.setText('选择此城市')  # 按钮组件汉化
         self.cancelButton.setText('取消')
-
-        self.search_edit = SearchLineEdit()
 
         self.search_edit.setPlaceholderText('输入城市名')
         self.search_edit.setClearButtonEnabled(True)
@@ -147,13 +226,15 @@ class selectCity(MessageBoxBase):  # 选择城市
 class licenseDialog(MessageBoxBase):  # 显示软件许可协议
     def __init__(self, parent=None):
         super().__init__(parent)
-        title_label = SubtitleLabel('软件许可协议')
-        subtitle_label = BodyLabel('此项目 (Class Widgets) 基于 GPL-3.0 许可证授权发布，详情请参阅：')
+        title_label = SubtitleLabel()
+        subtitle_label = BodyLabel()
+        self.license_text = PlainTextEdit()
+
+        title_label.setText('软件许可协议')
+        subtitle_label.setText('此项目 (Class Widgets) 基于 GPL-3.0 许可证授权发布，详情请参阅：')
         self.yesButton.setText('好')  # 按钮组件汉化
         self.cancelButton.hide()
         self.buttonLayout.insertStretch(0, 1)
-
-        self.license_text = PlainTextEdit()
         self.license_text.setPlainText(open('LICENSE', 'r', encoding='utf-8').read())
         self.license_text.setReadOnly(True)
 
@@ -168,6 +249,7 @@ class licenseDialog(MessageBoxBase):  # 显示软件许可协议
 class PluginSettingsDialog(MessageBoxBase):  # 插件设置对话框
     def __init__(self, plugin_dir=None, parent=None):
         super().__init__(parent)
+        self.plugin_widget = None
         self.plugin_dir = plugin_dir
         self.parent = parent
         self.init_ui()
@@ -188,7 +270,7 @@ class PluginSettingsDialog(MessageBoxBase):  # 插件设置对话框
 class PluginCard(CardWidget):  # 插件卡片
     def __init__(
             self, icon, title='Unknown', content='Unknown', version='1.0.0', plugin_dir='', author=None, parent=None,
-            settings=None
+            enable_settings=None
     ):
         super().__init__(parent)
         icon_radius = 5
@@ -220,7 +302,7 @@ class PluginCard(CardWidget):  # 插件卡片
                 triggered=self.remove_plugin
             )
         ])
-        if settings:
+        if enable_settings:
             self.moreMenu.addSeparator()
             self.moreMenu.addAction(Action(fIcon.SETTING, f'“{title}”插件设置', triggered=self.show_settings))
         else:
@@ -331,15 +413,12 @@ class PluginCard(CardWidget):  # 插件卡片
 
 
 class SettingsMenu(FluentWindow):
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(SettingsMenu, cls).__new__(cls)
-        return cls._instance
+    closed = pyqtSignal()
 
     def __init__(self):
         super().__init__()
+        self.button_clear_log = None
+        self.version_thread = None
         self.plugins_settings = {}
         # 创建子页面
         self.spInterface = uic.loadUi(f'{base_directory}/view/menu/preview.ui')  # 预览
@@ -429,7 +508,7 @@ class SettingsMenu(FluentWindow):
                 author=plugin_dict[plugin]['author'],
                 plugin_dir=plugin,
                 content=plugin_dict[plugin]['description'],
-                settings=plugin_dict[plugin]['settings'],
+                enable_settings=plugin_dict[plugin]['settings'],
                 parent=self
             )
             plugin_card_layout.addWidget(card)
@@ -439,9 +518,9 @@ class SettingsMenu(FluentWindow):
             tips_plugin_empty.hide()
 
     def setup_help_interface(self):
-        help_docu = FramelessWebEngineView(self)
-        help_docu.load(QUrl("https://classwidgets.rinlit.cn/docs-user/"))
-        help_docu.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # help_docu = FramelessWebEngineView(self)
+        # help_docu.load(QUrl("https://classwidgets.rinlit.cn/docs-user/"))
+        # help_docu.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         open_by_browser = self.findChild(PushButton, 'open_by_browser')
         open_by_browser.setIcon(fIcon.LINK)
@@ -449,8 +528,8 @@ class SettingsMenu(FluentWindow):
             'https://classwidgets.rinlit.cn/docs-user/'
         )))
 
-        web_layout = self.findChild(QVBoxLayout, 'web')
-        web_layout.addWidget(help_docu)
+        # web_layout = self.findChild(QVBoxLayout, 'web')
+        # web_layout.addWidget(help_docu)
 
     def setup_sound_interface(self):
         sd_scroll = self.findChild(SmoothScrollArea, 'sd_scroll')  # 触摸屏适配
@@ -458,19 +537,23 @@ class SettingsMenu(FluentWindow):
 
         switch_enable_toast = self.findChild(SwitchButton, 'switch_enable_attend')
         switch_enable_toast.setChecked(int(conf.read_conf('Toast', 'attend_class')))
-        switch_enable_toast.checkedChanged.connect(self.switch_enable_attend)  # 上课提醒开关
+        switch_enable_toast.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'attend_class'))
+        # 上课提醒开关
 
         switch_enable_finish = self.findChild(SwitchButton, 'switch_enable_finish')
         switch_enable_finish.setChecked(int(conf.read_conf('Toast', 'finish_class')))
-        switch_enable_finish.checkedChanged.connect(self.switch_enable_finish)  # 下课提醒开关
+        switch_enable_finish.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'finish_class'))
+        # 下课提醒开关
 
         switch_enable_prepare = self.findChild(SwitchButton, 'switch_enable_prepare')
         switch_enable_prepare.setChecked(int(conf.read_conf('Toast', 'prepare_class')))
-        switch_enable_prepare.checkedChanged.connect(self.switch_enable_prepare)  # 预备铃开关
+        switch_enable_prepare.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'prepare_class'))
+        # 预备铃开关
 
         switch_enable_pin_toast = self.findChild(SwitchButton, 'switch_enable_pin_toast')
         switch_enable_pin_toast.setChecked(int(conf.read_conf('Toast', 'pin_on_top')))
-        switch_enable_pin_toast.checkedChanged.connect(self.switch_enable_pin_toast)  # 置顶开关
+        switch_enable_pin_toast.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'pin_on_top'))
+        # 置顶开关
 
         slider_volume = self.findChild(Slider, 'slider_volume')
         slider_volume.setValue(int(conf.read_conf('Audio', 'volume')))
@@ -494,7 +577,7 @@ class SettingsMenu(FluentWindow):
 
         switch_wave_effect = self.findChild(SwitchButton, 'switch_enable_wave')
         switch_wave_effect.setChecked(int(conf.read_conf('Toast', 'wave')))
-        switch_wave_effect.checkedChanged.connect(self.switch_wave_effect)  # 波纹开关
+        switch_wave_effect.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'wave'))  # 波纹开关
 
         spin_prepare_time = self.findChild(SpinBox, 'spin_prepare_class')
         spin_prepare_time.setValue(int(conf.read_conf('Toast', 'prepare_minutes')))
@@ -551,8 +634,8 @@ class SettingsMenu(FluentWindow):
 
         select_theme_combo = self.findChild(ComboBox, 'combo_theme_select')  # 主题选择
         select_theme_combo.addItems(list.theme_names)
-        print(list.theme_folder, list.theme_names, self.getThemeName())
-        select_theme_combo.setCurrentIndex(list.theme_folder.index(self.getThemeName()))
+        print(list.theme_folder, list.theme_names, get_theme_name())
+        select_theme_combo.setCurrentIndex(list.theme_folder.index(get_theme_name()))
         select_theme_combo.currentIndexChanged.connect(
             lambda: conf.write_conf('General', 'theme', list.get_theme_ui_path(select_theme_combo.currentText())))
 
@@ -581,7 +664,8 @@ class SettingsMenu(FluentWindow):
 
         blur_countdown = self.findChild(SwitchButton, 'switch_blur_countdown')
         blur_countdown.setChecked(int(conf.read_conf('General', 'blur_countdown')))
-        blur_countdown.checkedChanged.connect(self.switch_blur_countdown)  # 模糊倒计时
+        blur_countdown.checkedChanged.connect(lambda checked: switch_checked(checked, 'General', 'blur_countdown'))
+        # 模糊倒计时
 
         select_weather_api = self.findChild(ComboBox, 'select_weather_api')  # 天气API选择
         select_weather_api.addItems(weather_db.api_config['weather_api_list_zhCN'])
@@ -603,14 +687,14 @@ class SettingsMenu(FluentWindow):
 
         self.version = self.findChild(BodyLabel, 'version')
 
-        self.check_update_btn = self.findChild(PrimaryPushButton, 'check_update')
-        self.check_update_btn.setIcon(fIcon.SYNC)
-        self.check_update_btn.clicked.connect(self.check_update)
+        check_update_btn = self.findChild(PrimaryPushButton, 'check_update')
+        check_update_btn.setIcon(fIcon.SYNC)
+        check_update_btn.clicked.connect(self.check_update)
 
         self.auto_check_update = self.ifInterface.findChild(SwitchButton, 'auto_check_update')
         self.auto_check_update.setChecked(int(conf.read_conf("Other", "auto_check_update")))
         self.auto_check_update.checkedChanged.connect(
-            lambda: conf.write_conf("Other", "auto_check_update", int(self.auto_check_update.isChecked()))
+            lambda checked: switch_checked("Other", "auto_check_update", checked)
         )  # 自动检查更新
 
         self.version_channel = self.findChild(ComboBox, 'version_channel')
@@ -665,7 +749,8 @@ class SettingsMenu(FluentWindow):
 
         switch_startup = self.adInterface.findChild(SwitchButton, 'switch_startup')
         switch_startup.setChecked(int(conf.read_conf('General', 'auto_startup')))
-        switch_startup.checkedChanged.connect(self.switch_startup)  # 开机自启
+        switch_startup.checkedChanged.connect(lambda checked: switch_checked(checked, 'General', 'auto_startup'))
+        # 开机自启
         if os.name != 'nt':
             switch_startup.setEnabled(False)
 
@@ -695,19 +780,28 @@ class SettingsMenu(FluentWindow):
 
         switch_enable_alt_schedule = self.adInterface.findChild(SwitchButton, 'switch_enable_alt_schedule')
         switch_enable_alt_schedule.setChecked(int(conf.read_conf('General', 'enable_alt_schedule')))
-        switch_enable_alt_schedule.checkedChanged.connect(self.switch_safe_mode)  # 安全模式
+        switch_enable_alt_schedule.checkedChanged.connect(
+            lambda checked: switch_checked('General', 'enable_alt_schedule', checked)
+        )  # 安全模式
 
         switch_enable_safe_mode = self.adInterface.findChild(SwitchButton, 'switch_safe_mode')
         switch_enable_safe_mode.setChecked(int(conf.read_conf('Other', 'safe_mode')))
-        switch_enable_safe_mode.checkedChanged.connect(self.switch_enable_alt_schedule)  # 单双周开关
+        switch_enable_safe_mode.checkedChanged.connect(
+            lambda checked: switch_checked(checked, 'Other', 'safe_mode')
+        )
+        # 安全模式开关
 
         switch_enable_multiple_programs = self.adInterface.findChild(SwitchButton, 'switch_multiple_programs')
         switch_enable_multiple_programs.setChecked(int(conf.read_conf('Other', 'multiple_programs')))
-        switch_enable_multiple_programs.checkedChanged.connect(self.switch_enable_multiple_programs)  # 多开
+        switch_enable_multiple_programs.checkedChanged.connect(
+            lambda checked: switch_checked('Other', 'multiple_programs', checked)
+        )  # 多开
 
         switch_disable_log = self.adInterface.findChild(SwitchButton, 'switch_disable_log')
         switch_disable_log.setChecked(int(conf.read_conf('Other', 'do_not_log')))
-        switch_disable_log.checkedChanged.connect(self.switch_disable_log)  # 禁用日志
+        switch_disable_log.checkedChanged.connect(
+            lambda checked: switch_checked('Other', 'do_not_log', checked)
+        )  # 禁用日志
 
         button_clear_log = self.adInterface.findChild(PushButton, 'button_clear_log')
         button_clear_log.clicked.connect(self.clear_log)  # 清空日志
@@ -735,7 +829,7 @@ class SettingsMenu(FluentWindow):
         )  # 保存缩放系数
 
     def setup_schedule_edit(self):
-        self.se_load_item()
+        se_load_item()
         se_set_button = self.findChild(ToolButton, 'set_button')
         se_set_button.setIcon(fIcon.EDIT)
         se_set_button.setToolTip('编辑课程')
@@ -881,99 +975,6 @@ class SettingsMenu(FluentWindow):
         license_dialog = licenseDialog(self)
         license_dialog.exec()
 
-    def getThemeName(self):
-        theme = conf.read_conf('General', 'theme')
-        if os.path.exists(f'{base_directory}/ui/{theme}/theme.json'):
-            return theme
-        else:
-            return 'default'
-
-    def switch_disable_log(self):
-        switch_disable_log = self.findChild(SwitchButton, 'switch_disable_log')
-        if switch_disable_log.isChecked():
-            conf.write_conf('Other', 'do_not_log', '1')
-        else:
-            conf.write_conf('Other', 'do_not_log', '0')
-
-    def switch_blur_countdown(self):
-        switch_blur_countdown = self.findChild(SwitchButton, 'switch_blur_countdown')
-        if switch_blur_countdown.isChecked():
-            conf.write_conf('General', 'blur_countdown', '1')
-        else:
-            conf.write_conf('General', 'blur_countdown', '0')
-
-    def switch_pin(self):
-        switch_pin_button = self.findChild(SwitchButton, 'switch_pin_button')
-        if switch_pin_button.isChecked():
-            conf.write_conf('General', 'pin_on_top', '1')
-        else:
-            conf.write_conf('General', 'pin_on_top', '0')
-
-    def switch_wave_effect(self):
-        switch_wave_effect = self.findChild(SwitchButton, 'switch_enable_wave')
-        if switch_wave_effect.isChecked():
-            conf.write_conf('Toast', 'wave', '1')
-        else:
-            conf.write_conf('Toast', 'wave', '0')
-
-    def switch_startup(self):
-        switch_startup = self.findChild(SwitchButton, 'switch_startup')
-        if switch_startup.isChecked():
-            conf.write_conf('General', 'auto_startup', '1')
-            conf.add_to_startup(f'{base_directory}/ClassWidgets.exe', f'{base_directory}/img/favicon.ico')
-        else:
-            conf.write_conf('General', 'auto_startup', '0')
-            conf.remove_from_startup()
-
-    def switch_enable_attend(self):
-        switch_enable_toast = self.findChild(SwitchButton, 'switch_enable_attend')
-        if switch_enable_toast.isChecked():
-            conf.write_conf('Toast', 'attend_class', '1')
-        else:
-            conf.write_conf('Toast', 'attend_class', '0')
-
-    def switch_enable_finish(self):
-        switch_enable_toast = self.findChild(SwitchButton, 'switch_enable_finish')
-        if switch_enable_toast.isChecked():
-            conf.write_conf('Toast', 'finish_class', '1')
-        else:
-            conf.write_conf('Toast', 'finish_class', '0')
-
-    def switch_enable_prepare(self):
-        switch_enable_toast = self.findChild(SwitchButton, 'switch_enable_prepare')
-        if switch_enable_toast.isChecked():
-            conf.write_conf('Toast', 'prepare_class', '1')
-        else:
-            conf.write_conf('Toast', 'prepare_class', '0')
-
-    def switch_enable_pin_toast(self):
-        switch_enable_toast = self.findChild(SwitchButton, 'switch_enable_pin_toast')
-        if switch_enable_toast.isChecked():
-            conf.write_conf('Toast', 'pin_on_top', '1')
-        else:
-            conf.write_conf('Toast', 'pin_on_top', '0')
-
-    def switch_enable_alt_schedule(self):
-        switch_enable_alt_schedule = self.findChild(SwitchButton, 'switch_enable_alt_schedule')
-        if switch_enable_alt_schedule.isChecked():
-            conf.write_conf('General', 'enable_alt_schedule', '1')
-        else:
-            conf.write_conf('General', 'enable_alt_schedule', '0')
-
-    def switch_safe_mode(self):
-        switch_safe_mode = self.findChild(SwitchButton, 'switch_safe_mode')
-        if switch_safe_mode.isChecked():
-            conf.write_conf('Other', 'safe_mode', '1')
-        else:
-            conf.write_conf('Other', 'safe_mode', '0')
-
-    def switch_enable_multiple_programs(self):
-        switch_enable_multiple_programs = self.findChild(SwitchButton, 'switch_multiple_programs')
-        if switch_enable_multiple_programs.isChecked():
-            conf.write_conf('Other', 'multiple_programs', '1')
-        else:
-            conf.write_conf('Other', 'multiple_programs', '0')
-
     def save_prepare_time(self):
         prepare_time_spin = self.findChild(SpinBox, 'spin_prepare_class')
         conf.write_conf('Toast', 'prepare_minutes', str(prepare_time_spin.value()))
@@ -981,23 +982,24 @@ class SettingsMenu(FluentWindow):
     def clear_log(self):  # 清空日志
         def get_directory_size(path):  # 计算目录大小
             total_size = 0
-            for dirpath, dirnames, filenames in os.walk(path):
-                for filename in filenames:
-                    file_path = os.path.join(dirpath, filename)
+            for dir_path, dir_names, filenames in os.walk(path):
+                for file_name in filenames:
+                    file_path = os.path.join(dir_path, file_name)
                     total_size += os.path.getsize(file_path)
             total_size /= 1024
             return round(total_size, 2)
 
-        button_clear_log = self.findChild(PushButton, 'button_clear_log')
+        self.button_clear_log = self.adInterface.findChild(PushButton, 'button_clear_log')
+        size = get_directory_size('log')
+
         try:
             if os.path.exists('log'):
-                size = get_directory_size('log')
                 rmtree('log')
                 Flyout.create(
                     icon=InfoBarIcon.SUCCESS,
                     title='已清除日志',
                     content=f"已清空所有日志文件，约 {size} KB",
-                    target=button_clear_log,
+                    target=self.button_clear_log,
                     parent=self,
                     isClosable=True,
                     aniType=FlyoutAnimationType.PULL_UP
@@ -1007,7 +1009,7 @@ class SettingsMenu(FluentWindow):
                     icon=InfoBarIcon.INFORMATION,
                     title='未找到日志',
                     content="日志目录下为空，已清理完成。",
-                    target=button_clear_log,
+                    target=self.button_clear_log,
                     parent=self,
                     isClosable=True,
                     aniType=FlyoutAnimationType.PULL_UP
@@ -1017,7 +1019,7 @@ class SettingsMenu(FluentWindow):
                 icon=InfoBarIcon.SUCCESS,
                 title='已清除日志',
                 content=f"已清空所有日志文件，约 {size} KB",
-                target=button_clear_log,
+                target=self.button_clear_log,
                 parent=self,
                 isClosable=True,
                 aniType=FlyoutAnimationType.PULL_UP
@@ -1027,7 +1029,7 @@ class SettingsMenu(FluentWindow):
                 icon=InfoBarIcon.ERROR,
                 title='清除日志失败！',
                 content=f"清除日志失败：{e}",
-                target=button_clear_log,
+                target=self.button_clear_log,
                 parent=self,
                 isClosable=True,
                 aniType=FlyoutAnimationType.PULL_UP
@@ -1194,7 +1196,9 @@ class SettingsMenu(FluentWindow):
                         path = f'{base_directory}/ui/{theme_folder}/preview/{widget_name[:-3]}.png'
                     else:
                         path = f'{base_directory}/ui/{theme_folder}/preview/widget-custom.png'
-                label = ImageLabel(path)
+
+                label = ImageLabel()
+                label.setImage(path)
                 widgets_preview.addWidget(label)
                 widget_config[i] = label
             right_spacer = QSpacerItem(20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
@@ -1256,7 +1260,7 @@ class SettingsMenu(FluentWindow):
             filename = conf.read_conf('General', 'schedule')
             self.te_load_item()
             self.te_upload_list()
-            self.se_load_item()
+            se_load_item()
             self.se_upload_list()
             self.sp_fill_grid_row()
         except Exception as e:
@@ -1326,69 +1330,6 @@ class SettingsMenu(FluentWindow):
                 all_line.append(item_text)
             timeline_dict[week] = all_line
 
-    # 加载课表
-    def se_load_item(self):
-        global schedule_dict
-        global schedule_even_dict
-        global loaded_data
-        loaded_data = conf.load_from_json(filename)
-        part_name = loaded_data.get('part_name')
-        part = loaded_data.get('part')
-        schedule = loaded_data.get('schedule')
-        schedule_even = loaded_data.get('schedule_even')
-        for week, item in schedule.items():
-            all_class = []
-            count = []  # 初始化计数器
-            for i in range(len(part)):
-                count.append(0)
-            if str(week) in loaded_data['timeline'] and loaded_data['timeline'][str(week)]:
-                timeline = get_timeline()[str(week)]
-            else:
-                timeline = get_timeline()['default']
-            for item_name, item_time in timeline.items():
-                if item_name.startswith('a'):
-                    try:
-                        if int(item_name[1]) == 0:
-                            count_num = 0
-                        else:
-                            count_num = sum(count[:int(item_name[1])])
-
-                        prefix = item[int(item_name[-1]) - 1 + count_num]
-                        period = part_name[str(item_name[1])]
-                        all_class.append(f'{prefix}-{period}')
-                    except Exception as e:
-                        prefix = '未添加'
-                        period = part_name[str(item_name[1])]
-                        all_class.append(f'{prefix}-{period}')
-                    count[int(item_name[1])] += 1
-            schedule_dict[week] = all_class
-        for week, item in schedule_even.items():
-            all_class = []
-            count = []  # 初始化计数器
-            for i in range(len(part)):
-                count.append(0)
-            if str(week) in loaded_data['timeline'] and loaded_data['timeline'][str(week)]:
-                timeline = get_timeline()[str(week)]
-            else:
-                timeline = get_timeline()['default']
-            for item_name, item_time in timeline.items():
-                if item_name.startswith('a'):
-                    try:
-                        if int(item_name[1]) == 0:
-                            count_num = 0
-                        else:
-                            count_num = sum(count[:int(item_name[1])])
-
-                        prefix = item[int(item_name[-1]) - 1 + count_num]
-                        period = part_name[str(item_name[1])]
-                        all_class.append(f'{prefix}-{period}')
-                    except Exception as e:
-                        prefix = '未添加'
-                        period = part_name[str(item_name[1])]
-                        all_class.append(f'{prefix}-{period}')
-                    count[int(item_name[1])] += 1
-            schedule_even_dict[week] = all_class
-
     def se_copy_odd_schedule(self):
         logger.info('复制单周课表')
         global schedule_dict, schedule_even_dict
@@ -1454,25 +1395,15 @@ class SettingsMenu(FluentWindow):
                 cache_list.append(item_text)
             schedule_dict[str(current_week)][:] = cache_list
 
-    # 保存课表
+    # 保存课程
     def se_save_item(self):
         try:
             data_dict = deepcopy(schedule_dict)
             data_dict_even = deepcopy(schedule_even_dict)  # 单双周保存
-            for week, item in data_dict.items():
-                cache_list = item
-                replace_list = []
-                for activity_num in range(len(cache_list)):
-                    item_info = cache_list[int(activity_num)].split('-')
-                    replace_list.append(item_info[0])
-                data_dict[str(week)] = replace_list
-            for week, item in data_dict_even.items():
-                cache_list = item
-                replace_list = []
-                for activity_num in range(len(cache_list)):
-                    item_info = cache_list[int(activity_num)].split('-')
-                    replace_list.append(item_info[0])
-                data_dict_even[str(week)] = replace_list
+
+            data_dict = convert_to_dict(data_dict)
+            data_dict_even = convert_to_dict(data_dict_even)
+
             # 写入
             data_dict_even = {"schedule_even": data_dict_even}
             conf.save_data_to_json(data_dict_even, filename)
@@ -1553,7 +1484,7 @@ class SettingsMenu(FluentWindow):
 
             conf.save_data_to_json(data_dict, filename)
             self.te_detect_item()
-            self.se_load_item()
+            se_load_item()
             self.se_upload_list()
             self.se_upload_item()
             self.te_upload_item()
@@ -1592,7 +1523,6 @@ class SettingsMenu(FluentWindow):
         part_list = self.findChild(ListWidget, 'part_list')
         tips = self.findChild(CaptionLabel, 'tips_2')
         tips_part = self.findChild(CaptionLabel, 'tips_1')
-        # self.se_load_item()
         if part_list.count() > 0:
             tips_part.hide()
         else:
@@ -1886,6 +1816,10 @@ class SettingsMenu(FluentWindow):
         self.setWindowIcon(QIcon(f'{base_directory}/img/logo/favicon-settings.ico'))
 
         self.init_font()  # 设置字体
+
+    def closeEvent(self, event):
+        self.closed.emit()
+        event.accept()
 
 
 def sp_get_class_num():  # 获取当前周课程数（未完成）

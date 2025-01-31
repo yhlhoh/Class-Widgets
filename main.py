@@ -1687,8 +1687,11 @@ if __name__ == '__main__':
     logger.info(f"操作系统：{platform.system()}，版本：{platform.version()}/{platform.release()}")
 
     if share.attach() and conf.read_conf('Other', 'multiple_programs') != '1':
-        msg_box = Dialog('Class Widgets 正在运行', 'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
-                                                   '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)')
+        msg_box = Dialog(
+            'Class Widgets 正在运行',
+            'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
+            '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)'
+        )
         msg_box.yesButton.setText('好')
         msg_box.cancelButton.hide()
         msg_box.buttonLayout.insertStretch(0, 1)

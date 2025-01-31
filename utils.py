@@ -46,7 +46,7 @@ class TrayIcon(QSystemTrayIcon):
         )
 
     def push_error_notification(self, title='检查更新失败！', text=''):
-        self.setIcon(QIcon(f"{base_directory}/img/logo/favicon-error.ico"))  # tray
+        self.setIcon(QIcon(f"{base_directory}/img/logo/favicon-update.png"))  # tray
         self.showMessage(
             title,
             text,

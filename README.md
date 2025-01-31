@@ -4,9 +4,6 @@
 > [!NOTE]
 > Class Widgets 有QQ群啦！详见[此处](#社区)
 
-> [!IMPORTANT]
-> 若要体验此页面的特性，请前往[此处](https://github.com/RinLit-233-shiroko/Class-Widgets/releases/tag/v1.1.7-b4)预发行版的页面下载。
-
 <p align="center">
   <img width="16%" align="center" src="img/Logo.png" alt="logo">
 </p>

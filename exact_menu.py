@@ -34,8 +34,8 @@ def open_settings():
     global settings
     if settings is None or not settings.isVisible():
         settings = SettingsMenu()
+        settings.closed.connect(cleanup_settings)
         settings.show()
-        settings.destroyed.connect(cleanup_settings)
         logger.info('打开“设置”')
     else:
         settings.raise_()
@@ -44,7 +44,8 @@ def open_settings():
 
 def cleanup_settings():
     global settings
-    print('clean up settings')
+    logger.info('关闭“设置”')
+    del settings
     settings = None
 
 

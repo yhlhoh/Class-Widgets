@@ -335,13 +335,6 @@ def main(state=1, lesson_name='', title='通知示例', subtitle='副标题',
     finish_class_color = f"#{conf.read_conf('Color', 'finish_class')}"
     prepare_class_color = f"#{conf.read_conf('Color', 'prepare_class')}"
 
-    # if conf.read_conf('General', 'color_mode') == '2':
-    #     setTheme(Theme.AUTO)
-    # elif conf.read_conf('General', 'color_mode') == '1':
-    #     setTheme(Theme.DARK)
-    # else:
-    #     setTheme(Theme.LIGHT)
-
     theme = conf.read_conf('General', 'theme')
     height = conf.load_theme_config(theme)['height']
     radius = conf.load_theme_config(theme)['radius']

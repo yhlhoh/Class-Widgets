@@ -4,7 +4,7 @@ from datetime import datetime
 from random import shuffle
 
 from PyQt5 import uic
-from PyQt5.QtCore import QSize, Qt, QTimer, QUrl, QStringListModel
+from PyQt5.QtCore import QSize, Qt, QTimer, QUrl, QStringListModel, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap, QDesktopServices
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QGridLayout, QSpacerItem, QSizePolicy, QWidget, \
     QScroller, QCompleter
@@ -20,7 +20,7 @@ import conf
 import list as l
 import network_thread as nt
 from conf import base_directory
-from utils import restart
+from utils import restart, calculate_size
 
 # 适配高DPI缩放
 QApplication.setHighDpiScaleFactorRoundingPolicy(
@@ -401,8 +401,11 @@ class PluginCard_Horizontal(CardWidget):  # 插件卡片（横向）
 
 
 class PluginPlaza(MSFluentWindow):
+    closed = pyqtSignal()
+
     def __init__(self):
         super().__init__()
+        self.splashScreen = None
         global installed_plugins
         try:
             with open(CONF_PATH, 'r', encoding='utf-8') as file:
@@ -448,7 +451,7 @@ class PluginPlaza(MSFluentWindow):
                 widget = self.search_plugin_grid.itemAt(i).widget()
                 if widget:
                     widget.setParent(None)  # 移除控件
-                    widget.deleteLater()
+                    widget.destroy()  # 销毁控件
 
         def search_plugins():  # 搜索插件
             if not plugins_data:
@@ -698,19 +701,14 @@ class PluginPlaza(MSFluentWindow):
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(500)
-        self.setMicaEffectEnabled(True)
         self.setWindowTitle('插件广场')
         self.setWindowIcon(QIcon(f'{base_directory}/img/pp_favicon.png'))
 
-        screen_geometry = QApplication.primaryScreen().geometry()
-        screen_width = screen_geometry.width()
-        screen_height = screen_geometry.height()
+        # 设置窗口大小
+        size, pos = calculate_size()
 
-        width = int(screen_width * 0.6)
-        height = int(screen_height * 0.7)
-
-        self.move(int(screen_width / 2 - width / 2), 150)
-        self.resize(width, height)
+        self.move(pos[0], pos[1])
+        self.resize(size[0], size[1])
 
         # 启动屏幕
         self.splashScreen = SplashScreen(self.windowIcon(), self)
@@ -721,6 +719,10 @@ class PluginPlaza(MSFluentWindow):
         self.setStyleSheet("""QLabel {
                     font-family: 'Microsoft YaHei';
                 }""")
+
+    def closeEvent(self, event):
+        self.closed.emit()
+        event.accept()
 
 
 def add2save_plugin(p_name):  # 保存已安装插件
