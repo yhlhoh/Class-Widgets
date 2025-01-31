@@ -90,7 +90,23 @@ Thanks goes to these wonderful people:
 
 [![Contributors](http://contrib.nn.ci/api?repo=Class-Widgets/Class-Widgets&repo=Class-Widgets/plugin-plaza&repo=Class-Widgets/cw-interim-site)](https://github.com/Class-Widgets/Class-Widgets/graphs/contributors)
 
-## Code signing policy / 代码签名策略
+### 赞助商 / Sponsors
+
+感谢以下赞助商对本项目的支持。
+
+<table>
+  <tr>
+    <td>
+      <img alt="SignPath" src="https://signpath.org/assets/favicon-50x50.png" />
+    </td>
+    <td>
+    Free code signing on Windows provided by <a href="https://signpath.io">SignPath.io</a>, certficate by <a href="https://signpath.org/">SignPath Foundation</a><br/>
+    由 <a href="https://signpath.io">SignPath.io</a> 提供代码签名，由 <a href="https://signpath.org">SignPath Foundation</a> 提供证书
+    </td>
+  </tr>
+</table>
+
+## 代码签名策略 / Code signing policy
 
 - Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/)  
 由 [SignPath.io](https://about.signpath.io/) 提供代码签名，由 [SignPath Foundation](https://signpath.org/) 提供证书
