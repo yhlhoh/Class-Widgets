@@ -312,7 +312,7 @@ def check_config():
         conf.read_dict(default_conf)
         with open(path, 'w', encoding='utf-8') as configfile:
             conf.write(configfile)
-        if sys.platform == 'linux':
+        if sys.platform != 'win32':
             conf.set('General', 'hide_method', '2')
             with open(path, 'w', encoding='utf-8') as configfile:
                 conf.write(configfile)
