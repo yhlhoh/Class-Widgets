@@ -537,22 +537,22 @@ class SettingsMenu(FluentWindow):
 
         switch_enable_toast = self.findChild(SwitchButton, 'switch_enable_attend')
         switch_enable_toast.setChecked(int(conf.read_conf('Toast', 'attend_class')))
-        switch_enable_toast.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'attend_class'))
+        switch_enable_toast.checkedChanged.connect(lambda checked: switch_checked('Toast', 'attend_class', checked))
         # 上课提醒开关
 
         switch_enable_finish = self.findChild(SwitchButton, 'switch_enable_finish')
         switch_enable_finish.setChecked(int(conf.read_conf('Toast', 'finish_class')))
-        switch_enable_finish.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'finish_class'))
+        switch_enable_finish.checkedChanged.connect(lambda checked: switch_checked('Toast', 'finish_class', checked))
         # 下课提醒开关
 
         switch_enable_prepare = self.findChild(SwitchButton, 'switch_enable_prepare')
         switch_enable_prepare.setChecked(int(conf.read_conf('Toast', 'prepare_class')))
-        switch_enable_prepare.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'prepare_class'))
+        switch_enable_prepare.checkedChanged.connect(lambda checked: switch_checked('Toast', 'prepare_class', checked))
         # 预备铃开关
 
         switch_enable_pin_toast = self.findChild(SwitchButton, 'switch_enable_pin_toast')
         switch_enable_pin_toast.setChecked(int(conf.read_conf('Toast', 'pin_on_top')))
-        switch_enable_pin_toast.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'pin_on_top'))
+        switch_enable_pin_toast.checkedChanged.connect(lambda checked: switch_checked('Toast', 'pin_on_top', checked))
         # 置顶开关
 
         slider_volume = self.findChild(Slider, 'slider_volume')
@@ -577,7 +577,7 @@ class SettingsMenu(FluentWindow):
 
         switch_wave_effect = self.findChild(SwitchButton, 'switch_enable_wave')
         switch_wave_effect.setChecked(int(conf.read_conf('Toast', 'wave')))
-        switch_wave_effect.checkedChanged.connect(lambda checked: switch_checked(checked, 'Toast', 'wave'))  # 波纹开关
+        switch_wave_effect.checkedChanged.connect(lambda checked: switch_checked('Toast', 'wave', checked))  # 波纹开关
 
         spin_prepare_time = self.findChild(SpinBox, 'spin_prepare_class')
         spin_prepare_time.setValue(int(conf.read_conf('Toast', 'prepare_minutes')))
@@ -664,7 +664,7 @@ class SettingsMenu(FluentWindow):
 
         blur_countdown = self.findChild(SwitchButton, 'switch_blur_countdown')
         blur_countdown.setChecked(int(conf.read_conf('General', 'blur_countdown')))
-        blur_countdown.checkedChanged.connect(lambda checked: switch_checked(checked, 'General', 'blur_countdown'))
+        blur_countdown.checkedChanged.connect(lambda checked: switch_checked('General', 'blur_countdown', checked))
         # 模糊倒计时
 
         select_weather_api = self.findChild(ComboBox, 'select_weather_api')  # 天气API选择
@@ -749,7 +749,7 @@ class SettingsMenu(FluentWindow):
 
         switch_startup = self.adInterface.findChild(SwitchButton, 'switch_startup')
         switch_startup.setChecked(int(conf.read_conf('General', 'auto_startup')))
-        switch_startup.checkedChanged.connect(lambda checked: switch_checked(checked, 'General', 'auto_startup'))
+        switch_startup.checkedChanged.connect(lambda checked: switch_checked('General', 'auto_startup', checked))
         # 开机自启
         if os.name != 'nt':
             switch_startup.setEnabled(False)
@@ -787,7 +787,7 @@ class SettingsMenu(FluentWindow):
         switch_enable_safe_mode = self.adInterface.findChild(SwitchButton, 'switch_safe_mode')
         switch_enable_safe_mode.setChecked(int(conf.read_conf('Other', 'safe_mode')))
         switch_enable_safe_mode.checkedChanged.connect(
-            lambda checked: switch_checked(checked, 'Other', 'safe_mode')
+            lambda checked: switch_checked('Other', 'safe_mode', checked)
         )
         # 安全模式开关
 
