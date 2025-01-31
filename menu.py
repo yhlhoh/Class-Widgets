@@ -1806,12 +1806,6 @@ class SettingsMenu(FluentWindow):
         self.move(int(screen_width / 2 - width / 2), 150)
         self.resize(width, height)
 
-        # macOS 标题栏显示 Windows 一样的按钮
-        if sys.platform == 'darwin':
-            self.titleBar.minBtn.setVisible(True)
-            self.titleBar.maxBtn.setVisible(True)
-            self.titleBar.closeBtn.setVisible(True)
-
         self.setWindowTitle('Class Widgets - 设置')
         self.setWindowIcon(QIcon(f'{base_directory}/img/logo/favicon-settings.ico'))
 
