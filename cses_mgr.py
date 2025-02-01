@@ -172,7 +172,7 @@ class CSES_Converter:
                         name=f'{name}_{CSES_WEEKS[int(day)]}',
                         enable_day=CSES_WEEKS[int(day)],
                         weeks=type_,
-                        classes=[timelines_part[str(day)]]
+                        classes=[timelines_part[str(day)][i] for i in range(len(timelines_part[str(day)]))]
                     )
 
         if not self.generator:
