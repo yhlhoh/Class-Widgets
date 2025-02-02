@@ -117,7 +117,7 @@ sys.excepthook = global_exceptHook  # 设置全局异常捕获
 
 def setTheme_():  # 设置主题
     if conf.read_conf('General', 'color_mode') == '2':  # 自动
-        if platform.system() == 'Darwin' and float(platform.version()) < 10.14:
+        if platform.system() == 'Darwin' and platform.version() < '10.14':
             return
         if platform.system() == 'Windows' and platform.release() != '10':
             return
