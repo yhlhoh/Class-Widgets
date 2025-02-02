@@ -197,7 +197,12 @@ class CSES_Converter:
 
         convert(schedules_odd)
         convert(schedule_even, 'even')
-        self.generator.save_to_file(self.path)
+        try:
+            self.generator.save_to_file(self.path)
+            return True
+        except Exception as e:
+            logger.error(f'Error: {e}')
+            return False
 
 
 if __name__ == '__main__':

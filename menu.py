@@ -613,7 +613,7 @@ class SettingsMenu(FluentWindow):
             except KeyError:
                 logger.warning(f'未知的组件：{key}')
             except Exception as e:
-                logger.error(f'获取组件名称时发生错误：{sys.exc_info()[0]}')
+                logger.error(f'获取组件名称时发生错误：{sys.exc_info()[0]}/{e}')
         widgets_list_widgets.addItems(widgets_list)
         widgets_list_widgets.sizePolicy().setVerticalPolicy(QSizePolicy.Policy.MinimumExpanding)
 
@@ -1133,7 +1133,7 @@ class SettingsMenu(FluentWindow):
                 utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
 
     def cf_import_schedule_cses(self):  # 导入课程表（CSES）
-        file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "CSES 课程表文件 (*.yaml)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "CSES 通用课程表交换文件 (*.yaml)")
         if file_path:
             file_name = file_path.split("/")[-1]
             save_path = f"{base_directory}/config/schedule/{file_name.replace('.yaml', '.json')}"
@@ -1169,9 +1169,27 @@ class SettingsMenu(FluentWindow):
                 alert.exec()
 
     def cf_export_schedule_cses(self):  # 导出课程表（CSES）
-        """
-        123
-        """
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "保存文件", filename.replace('.json', '.yaml'), "CSES 通用课程表交换文件 (*.yaml)")
+        if file_path:
+            exporter = CSES_Converter(file_path)
+            exporter.load_generator()
+            if exporter.convert_to_cses(cw_path=f'{base_directory}/config/schedule/{filename}'):
+                alert = MessageBox('您已成功导出课程表配置文件',
+                                   f'文件将导出于{file_path}', self)
+                alert.cancelButton.hide()
+                alert.buttonLayout.insertStretch(0, 1)
+                if alert.exec():
+                    return 0
+            else:
+                print('导出失败！')
+                alert = MessageBox('导出失败！',
+                                   '课程表文件导出失败，\n'
+                                   '可能为文件损坏，请将此情况反馈给开发者。', self)
+                alert.cancelButton.hide()
+                alert.buttonLayout.insertStretch(0, 1)
+                if alert.exec():
+                    return 0
 
     def cf_import_schedule(self):  # 导入课程表
         file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "Json 配置文件 (*.json)")
