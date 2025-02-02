@@ -3,11 +3,11 @@ CSES Format Support
 what is CSES: https://github.com/CSES-org/CSES
 """
 import json
-from datetime import datetime, timedelta
-
 import cses
+from datetime import datetime, timedelta
 from loguru import logger
 
+import list as list_
 import conf
 from file import base_directory
 
@@ -177,6 +177,24 @@ class CSES_Converter:
                         classes=[timelines_part[str(day)][i] for i in range(len(timelines_part[str(day)]))]
                     )
 
+        """
+        转换/CONVERT
+        """
+        # 科目
+        try:
+            with open(f'{base_directory}/config/data/subject.json', 'r', encoding='utf-8') as data:
+                cw_subjects = json.load(data)
+        except FileNotFoundError:
+            logger.error(f'File {base_directory}/config/data/subject.json not found')
+            return False
+
+        for subject in cw_subjects['subject_list']:
+            self.generator.add_subject(
+                name=subject, simplified_name=list_.get_subject_abbreviation(subject),
+                teacher=None, room=None
+            )
+
+        # 课表
         if not self.generator:
             raise Exception("Generator not loaded, please load_generator() first.")
 
@@ -185,7 +203,8 @@ class CSES_Converter:
                 with open(cw_path, 'r', encoding='utf-8') as data:
                     cw_data = json.load(data)
             except FileNotFoundError:
-                return f"File {self.path} not found"
+                logger.error(f'File {cw_path} not found')
+                return False
         else:
             raise Exception("Please provide a path or a cw_data")
 
