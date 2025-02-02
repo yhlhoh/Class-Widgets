@@ -117,11 +117,12 @@ sys.excepthook = global_exceptHook  # 设置全局异常捕获
 
 def setTheme_():  # 设置主题
     if conf.read_conf('General', 'color_mode') == '2':  # 自动
-        if platform.system() == 'Darwin' and platform.uname()[2] < '10.14':  # release ver
+        if platform.system() == 'Darwin' and platform.uname().release < '10.14':
             return
         if platform.system() == 'Windows' and platform.release() != '10':
             return
-
+        if platform.system() == 'Linux':
+            return
         setTheme(Theme.AUTO)
     elif conf.read_conf('General', 'color_mode') == '1':
         setTheme(Theme.DARK)
