@@ -43,7 +43,8 @@ class CSES_Converter:
             with open(f'{base_directory}/config/default.json', 'r', encoding='utf-8') as file:  # 加载默认配置
                 cw_format = json.load(file)
         except FileNotFoundError:
-            return "Default config not found"
+            logger.error(f'File {base_directory}/config/default.json not found')
+            return False
 
         if not self.parser:
             raise Exception("Parser not loaded, please load_parser() first.")
@@ -109,6 +110,7 @@ class CSES_Converter:
                     logger.warning('本软件暂时不支持更多的周数循环')
 
         print(cw_format)
+        return cw_format
 
     def convert_to_cses(self, cw_data=None, cw_path='./'):
         """
