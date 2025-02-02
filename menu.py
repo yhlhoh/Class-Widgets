@@ -604,7 +604,7 @@ class SettingsMenu(FluentWindow):
                 widgets_list.append(list.widget_name[key])
             except KeyError:
                 logger.warning(f'未知的组件：{key}')
-            except:
+            except Exception as e:
                 logger.error(f'获取组件名称时发生错误：{sys.exc_info()[0]}')
         widgets_list_widgets.addItems(widgets_list)
         widgets_list_widgets.sizePolicy().setVerticalPolicy(QSizePolicy.Policy.MinimumExpanding)
@@ -1107,10 +1107,11 @@ class SettingsMenu(FluentWindow):
         if 'error' in version:
             self.version.setText(f'当前版本：{conf.read_conf("Other", "version")}\n{version["error"]}')
 
-            utils.tray_icon.push_error_notification(
-                "检查更新失败！",
-                f"检查更新失败！\n{version['error']}"
-            )
+            if utils.tray_icon:
+                utils.tray_icon.push_error_notification(
+                    "检查更新失败！",
+                    f"检查更新失败！\n{version['error']}"
+                )
             return False
         channel = int(conf.read_conf("Other", "version_channel"))
         new_version = version['version_release' if channel == 0 else 'version_beta']
@@ -1120,7 +1121,7 @@ class SettingsMenu(FluentWindow):
         else:
             self.version.setText(f'当前版本：{conf.read_conf("Other", "version")}\n最新版本：{new_version}')
 
-            if new_version != conf.read_conf("Other", "version"):
+            if new_version != conf.read_conf("Other", "version") and utils.tray_icon:
                 utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
 
     def cf_import_schedule(self):  # 导入课程表
@@ -1606,6 +1607,9 @@ class SettingsMenu(FluentWindow):
             global timeline_dict, schedule_dict
             te_part_list = self.findChild(ListWidget, 'part_list')
             selected_items = te_part_list.selectedItems()
+            if not selected_items:
+                return
+
             deleted_part_name = selected_items[0].text().split(' - ')[0]
             for item in selected_items:
                 te_part_list.takeItem(te_part_list.row(item))
