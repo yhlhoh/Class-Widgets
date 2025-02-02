@@ -21,7 +21,7 @@ from qfluentwidgets import (
     CalendarPicker, BodyLabel, ColorDialog, isDarkTheme, TimeEdit, EditableComboBox, MessageBoxBase,
     SearchLineEdit, Slider, PlainTextEdit, ToolTipFilter, ToolTipPosition, RadioButton, HyperlinkLabel,
     PrimaryDropDownPushButton, Action, RoundMenu, CardWidget, ImageLabel, StrongBodyLabel,
-    TransparentDropDownToolButton, Dialog, SmoothScrollArea, TransparentToolButton
+    TransparentDropDownToolButton, Dialog, SmoothScrollArea, TransparentToolButton, HyperlinkButton
 )
 
 import conf
@@ -31,6 +31,7 @@ import utils
 import weather_db
 import weather_db as wd
 from conf import base_directory
+from cses_mgr import CSES_Converter
 from network_thread import VersionThread
 from plugin_plaza import PluginPlaza
 from utils import restart
@@ -591,6 +592,13 @@ class SettingsMenu(FluentWindow):
         cf_open_schedule_folder = self.findChild(PushButton, 'open_schedule_folder')  # 打开课程表文件夹
         cf_open_schedule_folder.clicked.connect(lambda: open_dir(os.path.join(os.path.abspath('.'), 'config/schedule')))
 
+        cf_import_schedule_cses = self.findChild(PushButton, 'im_schedule_cses')
+        cf_import_schedule_cses.clicked.connect(self.cf_import_schedule_cses)  # 导入课程表（CSES）
+        cf_export_schedule_cses = self.findChild(PushButton, 'ex_schedule_cses')
+        cf_export_schedule_cses.clicked.connect(self.cf_export_schedule_cses)  # 导出课程表（CSES）
+        cf_what_is_cses = self.findChild(HyperlinkButton, 'what_is')
+        cf_what_is_cses.setUrl(QUrl('https://github.com/CSES-org/CSES'))
+
     def setup_customization_interface(self):
         ct_scroll = self.findChild(SmoothScrollArea, 'ct_scroll')  # 触摸屏适配
         QScroller.grabGesture(ct_scroll.viewport(), QScroller.LeftMouseButtonGesture)
@@ -1124,18 +1132,56 @@ class SettingsMenu(FluentWindow):
             if new_version != conf.read_conf("Other", "version") and utils.tray_icon:
                 utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
 
+    def cf_import_schedule_cses(self):  # 导入课程表（CSES）
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "CSES 课程表文件 (*.yaml)")
+        if file_path:
+            file_name = file_path.split("/")[-1]
+            save_path = f"{base_directory}/config/schedule/{file_name.replace('.yaml', '.json')}"
+
+            print(save_path)
+            importer = CSES_Converter(file_path)
+            importer.load_parser()
+            cw_data = importer.convert_to_cw()
+            if not cw_data:
+                alert = MessageBox('转换失败！',
+                                   '课程表文件转换失败！\n'
+                                   '可能为格式错误或文件损坏，请检查此文件是否为正确的 CSES 课程表文件。\n'
+                                   '详情请查看Log日志，日志位于./log/下。', self)
+                alert.cancelButton.hide()  # 隐藏取消按钮
+                alert.buttonLayout.insertStretch(0, 1)
+                alert.exec()
+            try:
+                with open(save_path, 'w', encoding='utf-8') as f:
+                    json.dump(cw_data, f, ensure_ascii=False, indent=4)
+                    alert = MessageBox('您已成功导入 CSES 课程表配置文件',
+                                       '请在“高级选项”中手动切换您的配置文件。', self)
+                    alert.cancelButton.hide()  # 隐藏取消按钮，必须重启
+                    alert.buttonLayout.insertStretch(0, 1)
+                    alert.exec()
+            except Exception as e:
+                logger.error(f'导入课程表时发生错误：{e}')
+                alert = MessageBox('导入失败！',
+                                   '课程表文件导入失败！\n'
+                                   '可能为格式错误或文件损坏，请检查此文件是否为正确的 CSES 课程表文件。\n'
+                                   '详情请查看Log日志，日志位于./log/下。', self)
+                alert.cancelButton.hide()  # 隐藏取消按钮
+                alert.buttonLayout.insertStretch(0, 1)
+                alert.exec()
+
+    def cf_export_schedule_cses(self):  # 导出课程表（CSES）
+        """
+        123
+        """
+
     def cf_import_schedule(self):  # 导入课程表
         file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "Json 配置文件 (*.json)")
         if file_path:
             file_name = file_path.split("/")[-1]
             if list.import_schedule(file_path, file_name):
                 alert = MessageBox('您已成功导入课程表配置文件',
-                                   '软件将在您确认后重启，\n'
-                                   '您需重新启动以应用您切换的配置文件。', self)
+                                   '请在“高级选项”中手动切换您的配置文件。', self)
                 alert.cancelButton.hide()  # 隐藏取消按钮，必须重启
                 alert.buttonLayout.insertStretch(0, 1)
-                if alert.exec():
-                    restart()
             else:
                 print('导入失败！')
                 alert = MessageBox('导入失败！',
