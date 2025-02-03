@@ -1680,6 +1680,11 @@ if __name__ == '__main__':
     os.environ['QT_SCALE_FACTOR'] = str(scale_factor)
     logger.info(f"当前缩放系数：{scale_factor * 100}%")
 
+    app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+    share.create(1)  # 创建共享内存
+    logger.info(f"共享内存：{share.isAttached()} 是否允许多开实例：{conf.read_conf('Other', 'multiple_programs')}")
+
     if scale_factor > 1.8 or scale_factor < 1.0:
         logger.warning("当前缩放系数可能导致显示异常，建议使缩放系数在 100% 到 180% 之间")
         msg_box = Dialog('缩放系数过大',
@@ -1689,11 +1694,6 @@ if __name__ == '__main__':
         msg_box.buttonLayout.insertStretch(0, 1)
         msg_box.setFixedWidth(550)
         msg_box.exec()
-
-    app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)
-    share.create(1)  # 创建共享内存
-    logger.info(f"共享内存：{share.isAttached()} 是否允许多开实例：{conf.read_conf('Other', 'multiple_programs')}")
 
     # 优化操作系统和版本输出
     system = platform.system()
