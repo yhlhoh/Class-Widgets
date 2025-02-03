@@ -124,24 +124,11 @@ Thanks goes to these wonderful people:
 我们目前开通了 [Discussions](https://github.com/orgs/Class-Widgets/discussions) 和 [QQ群](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=yHXKCAjOxlpTpJ4mNdXm0mxOneYUinRs&authKey=sd3%2F06iGdOZUjkXXPBeIzGnFDIeYwmdwuM8dhk25fi%2B1CUL32MkeN2EEfjdo2pzE&noverify=0&group_code=169200380)
 
 ## 星标历史
-<picture>
-  <source
-    media="(prefers-color-scheme: dark)"
-    srcset="
-      https://api.star-history.com/svg?repos=RinLit-233-shiroko/Class-Widgets&type=Date&theme=dark
-    "
-  />
-  <source
-    media="(prefers-color-scheme: light)"
-    srcset="
-      https://api.star-history.com/svg?repos=RinLit-233-shiroko/Class-Widgets&type=Date&theme=dark
-    "
-  />
-  <img
-    alt="Star History Chart"
-    src="https://api.star-history.com/svg?repos=RinLit-233-shiroko/Class-Widgets&type=Date&theme=dark"
-  />
-</picture>
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Class-Widgets/Class-Widgets&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Class-Widgets/Class-Widgets&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Class-Widgets/Class-Widgets&type=Date" />
+ </picture>
 
 ##
 这仅是我作为新人的练习作品，欢迎提供更多意见！
