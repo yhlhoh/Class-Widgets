@@ -22,7 +22,7 @@
 [![开源许可](https://img.shields.io/badge/license-GPLv3-blue.svg?label=开源许可证&style=for-the-badge)](https://github.com/RinLit-233-shiroko/Class-Widgets)
 [![下载量](https://img.shields.io/github/downloads/RinLit-233-shiroko/Class-Widgets/total.svg?label=下载量&color=green&style=for-the-badge)](https://github.com/RinLit-233-shiroko/Class-Widgets)
 [![Q群](https://img.shields.io/badge/QQ群-169200380-blue.svg?logo=qq&color=blue&style=for-the-badge)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=yHXKCAjOxlpTpJ4mNdXm0mxOneYUinRs&authKey=sd3%2F06iGdOZUjkXXPBeIzGnFDIeYwmdwuM8dhk25fi%2B1CUL32MkeN2EEfjdo2pzE&noverify=0&group_code=169200380)
-[![DC](https://img.shields.io/discord/1332636953719476284?style=for-the-badge&logo=discord&logoColor=ffffff&label=discord%20%E6%9C%8D%E5%8A%A1%E5%99%A8&labelColor=5865f2)](https://discord.gg/YxstJGn7)
+[![DC](https://img.shields.io/discord/1332636953719476284?style=for-the-badge&logo=discord&logoColor=ffffff&label=discord%20%E6%9C%8D%E5%8A%A1%E5%99%A8&labelColor=5865f2)](https://discord.gg/EFF4PpqpqZ)
 
 
 ![Banner](img/Banner.png)
