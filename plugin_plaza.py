@@ -445,6 +445,9 @@ class PluginPlaza(MSFluentWindow):
         search_scroll = self.searchInterface.findChild(SmoothScrollArea, 'search_scroll')
 
         def search(keyword):  # 搜索
+            if keyword == '/all':
+                return plugins_data
+
             result = {}
             for key, value in plugins_data.items():
                 if any(keyword.lower() in str(value.get(field, "")).lower() for field in SEARCH_FIELDS):
@@ -470,7 +473,7 @@ class PluginPlaza(MSFluentWindow):
                     plugin_card.set_img(pixmap)
 
                 keyword = self.search_plugin.text()
-                print(search(keyword))  # 结果
+                print(f'结果：{search(keyword)}')  # 结果
                 plugin_num = 0  # 计数
                 for key, data in search(keyword).items():
                     plugin_card = PluginCard_Horizontal(title=data['name'], content=data['description'],
@@ -582,9 +585,7 @@ class PluginPlaza(MSFluentWindow):
         self.load_plugins(rec_data, 'home')
 
     def load_plugins(self, p_data, page):
-        global plugins_data, search_items
-        plugins_data = p_data  # 保存插件数据
-        print(plugins_data)
+        global search_items
 
         for plugin in p_data.values():  # 遍历插件数据
             search_items.append(plugin['name'])
@@ -686,6 +687,8 @@ class PluginPlaza(MSFluentWindow):
     def get_pp_data(self):
         global plugins_data
         def callback(data):
+            global plugins_data
+            plugins_data = data  # 保存插件数据
             self.load_plugins(data, 'latest')
             self.get_tags_data()
 
