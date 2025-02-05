@@ -427,7 +427,6 @@ class PluginPlaza(MSFluentWindow):
             self.init_nav()
             self.init_window()
             self.get_pp_data()
-            self.get_tags_data()
             self.get_banner_img()
         except Exception as e:
             logger.error(f'初始化插件广场时发生错误：{e}')
@@ -577,11 +576,10 @@ class PluginPlaza(MSFluentWindow):
             self.tags_layout.addWidget(tag_link, tag_num // 3, tag_num % 3)  # 排列
             tag_num += 1
 
-        if recommend_plugins:
-            for key, data in plugins_data.items():
-                if key in recommend_plugins:
-                    rec_data[key] = data
-            self.load_plugins(rec_data, 'home')
+        for key, data in plugins_data.items():
+            if key in recommend_plugins:
+                rec_data[key] = data
+        self.load_plugins(rec_data, 'home')
 
     def load_plugins(self, p_data, page):
         global plugins_data, search_items
@@ -687,8 +685,12 @@ class PluginPlaza(MSFluentWindow):
 
     def get_pp_data(self):
         global plugins_data
+        def callback(data):
+            self.load_plugins(data, 'latest')
+            self.get_tags_data()
+
         self.get_plugin_list_thread = nt.getPluginInfo()
-        self.get_plugin_list_thread.repo_signal.connect(lambda data: self.load_plugins(data, 'latest'))
+        self.get_plugin_list_thread.repo_signal.connect(callback)
         self.get_plugin_list_thread.start()
 
     def get_tags_data(self):
