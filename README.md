@@ -83,13 +83,15 @@ Copyright © 2025 RinLit.
 
 ### 贡献者
 
-Thanks goes to these wonderful people:
+感谢以下同学为 Class Widgets 作出贡献。
 
 [![Contributors](http://contrib.nn.ci/api?repo=Class-Widgets/Class-Widgets&repo=Class-Widgets/plugin-plaza&repo=Class-Widgets/cw-interim-site)](https://github.com/Class-Widgets/Class-Widgets/graphs/contributors)
 
+如果您想要为 Class Widgets 作出贡献，请阅读[贡献指南](CONTRIBUTING.md)
+
 ### 赞助商 / Sponsors
 
-感谢以下人员对本项目的支持：
+感谢以下人员对本项目的支持。
 - [猞猁](http://dq6666.cn/)
 
 感谢以下赞助商对本项目的支持。
