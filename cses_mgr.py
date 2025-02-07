@@ -171,6 +171,8 @@ class CSES_Converter:
                     class_counter_dict[part][day] = class_counter  # 记录一个节点当天的课程数
 
                     print(timelines_part)
+                    if not timelines_part[str(day)]:  # 跳过空时间线
+                        continue
                     self.generator.add_schedule(
                         name=f'{name}_{CSES_WEEKS_TEXTS[int(day)]}',
                         enable_day=CSES_WEEKS[int(day)],
