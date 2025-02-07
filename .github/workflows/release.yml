@@ -27,14 +27,22 @@ jobs:
         run: |
           git cliff
       - name: Prepare release
-        run: mkdir release
+        run: |
+          mkdir release
+          mkdir artifacts
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: release
+          path: artifacts
           run-id: ${{ github.event.workflow_run.id }}
-      - name: Clean
-        run: rm *single\).zip
+      - name: Prepare artifacts
+        run: |
+          mv artifacts/windows-latest-x64/* release/
+          mv artifacts/windows-latest-x86/* release/
+          mv artifacts/debian10-x64/* release/
+          mv artifacts/macos-13-x64/* release/
+          mv artifacts/macos-14-arm64/* release/
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
