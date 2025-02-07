@@ -1,6 +1,7 @@
 [changelog]
-header = "## Class Widgets 新版本！"
 body = """
+
+## Class Widgets 新版本！{% if version %}({{ version }}){%- endif -%}
 {% for group, commits in commits | group_by(attribute="group") %}
 
     ### {{ group | upper_first }}
