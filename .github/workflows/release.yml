@@ -34,7 +34,7 @@ jobs:
           path: release
           run-id: ${{ github.event.workflow_run.id }}
       - name: Clean
-        run: rm *single).zip
+        run: rm "*single).zip"
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
