@@ -7,6 +7,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   generate-changelog-and-release:
     name: 生成 Changelog 并发布版本
@@ -49,3 +52,5 @@ jobs:
           files: release/*
           body_path: CHANGELOG.md
           draft: true
+        env:
+          GITHUB_TOKEN: ${{ secret.GITHUB_TOKEN }}
