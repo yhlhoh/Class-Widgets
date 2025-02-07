@@ -20,18 +20,12 @@ jobs:
       - name: Get previous tag
         uses: younited/get-previous-tag-action@v1.0.0
         id: getprevtag
-
+      - name: Set up git-cliff
+        uses: kenji-miyake/setup-git-cliff@v1
       - name: Generate a changelog
         id: generate-changelog
-        uses: orhun/git-cliff-action@v3
-        with:
-          config: cliff.toml
-          args: --verbose $PREV..$TAG
-        env:
-          PREV: ${{ steps.getprevtag.outputs.previous-tag }}
-          TAG: ${{ github.ref_name }}
-          OUTPUT: CHANGELOG.md
-          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          git cliff
       - name: Prepare release
         run: mkdir release
       - name: Download artifacts
@@ -40,7 +34,7 @@ jobs:
           path: release
           run-id: ${{ github.event.workflow_run.id }}
       - name: Clean
-        run: rm *.exe
+        run: rm *single).zip
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
