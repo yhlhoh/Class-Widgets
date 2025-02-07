@@ -417,7 +417,7 @@ class PluginCard(CardWidget):  # 插件卡片
 class TextFieldMessageBox(MessageBoxBase):
     """ Custom message box """
     def __init__(
-            self, parent=None, title='标题', text='请输入内容', default_text='', enable_check=list_.get_schedule_config()):
+            self, parent=None, title='标题', text='请输入内容', default_text='', enable_check=False):
         super().__init__(parent)
         self.fail_color = (QColor('#c42b1c'), QColor('#ff99a4'))
         self.success_color = (QColor('#0f7b0f'), QColor('#6ccb5f'))
@@ -431,13 +431,13 @@ class TextFieldMessageBox(MessageBoxBase):
         self.tipsLabel = CaptionLabel()
         self.tipsLabel.setText('')
         self.yesButton.setText('确定')
-        self.yesButton.setEnabled(False)
 
         self.fieldLayout = QVBoxLayout()
         self.textField.setPlaceholderText(default_text)
         self.textField.setClearButtonEnabled(True)
         if enable_check:
             self.textField.textChanged.connect(self.check_text)
+            self.yesButton.setEnabled(False)
 
         # 将组件添加到布局中
         self.viewLayout.addWidget(self.titleLabel)
@@ -1339,7 +1339,8 @@ class SettingsMenu(FluentWindow):
                 self.conf_combo.setCurrentIndex(-1)  # 取消
                 # new_name = f'新课表 - {list.return_default_schedule_number() + 1}'
                 n2_dialog = TextFieldMessageBox(
-                    self, '请输入新课表名称：', '请命名您的课程表计划：', '新课表 - 1'
+                    self, '请输入新课表名称',
+                    '请命名您的课程表计划：', '新课表 - 1', list_.get_schedule_config()
                 )
                 if not n2_dialog.exec():
                     return
