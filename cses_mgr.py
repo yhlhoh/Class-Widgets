@@ -158,6 +158,7 @@ class CSES_Converter:
                             class_counter += 1
 
                             if subject == '未添加':  # 跳过未添加的科目
+                                time_counter += int(time)  # 时间叠加
                                 continue
 
                             class_dict['subject'] = subject
@@ -173,6 +174,7 @@ class CSES_Converter:
                     print(timelines_part)
                     if not timelines_part[str(day)]:  # 跳过空时间线
                         continue
+
                     self.generator.add_schedule(
                         name=f'{name}_{CSES_WEEKS_TEXTS[int(day)]}',
                         enable_day=CSES_WEEKS[int(day)],
