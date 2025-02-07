@@ -122,8 +122,8 @@ jobs:
             --add-data LICENSE:. \
             --add-data plugins:plugins
           
-          zip -r -q "zip/Class Widgets-${{ matrix.arch }} (bundle).zip" dist/Class\ Widgets.app/*
-          zip -r -q zip/Class\ Widgets-${{ matrix.arch }}.zip dist/Class\ Widgets/*
+          zip -r -q "zip/Class Widgets-macOS-${{ matrix.arch }} (bundle).zip" dist/Class\ Widgets.app/*
+          zip -r -q zip/Class\ Widgets-macOS-${{ matrix.arch }}.zip dist/Class\ Widgets/*
 
       - name: Upload unsigned application
         if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
