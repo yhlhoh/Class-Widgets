@@ -82,8 +82,8 @@ class CSES_Converter:
                     part_list.append(time)
 
                 # 时间线
-                start_time = datetime.strptime(class_['start_time'][:5], '%H:%M')
-                end_time = datetime.strptime(class_['end_time'][:5], '%H:%M')
+                start_time = datetime.strptime(str(class_['start_time'])[:5], '%H:%M')
+                end_time = datetime.strptime(str(class_['end_time'])[:5], '%H:%M')
                 class_count += 1
 
                 # 计算时长
