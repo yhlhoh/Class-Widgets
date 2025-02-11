@@ -936,6 +936,7 @@ class SettingsMenu(FluentWindow):
         te_add_part_button.clicked.connect(self.te_add_part)
 
         te_part_type_combo = self.findChild(ComboBox, 'part_type')  # 节次类型
+        te_part_type_combo.clear()
         te_part_type_combo.addItems(list_.part_type)
 
         te_name_edit = self.findChild(EditableComboBox, 'name_part_combo')  # 名称
@@ -989,7 +990,7 @@ class SettingsMenu(FluentWindow):
         QScroller.grabGesture(te_timeline_list.viewport(), QScroller.LeftMouseButtonGesture)  # 触摸屏适配
         QScroller.grabGesture(part_list.viewport(), QScroller.LeftMouseButtonGesture)  # 触摸屏适配
         self.te_detect_item()
-        self.te_detect_part()  # 修复在启动时无法添加时段到下拉框的问题
+        self.te_update_parts_name()  # 修复在启动时无法添加时段到下拉框的问题
 
     def setup_schedule_preview(self):
         subtitle = self.findChild(SubtitleLabel, 'subtitle_file')
@@ -1380,6 +1381,7 @@ class SettingsMenu(FluentWindow):
             filename = conf.read_conf('General', 'schedule')
             self.te_load_item()
             self.te_upload_list()
+            self.te_update_parts_name()
             se_load_item()
             self.se_upload_list()
             self.sp_fill_grid_row()
@@ -1705,7 +1707,7 @@ class SettingsMenu(FluentWindow):
                 aniType=FlyoutAnimationType.PULL_UP
             )
         self.te_detect_item()
-        self.te_detect_part()
+        self.te_update_parts_name()
 
     def te_delete_part(self):
         alert = MessageBox("您确定要删除这个时段吗？", "删除该节点后，将一并删除该节点下所有课程安排，且无法恢复。", self)
@@ -1803,11 +1805,11 @@ class SettingsMenu(FluentWindow):
 
             self.te_upload_list()
             self.se_upload_list()
-            self.te_detect_part()
+            self.te_update_parts_name()
         else:
             return
 
-    def te_detect_part(self):
+    def te_update_parts_name(self):
         rl = []
         te_time_combo = self.findChild(ComboBox, 'time_period')  # 时段
         te_time_combo.clear()
