@@ -77,10 +77,18 @@ class UnionUpdateTimer(QObject):
         if callback not in self.callbacks:
             self.callbacks.append(callback)
 
+    def remove_callback(self, callback):
+        """ 移除回调函数 """
+        if callback in self.callbacks:
+            self.callbacks.remove(callback)
+
+    def remove_all_callbacks(self):
+        """ 移除所有回调函数 """
+        self.callbacks = [config_center.update_conf]
+
     def start(self):  # 启动定时器
         self._schedule_next()  # 计算下次触发时间
 
 
 tray_icon = None
 update_timer = UnionUpdateTimer()
-update_timer.add_callback(config_center.update_conf)

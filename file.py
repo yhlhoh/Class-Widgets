@@ -28,6 +28,7 @@ class ConfigCenter:
     def update_conf(self):
         try:
             self.config.read_file(open(path, 'r', encoding='utf-8'))
+
             self.schedule_name = self.read_conf('General', 'schedule')
             if self.schedule_name != self.old_schedule_name:
                 logger.info(f'已切换课程表: {self.schedule_name}')

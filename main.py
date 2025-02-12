@@ -1119,7 +1119,6 @@ class FloatingWidget(QWidget):  # 浮窗
 class DesktopWidget(QWidget):  # 主要小组件
     def __init__(self, parent=WidgetsManager, path='widget-time.ui', enable_tray=False):
         super().__init__()
-        self.weather_thread = None
         self.tray_menu = None
 
         self.last_widgets = list_.get_widget_config()
@@ -1621,14 +1620,11 @@ class DesktopWidget(QWidget):  # 主要小组件
         super().closeEvent(event)
         self.destroy()
 
-        if hasattr(self, 'w_d_timer'):
-            self.w_d_timer.stop()  # 停止定时器
-        if hasattr(self, 'd_t_timer'):
-            self.d_t_timer.stop()  # 停止定时器
         if hasattr(self, 'weather_thread'):
-            self.weather_timer.stop()  # 停止定时器
             self.weather_thread.terminate()  # 终止天气线程
             self.weather_thread.quit()  # 退出天气线程
+        if hasattr(self, 'weather_timer'):
+            self.weather_timer.stop()  # 停止定时器
 
 
 def check_windows_maximize():  # 检查窗口是否最大化
@@ -1651,17 +1647,17 @@ def init_config():  # 重设配置文件
 
 def init():
     global theme, radius, mgr, screen_width, first_start, fw
+    update_timer.remove_all_callbacks()
 
     theme = config_center.read_conf('General', 'theme')  # 主题
-
     if not os.path.exists(f'{base_directory}/ui/{theme}/theme.json'):
         logger.warning(f'主题 {theme} 不存在，使用默认主题')
         theme = 'default'
+    logger.info(f'应用主题：{theme}')
 
     mgr = WidgetsManager()
     fw = FloatingWidget()
 
-    logger.info(f'应用主题：{theme}')
     # 获取屏幕横向分辨率
     screen_geometry = app.primaryScreen().availableGeometry()
     screen_width = screen_geometry.width()
