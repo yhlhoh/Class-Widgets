@@ -929,6 +929,8 @@ class openProgressDialog(QWidget):
 class FloatingWidget(QWidget):  # 浮窗
     def __init__(self):
         super().__init__()
+        self.m_flag = None
+        self.r_Position = None
         self.init_ui()
         self.init_font()
         self.position = None
@@ -1093,7 +1095,7 @@ class FloatingWidget(QWidget):  # 浮窗
             event.accept()
 
     def mouseMoveEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton and self.m_flag:
+        if event.buttons() == Qt.MouseButton.LeftButton and self.m_flag:
             self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
             event.accept()
 
