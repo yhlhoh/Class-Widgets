@@ -1197,11 +1197,10 @@ class SettingsMenu(FluentWindow):
             try:
                 with open(save_path, 'w', encoding='utf-8') as f:
                     json.dump(cw_data, f, ensure_ascii=False, indent=4)
-                    self.conf_combo.clear()
-                    self.conf_combo.addItems(list_.get_schedule_config())
+                    self.conf_combo.addItem(file_name.replace('.yaml', '.json'))
                     alert = MessageBox('您已成功导入 CSES 课程表配置文件',
                                        '请在“高级选项”中手动切换您的配置文件。', self)
-                    alert.cancelButton.hide()  # 隐藏取消按钮，必须重启
+                    alert.cancelButton.hide()
                     alert.buttonLayout.insertStretch(0, 1)
                     alert.exec()
             except Exception as e:
@@ -1242,8 +1241,7 @@ class SettingsMenu(FluentWindow):
         if file_path:
             file_name = file_path.split("/")[-1]
             if list_.import_schedule(file_path, file_name):
-                self.conf_combo.clear()
-                self.conf_combo.addItems(list_.get_schedule_config())
+                self.conf_combo.addItem(file_name)
                 alert = MessageBox('您已成功导入课程表配置文件',
                                    '请在“高级选项”中手动切换您的配置文件。', self)
                 alert.cancelButton.hide()  # 隐藏取消按钮，必须重启
