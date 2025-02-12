@@ -196,7 +196,7 @@ def get_part():
         c_time = parts_start_time[i] + dt.timedelta(seconds=time_offset)
         return c_time, int(order[i])  # 返回开始时间、Part序号
 
-    current_dt = dt.datetime.now()
+    current_dt = dt.datetime.now() + dt.timedelta(seconds=time_offset)  # 当前时间
 
     for i in range(len(parts_start_time)):  # 遍历每个Part
         time_len = dt.timedelta(minutes=0)  # Part长度
