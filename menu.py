@@ -466,11 +466,19 @@ class TextFieldMessageBox(MessageBoxBase):
 
 class SettingsMenu(FluentWindow):
     closed = pyqtSignal()
+    is_temp = False
 
     def __init__(self):
+        global filename
+        global loaded_data
         super().__init__()
         self.button_clear_log = None
         self.version_thread = None
+
+        if conf.read_conf('Temp', 'temp_schedule') :
+            self.is_temp = True
+            filename = 'backup.json'
+            loaded_data = conf.load_from_json(filename)
 
         # 创建子页面
         self.spInterface = uic.loadUi(f'{base_directory}/view/menu/preview.ui')  # 预览
@@ -919,6 +927,7 @@ class SettingsMenu(FluentWindow):
         quick_select_week_button.clicked.connect(self.se_quick_select_week)
 
     def setup_timeline_edit(self):  # 底层大改
+        filename = 'backup.json'
         self.te_load_item()  # 加载时段
         # teInterface
         te_add_button = self.findChild(ToolButton, 'add_button')  # 添加
@@ -994,7 +1003,10 @@ class SettingsMenu(FluentWindow):
 
     def setup_schedule_preview(self):
         subtitle = self.findChild(SubtitleLabel, 'subtitle_file')
-        subtitle.setText(f'预览  -  {filename[:-5]}')
+        if conf.read_conf('Temp', 'temp_schedule'):
+            subtitle.setText(f'预览  -  {conf.read_conf("General", "schedule")[:-5]} 的备份')
+        else:
+            subtitle.setText(f'预览  -  {filename[:-5]}')
 
         schedule_view = self.findChild(TableWidget, 'schedule_view')
         schedule_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)  # 使列表自动等宽
@@ -1197,10 +1209,11 @@ class SettingsMenu(FluentWindow):
             try:
                 with open(save_path, 'w', encoding='utf-8') as f:
                     json.dump(cw_data, f, ensure_ascii=False, indent=4)
-                    self.conf_combo.addItem(file_name.replace('.yaml', '.json'))
+                    self.conf_combo.clear()
+                    self.conf_combo.addItems(list_.get_schedule_config())
                     alert = MessageBox('您已成功导入 CSES 课程表配置文件',
                                        '请在“高级选项”中手动切换您的配置文件。', self)
-                    alert.cancelButton.hide()
+                    alert.cancelButton.hide()  # 隐藏取消按钮，必须重启
                     alert.buttonLayout.insertStretch(0, 1)
                     alert.exec()
             except Exception as e:
@@ -1241,7 +1254,8 @@ class SettingsMenu(FluentWindow):
         if file_path:
             file_name = file_path.split("/")[-1]
             if list_.import_schedule(file_path, file_name):
-                self.conf_combo.addItem(file_name)
+                self.conf_combo.clear()
+                self.conf_combo.addItems(list_.get_schedule_config())
                 alert = MessageBox('您已成功导入课程表配置文件',
                                    '请在“高级选项”中手动切换您的配置文件。', self)
                 alert.cancelButton.hide()  # 隐藏取消按钮，必须重启
