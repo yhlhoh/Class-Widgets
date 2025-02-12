@@ -8,7 +8,7 @@ import cses
 from datetime import datetime, timedelta
 from loguru import logger
 
-import list as list_
+import list_ as list_
 import conf
 from file import base_directory
 
