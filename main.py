@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 import traceback
-from shutil import copy, move
+from shutil import copy
 from typing import Optional
 
 from PyQt5 import uic
@@ -1653,7 +1653,7 @@ def check_windows_maximize():  # 检查窗口是否最大化
 def init_config():  # 重设配置文件
     conf.write_conf('Temp', 'set_week', '')
     if conf.read_conf('Temp', 'temp_schedule') != '':  # 修复换课重置
-        move(f'{base_directory}/config/schedule/backup.json', f'{base_directory}/config/schedule/{filename}')
+        copy(f'{base_directory}/config/schedule/backup.json', f'{base_directory}/config/schedule/{filename}')
         conf.write_conf('Temp', 'temp_schedule', '')
 
 

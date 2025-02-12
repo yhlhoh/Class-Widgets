@@ -33,18 +33,16 @@ temp_schedule = {'schedule': {}, 'schedule_even': {}}
 def open_settings():
     if conf.read_conf('Temp', 'temp_schedule'):
         w = Dialog(
-            "您即将修改备份文件",
-            "由于您正在使用临时课表，您需要在“额外选项”中管理今日课表。\n不过，您仍然可以修改课表备份文件。"
-            "\n在您下次启动 Class Widgets 时，您的修改将会生效",
+            "暂时无法使用“设置”",
+            "由于您正在使用临时课表，将无法使用“设置”的课程表功能；\n若要启用“设置”，请重新启动 Class Widgets。"
+            "\n(重启后，临时课表也将会恢复)",
             None
         )
-        w.yesButton.setText("好")
-        if w.finished == w.accepted:
-            w.exec()
-            pass
-        else:
-            w.exec()
-            return
+        w.cancelButton.hide()
+        w.buttonLayout.insertStretch(1)
+        w.exec()
+
+        return
 
     global settings
     if settings is None or not settings.isVisible():
