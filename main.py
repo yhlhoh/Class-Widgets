@@ -1093,15 +1093,19 @@ class FloatingWidget(QWidget):  # 浮窗
             event.accept()
 
     def mouseMoveEvent(self, event):
-        if Qt.MouseButton.LeftButton and self.m_flag:
+        if event.button() == Qt.MouseButton.LeftButton and self.m_flag:
             self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
             event.accept()
 
     def mouseReleaseEvent(self, event):
         self.r_Position = event.globalPos()  # 获取鼠标相对窗口的位置
         self.m_flag = False
-        if (self.r_Position == self.p_Position and not self.animating and
-                conf.read_conf('General', 'hide') == '0'):  # 开启自动隐藏忽略点击事件
+        if (
+            hasattr(self, "p_Position")
+            and self.r_Position == self.p_Position
+            and not self.animating
+            and conf.read_conf("General", "hide") == "0"
+        ):  # 开启自动隐藏忽略点击事件
             mgr.show_windows()
             self.close()
 
