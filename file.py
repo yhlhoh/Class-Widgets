@@ -41,7 +41,7 @@ class ConfigCenter:
         if section in self.config and key in self.config[section]:
             return self.config[section][key]
         elif section in self.config and key == '':
-            return self.config[section]
+            return dict(self.config[section])
         elif section in self.default_data and key in self.default_data[section]:
             logger.info('配置文件出现问题，已尝试修复')
             self.write_conf(section, key, self.default_data[section][key])
@@ -49,7 +49,7 @@ class ConfigCenter:
         elif section in self.default_data and key == '':
             logger.info('配置文件出现问题，已尝试修复')
             self.write_conf(section, '', self.default_data[section])
-            return self.default_data[section]
+            return dict(self.default_data[section])
         else:
             return None
 
