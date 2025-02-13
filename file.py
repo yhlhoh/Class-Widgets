@@ -1,5 +1,8 @@
 import json
 import os
+import sys
+from pathlib import Path
+from shutil import copy
 
 from loguru import logger
 import configparser as config
@@ -19,11 +22,12 @@ class ConfigCenter:
     def __init__(self):
         self.config = config.ConfigParser()
         self.config.read(path, encoding='utf-8')
-        self.schedule_name = self.read_conf('General', 'schedule')
-        self.old_schedule_name = self.schedule_name
-
         with open(f'{base_directory}/config/default_config.json', encoding="utf-8") as default:
             self.default_data = json.load(default)
+
+        self.check_config()
+        self.schedule_name = self.read_conf('General', 'schedule')
+        self.old_schedule_name = self.schedule_name
 
     def update_conf(self):
         try:
@@ -61,6 +65,70 @@ class ConfigCenter:
 
         with open(path, 'w', encoding='utf-8') as configfile:
             self.config.write(configfile)
+
+    def check_config(self):
+        if not os.path.exists(path):  # 如果配置文件不存在，则copy默认配置文件
+            self.config.read_dict(self.default_data)
+            with open(path, 'w', encoding='utf-8') as configfile:
+                self.config.write(configfile)
+            if sys.platform != 'win32':
+                self.config.set('General', 'hide_method', '2')
+                with open(path, 'w', encoding='utf-8') as configfile:
+                    self.config.write(configfile)
+            logger.info("配置文件不存在，已创建并写入默认配置。")
+            copy(f'{base_directory}/config/default.json', f'{base_directory}/config/schedule/新课表 - 1.json')
+        else:
+            with open(path, 'r', encoding='utf-8') as configfile:
+                self.config.read_file(configfile)
+
+            if self.config['Other']['version'] != self.default_data['Other']['version']:  # 如果配置文件版本不同，则更新配置文件
+                logger.info(f"配置文件版本不同，将重新适配")
+                try:
+                    for section, options in self.default_data.items():
+                        if section not in self.config:
+                            self.config[section] = options
+                        else:
+                            for key, value in options.items():
+                                if key not in self.config[section]:
+                                    self.config[section][key] = str(value)
+                    self.config.set('Other', 'version', self.default_data['Other']['version'])
+                    with open(path, 'w', encoding='utf-8') as configfile:
+                        self.config.write(configfile)
+                    logger.info(f"配置文件已更新")
+                except Exception as e:
+                    logger.error(f"配置文件更新失败: {e}")
+
+            if not os.path.exists(f"{base_directory}/config/schedule/{self.read_conf('General', 'schedule')}"):
+                # 如果config.ini课程表不存在，则创建
+
+                schedule_config = []
+                # 遍历目标目录下的所有文件
+                for file_name in os.listdir(f'{base_directory}/config/schedule'):
+                    # 找json
+                    if file_name.endswith('.json') and file_name != 'backup.json':
+                        # 将文件路径添加到列表
+                        schedule_config.append(file_name)
+                if not schedule_config:
+                    copy(f'{base_directory}/config/default.json',
+                         f'{base_directory}/config/schedule/{self.read_conf("General", "schedule")}')
+                    logger.info(f"课程表不存在，已创建默认课程表")
+                else:
+                    config_center.write_conf('General', 'schedule', schedule_config[0])
+            print(os.path.join(os.getcwd(), 'config', 'schedule'))
+
+        # 判断是否存在 Plugins 文件夹
+        plugins_dir = Path(base_directory) / 'plugins'
+        if not plugins_dir.exists():
+            plugins_dir.mkdir()
+            logger.info("Plugins 文件夹不存在，已创建。")
+
+        # 判断 Plugins 文件夹内是否存在 plugins_from_pp.json 文件
+        plugins_file = plugins_dir / 'plugins_from_pp.json'
+        if not plugins_file.exists():
+            with open(plugins_file, 'w', encoding='utf-8') as file:
+                # 使用 indent=4 来缩进，并确保数组元素在多行显示
+                json.dump({"plugins": []}, file, ensure_ascii=False, indent=4)
+            logger.info("plugins_from_pp.json 文件不存在，已创建。")
 
 
 class ScheduleCenter:
