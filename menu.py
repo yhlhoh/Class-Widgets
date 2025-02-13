@@ -140,7 +140,7 @@ def load_schedule_dict(schedule, part, part_name):
                     else:
                         count_num = sum(count[:int(item_name[1])])
 
-                    prefix = item[int(item_name[-1]) - 1 + count_num]
+                    prefix = item[int(item_name[2:]) - 1 + count_num]
                     period = part_name[str(item_name[1])]
                     all_class.append(f'{prefix}-{period}')
                 except IndexError or ValueError:  # 未设置值
@@ -1378,8 +1378,11 @@ class SettingsMenu(FluentWindow):
                     aniType=FlyoutAnimationType.PULL_UP
                 )
                 return
+            global loaded_data
 
             config_center.schedule_name = config_center.read_conf('General', 'schedule')
+            schedule_center.update_schedule()
+            loaded_data = schedule_center.schedule_data
             self.te_load_item()
             self.te_upload_list()
             self.te_update_parts_name()
@@ -1400,8 +1403,8 @@ class SettingsMenu(FluentWindow):
             schedule_dict_sp = schedule_even_dict
         else:
             schedule_dict_sp = schedule_dict
-        for i in range(len(schedule_dict_sp)):
-            for j in range(len(schedule_dict_sp[str(i)])):
+        for i in range(len(schedule_dict_sp)):  # 周数
+            for j in range(len(schedule_dict_sp[str(i)])):  # 一天内全部课程
                 item_text = schedule_dict_sp[str(i)][j].split('-')[0]
                 if item_text != '未添加':
                     item = QTableWidgetItem(item_text)
