@@ -107,7 +107,7 @@ Copyright © 2025 RinLit.
     </td>
     <td>
     Free code signing on Windows provided by <a href="https://signpath.io">SignPath.io</a>, certficate by <a href="https://signpath.org/">SignPath Foundation</a><br/>
-    由 <a href="https://signpath.io">SignPath.io</a> 提供代码签名，由 <a href="https://signpath.org">SignPath Foundation</a> 提供证书
+    由 <a href="https://signpath.io">SignPath.io</a> 提供 Windows 上的免费代码签名，由 <a href="https://signpath.org">SignPath Foundation</a> 提供证书
     </td>
   </tr>
 </table>
