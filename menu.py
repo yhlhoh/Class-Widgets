@@ -107,6 +107,11 @@ def switch_checked(section, key, checked):
         config_center.write_conf(section, key, '1')
     else:
         config_center.write_conf(section, key, '0')
+    if key == 'auto_startup':
+        if checked:
+            conf.add_to_startup()
+        else:
+            conf.remove_from_startup()
 
 
 def get_theme_name():

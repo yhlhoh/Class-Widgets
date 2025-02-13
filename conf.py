@@ -1,13 +1,11 @@
 import json
 import os
-import sys
 import configparser as config
 from pathlib import Path
-from shutil import copy
 
 from datetime import datetime
 from loguru import logger
-from file import base_directory, path, config_center
+from file import base_directory, config_center
 
 import list_
 
@@ -170,7 +168,7 @@ def add_shortcut(file='', icon=''):
         logger.error(f"创建桌面快捷方式时出错: {e}")
 
 
-def add_to_startup(file_path='', icon_path=''):  # 注册到开机启动
+def add_to_startup(file_path=f'{base_directory}/ClassWidgets.exe', icon_path=''):  # 注册到开机启动
     if os.name != 'nt':
         return
     if file_path == "":
