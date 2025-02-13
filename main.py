@@ -566,6 +566,8 @@ class PluginManager:  # 插件管理器
             "Notification": notification.notification_contents,  # 检测到的通知内容
 
             "PLUGIN_PATH": f'{conf.PLUGINS_DIR}/{path}',  # 传递插件目录
+            "Config_Center": config_center,  # 配置中心实例
+            "Schedule_Center": schedule_center,  # 课程表中心实例
             "Base_Directory": base_directory,  # 资源目录
             "Widgets_Mgr": mgr,  # 组件管理器实例
         }
