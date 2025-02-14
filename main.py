@@ -930,6 +930,8 @@ class openProgressDialog(QWidget):
 class FloatingWidget(QWidget):  # 浮窗
     def __init__(self):
         super().__init__()
+        self.animation_rect = None
+        self.animation = None
         self.m_Position = None
         self.p_Position = None
         self.m_flag = None
@@ -1477,9 +1479,11 @@ class DesktopWidget(QWidget):  # 主要小组件
                 self.temperature.setText(f"{db.get_weather_data('temp', weather_data)}")
                 current_city.setText(f"{db.search_by_num(config_center.read_conf('Weather', 'city'))} · "
                                      f"{weather_name}")
-                update_stylesheet = re.sub(r'border-image: url\((.*?)\);',
-                                           f"border-image: url({db.get_weather_stylesheet(db.get_weather_data('icon', weather_data))});",
-                                           self.backgnd.styleSheet())
+                update_stylesheet = re.sub(
+                    r'border-image: url\((.*?)\);',
+                    f"border-image: url({db.get_weather_stylesheet(db.get_weather_data('icon', weather_data))});",
+                    self.backgnd.styleSheet()
+                )
                 self.backgnd.setStyleSheet(update_stylesheet)
             except Exception as e:
                 logger.error(f'天气组件出错：{e}')
