@@ -219,7 +219,7 @@ def get_part():
 def get_current_lessons():  # 获取当前课程
     global current_lessons
     timeline = get_timeline_data()
-    if config_center.read_conf('General', 'enable_alt_schedule') == '1':
+    if config_center.read_conf('General', 'enable_alt_schedule') == '1' or conf.is_temp_week():
         try:
             if conf.get_week_type():
                 schedule = loaded_data.get('schedule_even')
@@ -1645,6 +1645,7 @@ def check_windows_maximize():  # 检查窗口是否最大化
 
 def init_config():  # 重设配置文件
     config_center.write_conf('Temp', 'set_week', '')
+    config_center.write_conf('Temp', 'set_schedule', '')
     if config_center.read_conf('Temp', 'temp_schedule') != '':  # 修复换课重置
         copy(f'{base_directory}/config/schedule/backup.json',
              f'{base_directory}/config/schedule/{config_center.schedule_name}')
