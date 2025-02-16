@@ -76,7 +76,8 @@ jobs:
             --add-data font:font `
             --add-data view:view `
             --add-data LICENSE:. `
-            --add-data plugins:plugins
+            --add-data plugins:plugins `
+            --hidden-import darkdetect
           ./zip -r -q "zip/ClassWidgets-Windows-${{ matrix.arch }} (Unsigned).zip" dist/ClassWidgets/*
 
       - name: Run Linux build
@@ -98,7 +99,8 @@ jobs:
             --add-data font:font \
             --add-data view:view \
             --add-data LICENSE:. \
-            --add-data plugins:plugins
+            --add-data plugins:plugins \ 
+            --hidden-import darkdetect
           zip -r -q zip/ClassWidgets-Ubuntu20.04.zip dist/ClassWidgets/*
 
       - name: Run macOS build
@@ -120,10 +122,11 @@ jobs:
             --add-data font:font \
             --add-data view:view \
             --add-data LICENSE:. \
-            --add-data plugins:plugins
+            --add-data plugins:plugins \ 
+            --hidden-import darkdetect
           
           zip -r -q "zip/Class Widgets-macOS-${{ matrix.arch }} (bundle).zip" dist/Class\ Widgets.app/*
-          zip -r -q zip/Class\ Widgets-macOS-${{ matrix.arch }}.zip dist/Class\ Widgets/*
+          zip -r -q "zip/Class Widgets-macOS-${{ matrix.arch }}.zip" dist/Class\ Widgets/*
 
       - name: Upload unsigned application
         if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
@@ -209,7 +212,8 @@ jobs:
             --add-data font:font \
             --add-data view:view \
             --add-data LICENSE:. \
-            --add-data plugins:plugins
+            --add-data plugins:plugins \ 
+            --hidden-import darkdetect
           zip -r -q zip/ClassWidgets-Debian10.zip dist/ClassWidgets/*
 
       - name: Upload
