@@ -99,7 +99,7 @@ jobs:
             --add-data font:font \
             --add-data view:view \
             --add-data LICENSE:. \
-            --add-data plugins:plugins \ 
+            --add-data plugins:plugins \
             --hidden-import darkdetect
           zip -r -q zip/ClassWidgets-Ubuntu20.04.zip dist/ClassWidgets/*
 
@@ -122,7 +122,7 @@ jobs:
             --add-data font:font \
             --add-data view:view \
             --add-data LICENSE:. \
-            --add-data plugins:plugins \ 
+            --add-data plugins:plugins \
             --hidden-import darkdetect
           
           zip -r -q "zip/Class Widgets-macOS-${{ matrix.arch }} (bundle).zip" dist/Class\ Widgets.app/*
@@ -212,7 +212,7 @@ jobs:
             --add-data font:font \
             --add-data view:view \
             --add-data LICENSE:. \
-            --add-data plugins:plugins \ 
+            --add-data plugins:plugins \
             --hidden-import darkdetect
           zip -r -q zip/ClassWidgets-Debian10.zip dist/ClassWidgets/*
 
