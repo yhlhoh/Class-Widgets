@@ -53,9 +53,10 @@
 如果您的提交是 fix（修复）类型，请您在提交信息中添加“修复”等动词和“的问题”等词汇。  
 如果您的提交是 feat（功能）类型，您可以在提交信息中添加“增加”等动词和“功能”等词汇。这不是硬性要求。
 - **注明范围（scope）**  
-如果您的提交是 feat（功能）类型，且添加的是一整个功能，您不需要注明范围；如果添加的功能是一个大功能下的小功能（如 天气（weather） 功能下的 高德地图天气 功能），请您添加范围。  
-如果您的提交是 fix（修复）类型，且修复的部分不属于下表的任何一个，您可以不添加范围；反之，请您添加范围。
+如果您的提交是 feat（功能）类型，且添加的是一整个功能，您不需要注明范围；如果添加的功能是一个大功能下的小功能（如 天气（weather） 功能下的 高德地图天气 功能），请您添加范围。   
+如果您的提交是 fix（修复）类型，且修复的部分不属于下表的任何一个，您可以不添加范围；反之，请您添加范围。  
 在文档底部有一份对照表。
+    > 啊不对现在还没有 快了快了
 
 
 ### 发起拉取请求
@@ -73,3 +74,22 @@
 ## 还有问题？
 
 您可以加入 [QQ 群](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=yHXKCAjOxlpTpJ4mNdXm0mxOneYUinRs&authKey=sd3%2F06iGdOZUjkXXPBeIzGnFDIeYwmdwuM8dhk25fi%2B1CUL32MkeN2EEfjdo2pzE&noverify=0&group_code=169200380)或 [Discord 服务器](https://discord.gg/EFF4PpqpqZ)与开发者和其他用户讨论。
+
+## 附录
+
+### 功能对照表
+
+中|英
+-:|:-
+主程序<br>小组件|/
+天气|weather
+提醒|tip
+TTS|tts
+插件广场|pp<br>plugin_plaza
+设置|settings
+设置 - 课表|schedule
+设置 - CSES|cses
+设置 - 个性化|customize
+设置 - 高级选项|advanced
+额外选项|exact
+额外选项 - 调休<br>额外选项 - 换课|temp
