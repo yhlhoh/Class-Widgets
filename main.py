@@ -29,7 +29,7 @@ import tip_toast
 import utils
 import weather_db as db
 from conf import base_directory
-from exact_menu import ExactMenu, open_settings
+from extra_menu import ExtraMenu, open_settings
 from generate_speech import generate_speech_sync, list_pyttsx3_voices
 from menu import open_plaza
 from network_thread import check_update, weatherReportThread
@@ -1385,7 +1385,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         self.tray_menu.addSeparator()
         self.tray_menu.addActions([
             Action(fIcon.SHOPPING_CART, '插件广场', triggered=open_plaza),
-            Action(fIcon.DEVELOPER_TOOLS, '额外选项', triggered=self.open_exact_menu),
+            Action(fIcon.DEVELOPER_TOOLS, '额外选项', triggered=self.open_extra_menu),
             Action(fIcon.SETTING, '设置', triggered=open_settings)
         ])
         self.tray_menu.addSeparator()
@@ -1407,7 +1407,7 @@ class DesktopWidget(QWidget):  # 主要小组件
     def rightReleaseEvent(self, event):  # 右键事件
         event.ignore()
         if event.button() == Qt.MouseButton.RightButton:
-            self.open_exact_menu()
+            self.open_extra_menu()
 
     def update_data(self, path=''):
         global current_time, current_week, start_y, time_offset, today
@@ -1556,19 +1556,19 @@ class DesktopWidget(QWidget):  # 主要小组件
         else:
             logger.error(f'获取天气数据出错：{weather_data}')
 
-    def open_exact_menu(self):
+    def open_extra_menu(self):
         global ex_menu
         if ex_menu is None or not ex_menu.isVisible():
-            ex_menu = ExactMenu()
+            ex_menu = ExtraMenu()
             ex_menu.show()
-            ex_menu.destroyed.connect(self.cleanup_exact_menu)
+            ex_menu.destroyed.connect(self.cleanup_extra_menu)
             logger.info('打开“额外选项”')
         else:
             ex_menu.raise_()
             ex_menu.activateWindow()
 
     @staticmethod
-    def cleanup_exact_menu():
+    def cleanup_extra_menu():
         global ex_menu
         ex_menu = None
 
