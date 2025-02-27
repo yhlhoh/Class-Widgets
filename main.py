@@ -35,7 +35,7 @@ from menu import open_plaza
 from network_thread import check_update, weatherReportThread
 from play_audio import play_audio
 from plugin import p_loader
-from utils import restart, share, update_timer
+from utils import restart, stop, share, update_timer
 from file import config_center, schedule_center
 
 if os.name == 'nt':
@@ -463,6 +463,10 @@ def check_fullscreen():  # 检查是否全屏
 
 class ErrorDialog(Dialog):  # 重大错误提示框
     def __init__(self, error_details='Traceback (most recent call last):', parent=None):
+        # KeyboardInterrupt 直接 exit
+        if error_details.endswith('KeyboardInterrupt') or error_details.endswith('KeyboardInterrupt\n'):
+            stop()
+        
         super().__init__(
             'Class Widgets 崩溃报告',
             '抱歉！Class Widgets 发生了严重的错误从而无法正常运行。您可以保存下方的错误信息并向他人求助。'
@@ -838,6 +842,10 @@ class WidgetsManager:
         else:
             self.hide_windows()
 
+    def stop(self):
+        for widget in self.widgets:
+            widget.stop()
+
 
 class openProgressDialog(QWidget):
     def __init__(self, action_title='打开 记事本', action='notepad'):
@@ -1186,6 +1194,7 @@ class FloatingWidget(QWidget):  # 浮窗
 class DesktopWidget(QWidget):  # 主要小组件
     def __init__(self, parent=WidgetsManager, path='widget-time.ui', enable_tray=False):
         super().__init__()
+        self.close
         self.tray_menu = None
 
         self.last_widgets = list_.get_widget_config()
@@ -1390,7 +1399,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         ])
         self.tray_menu.addSeparator()
         self.tray_menu.addAction(Action(fIcon.SYNC, '重新启动', triggered=restart))
-        self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=lambda: sys.exit()))
+        self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=stop))
         utils.tray_icon.setContextMenu(self.tray_menu)
 
         utils.tray_icon.activated.connect(self.on_tray_icon_clicked)
@@ -1815,7 +1824,7 @@ if __name__ == '__main__':
         msg_box.buttonLayout.insertStretch(0, 1)
         msg_box.setFixedWidth(550)
         msg_box.exec()
-        sys.exit(-1)
+        stop(-1)
     else:
         mgr = WidgetsManager()
 
@@ -1852,4 +1861,4 @@ if __name__ == '__main__':
         if config_center.read_conf('Other', 'auto_check_update') == '1':
             check_update()
 
-    sys.exit(app.exec())
+    stop(app.exec())
