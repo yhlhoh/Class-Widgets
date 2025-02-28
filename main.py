@@ -1194,7 +1194,7 @@ class FloatingWidget(QWidget):  # 浮窗
 class DesktopWidget(QWidget):  # 主要小组件
     def __init__(self, parent=WidgetsManager, path='widget-time.ui', enable_tray=False):
         super().__init__()
-        self.close
+
         self.tray_menu = None
 
         self.last_widgets = list_.get_widget_config()
