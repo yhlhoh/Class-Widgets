@@ -707,6 +707,11 @@ class WidgetsManager:
         self.start_pos_x = 0  # 小组件起始位置
         self.start_pos_y = 0
 
+    def sync_widget_animation(self, target_pos):
+        for widget in self.widgets:
+            if widget.path == 'widget-current-activity.ui':
+                widget.animate_expand(target_pos) # 主组件形变动画
+
     def init_widgets(self):  # 初始化小组件
         self.widgets_list = list_.get_widget_config()
         self.check_widgets_exist()
@@ -773,7 +778,8 @@ class WidgetsManager:
         screen_width = screen_geometry.width()
         screen_height = screen_geometry.height()
 
-        self.start_pos_y = int(config_center.read_conf('General', 'margin'))
+        margin = max(0, int(config_center.read_conf('General', 'margin')))
+        self.start_pos_y = margin
         self.start_pos_x = (screen_width - self.widgets_width) // 2
 
     def calculate_widgets_width(self):  # 计算小组件占用宽度
@@ -952,7 +958,7 @@ class openProgressDialog(QWidget):
         event.ignore()
         self.setMinimumWidth(0)
         self.position = self.pos()
-        # 关闭时保存一次
+        # 关闭时保存一次位置
         self.save_position()
         self.deleteLater()
         self.hide()
@@ -989,7 +995,7 @@ class FloatingWidget(QWidget):  # 浮窗
         # 加载保存的位置
         saved_pos = self.load_position()
         if saved_pos:
-            # 添加边界检查
+            # 边界检查
             saved_pos = self.adjust_position_to_screen(saved_pos)
             self.position = saved_pos
         else:
@@ -1002,11 +1008,37 @@ class FloatingWidget(QWidget):  # 浮窗
         update_timer.add_callback(self.update_data)
 
     def adjust_position_to_screen(self, pos):
-        # 确保浮窗位置在屏幕可视范围内
-        screen_geometry = QApplication.primaryScreen().availableGeometry()
-        x = max(screen_geometry.left(), min(pos.x(), screen_geometry.right() - self.width()))
-        y = max(screen_geometry.top(), min(pos.y(), screen_geometry.bottom() - self.height()))
-        return QPoint(x, y)
+        screen = QApplication.screenAt(pos)
+        if not screen:
+            screen = QApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+        window_width = self.width()
+        window_height = self.height()
+        # 计算屏幕边界
+        screen_left = screen_geometry.x()
+        screen_right = screen_geometry.x() + screen_geometry.width()
+        screen_top = screen_geometry.y()
+        screen_bottom = screen_geometry.y() + screen_geometry.height()
+
+        new_x, new_y = pos.x(), pos.y()
+        if pos.x() < screen_left:
+        # 当窗口可见部分不足50%时调整
+            visible_width = (pos.x() + window_width) - screen_left
+            if visible_width < window_width / 2:
+                new_x = screen_left
+        elif (pos.x() + window_width) > screen_right:
+            visible_width = screen_right - pos.x()
+            if visible_width < window_width / 2:
+                new_x = screen_right - window_width
+        if pos.y() < screen_top:
+            visible_height = (pos.y() + window_height) - screen_top
+            if visible_height < window_height / 2:
+                new_y = screen_top
+        elif (pos.y() + window_height) > screen_bottom:
+            visible_height = screen_bottom - pos.y()
+            if visible_height < window_height / 2:
+                new_y = screen_bottom - window_height
+        return QPoint(new_x, new_y)
     
     def save_position(self):
         pos = self.pos()
@@ -1069,6 +1101,8 @@ class FloatingWidget(QWidget):  # 浮窗
                 """)
 
     def update_data(self):
+        if self.animating:  # 执行动画时跳过更新
+            return
         self.setWindowOpacity(int(config_center.read_conf('General', 'opacity')) / 100)  # 设置窗口透明度
         cd_list = get_countdown()
         self.text_changed = False
@@ -1090,21 +1124,50 @@ class FloatingWidget(QWidget):  # 浮窗
 
     def showEvent(self, event):  # 窗口显示
         logger.info('显示浮窗')
-        self.move((screen_width - self.width()) // 2, 50)
-        if self.position:  # 位置配置
-            self.move(self.position)
-        self.animation = QPropertyAnimation(self, b'windowOpacity')  # 透明度
-        self.animation.setDuration(400)
+        current_screen = QApplication.screenAt(self.pos()) or QApplication.primaryScreen()
+        screen_geometry = current_screen.availableGeometry()
+        
+        if self.position:
+            if self.position.y() > screen_geometry.center().y():
+                # 下半屏
+                start_pos = QPoint(
+                    self.position.x(),
+                    screen_geometry.bottom() + self.height()
+                )
+            else:
+                # 上半屏
+                start_pos = QPoint(
+                    self.position.x(),
+                    screen_geometry.top() - self.height()
+                )
+        else:
+            # 默认:顶部中央滑入
+            start_pos = QPoint(
+                (screen_geometry.width() - self.width()) // 2,
+                screen_geometry.top() - self.height()
+            )
+            self.position = QPoint(
+                (screen_geometry.width() - self.width()) // 2,
+                max(50, int(config_center.read_conf('General', 'margin')))
+            )
+
+        self.animation = QPropertyAnimation(self, b'windowOpacity')
+        self.animation.setDuration(450)
         self.animation.setStartValue(0)
         self.animation.setEndValue(int(config_center.read_conf('General', 'opacity')) / 100)
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutCirc)
+        self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        self.animation_rect = QPropertyAnimation(self, b'geometry')  # 位置
-        self.animation_rect.setDuration(500)
-        self.animation_rect.setStartValue(
-            QRect((screen_width - self.width()) // 2, 0, self.width(), self.height()))
-        self.animation_rect.setEndValue(self.geometry())
-        self.animation_rect.setEasingCurve(QEasingCurve.Type.InOutCirc)
+        self.animation_rect = QPropertyAnimation(self, b'geometry')
+        self.animation_rect.setDuration(600)
+        self.animation_rect.setStartValue(QRect(start_pos, self.size()))
+        self.animation_rect.setEndValue(QRect(self.position, self.size()))
+        
+        if platform.system() == 'Darwin':
+            self.animation_rect.setEasingCurve(QEasingCurve.Type.OutQuad)
+        elif platform.system() == 'Windows':
+            self.animation_rect.setEasingCurve(QEasingCurve.Type.OutBack)
+        else:
+            self.animation_rect.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         self.animating = True
         self.animation.start()
@@ -1118,22 +1181,79 @@ class FloatingWidget(QWidget):  # 浮窗
         event.ignore()
         self.setMinimumWidth(0)
         self.position = self.pos()
-        self.animation = QPropertyAnimation(self, b'windowOpacity')
-        self.animation.setDuration(350)
-        self.animation.setEndValue(0)
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutCirc)
-
-        self.animation_rect = QPropertyAnimation(self, b'geometry')
-        self.animation_rect.setDuration(400)
-        self.animation_rect.setEndValue(
-            QRect((screen_width - self.width()) // 2, 0, self.width(),
-                  self.height()))
-        self.animation_rect.setEasingCurve(QEasingCurve.Type.InOutCirc)
-
+        current_screen = QApplication.screenAt(self.pos())
+        if not current_screen:
+            current_screen = QApplication.primaryScreen()
+        screen_geometry = current_screen.availableGeometry()
+        screen_center_y = screen_geometry.y() + (screen_geometry.height() // 2)
+        # 动态动画
+        current_pos = self.pos()
+        base_duration = 350  # 基础
+        max_duration = 550   # 最大
+        min_duration = 250   # 最小
+        # 获取主组件位置
+        main_widget = next(
+            (w for w in mgr.widgets if w.path == 'widget-current-activity.ui'), 
+            None
+        )
+        if main_widget:
+            if current_pos.y() > screen_center_y:  # 下半屏
+                # 屏幕底部
+                target_y = screen_geometry.bottom() + self.height() + 10
+                # 任务栏补偿
+                if platform.system() == "Windows":
+                    target_y += 30
+                
+                target_pos = QPoint(
+                    main_widget.x(),
+                    target_y
+                )
+                distance = abs(current_pos.y() - target_y)
+            else:  # 上半屏
+                target_pos = main_widget.pos()
+                distance = abs(current_pos.y() - target_pos.y())
+        else:
+            target_pos = QPoint(
+                screen_geometry.center().x() - self.width()//2,
+                int(config_center.read_conf('General', 'margin'))
+            )
+            distance = abs(current_pos.y() - target_pos.y())
+        
+        max_distance = screen_geometry.height()
+        distance_ratio = min(distance / max_distance, 1.0)
+        duration = int(base_duration + (max_duration - base_duration) * (distance_ratio ** 0.7))
+        duration = max(min_duration, min(duration, max_duration))
+        # 多平台兼容
+        if platform.system() == "Darwin":
+            curve = QEasingCurve.Type.OutQuad
+            duration = int(duration * 0.85)
+        elif platform.system() == "Windows":
+            curve = QEasingCurve.Type.OutCubic
+            if current_pos.y() > screen_center_y:
+                duration += 50  # 底部移动稍慢
+            curve = QEasingCurve.Type.InOutQuad
+        
+        self.animation = QPropertyAnimation(self, b"windowOpacity")
+        self.animation.setDuration(int(duration * 1.15))
+        self.animation.setStartValue(self.windowOpacity())
+        self.animation.setEndValue(0.0)
+        
+        self.animation_rect = QPropertyAnimation(self, b"geometry")
+        self.animation_rect.setDuration(duration)
+        self.animation_rect.setStartValue(self.geometry())
+        self.animation_rect.setEndValue(QRect(target_pos, self.size()))
+        self.animation_rect.setEasingCurve(curve)
+        
         self.animating = True
         self.animation.start()
         self.animation_rect.start()
-        self.animation_rect.finished.connect(self.hide)
+        
+        def cleanup():
+            self.hide()
+            self.save_position()
+            self.animating = False
+            
+        self.animation_rect.finished.connect(cleanup)
 
     def hideEvent(self, event):
         event.accept()
@@ -1381,6 +1501,16 @@ class DesktopWidget(QWidget):  # 主要小组件
                     }}
                 """)
 
+    def animate_expand(self, target_geometry):
+        self.animation = QPropertyAnimation(self, b"geometry")
+        self.animation.setDuration(400)
+        self.animation.setStartValue(QRect(target_geometry.x(), -self.height(), 
+                                          self.width(), self.height()))
+        self.animation.setEndValue(target_geometry)
+        self.animation.setEasingCurve(QEasingCurve.Type.OutBack)
+        self.raise_()
+        self.show()
+
     def init_tray_menu(self):
         if not first_start:
             return
@@ -1603,7 +1733,7 @@ class DesktopWidget(QWidget):  # 主要小组件
     def animate_window(self, target_pos):  # **初次**启动动画
         # 创建位置动画
         self.animation = QPropertyAnimation(self, b"geometry")
-        self.animation.setDuration(525)  # 持续时间
+        self.animation.setDuration(300)  # 持续时间
         if os.name == 'nt':
             self.animation.setStartValue(QRect(target_pos[0], -self.height(), self.w, self.h))
         else:
@@ -1654,10 +1784,10 @@ class DesktopWidget(QWidget):  # 主要小组件
 
     def animate_show(self):  # 显示窗口
         self.animation = QPropertyAnimation(self, b"geometry")
-        self.animation.setDuration(625)  # 持续时间
+        self.animation.setDuration(525)  # 持续时间
         # 获取当前窗口的宽度和高度，确保动画过程中保持一致
         self.animation.setEndValue(
-            QRect(self.x(), int(config_center.read_conf('General', 'margin')), self.width(), self.height()))
+        QRect(self.x(), int(config_center.read_conf('General', 'margin')), self.width(), self.height()))
         self.animation.setEasingCurve(QEasingCurve.Type.InOutCirc)  # 设置动画效果
         self.animation.finished.connect(self.clear_animation)
 
