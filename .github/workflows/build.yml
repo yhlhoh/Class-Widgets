@@ -34,6 +34,8 @@ jobs:
             arch: x86
           - os: macos-14
             arch: x64
+          - os: windows-latest
+            arch: x86
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check for new commits today
