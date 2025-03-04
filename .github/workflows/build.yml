@@ -18,11 +18,11 @@ jobs:
       fail-fast: false
       matrix:
         arch: [ x86, x64, arm64 ]
-        os: [ ubuntu-20.04, windows-latest, macos-13, macos-14 ]
+        os: [ ubuntu-latest, windows-latest, macos-13, macos-14 ]
         exclude:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             arch: x86
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             arch: arm64
           - os: macos-13
             arch: x86
@@ -142,10 +142,10 @@ jobs:
           ./zip -r -q "./zip/ClassWidgets-Windows-${{ matrix.arch }} (Unsigned).zip" ClassWidgets
 
       - name: Package (Linux)
-        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           cp -R build/main.dist ClassWidgets
-          zip -r -q ./zip/ClassWidgets-Ubuntu20.04.zip ClassWidgets
+          zip -r -q ./zip/ClassWidgets-UbuntuLatest.zip ClassWidgets
 
       - name: Package (macOS)
         if: ${{ startsWith(matrix.os, 'macos') }}
