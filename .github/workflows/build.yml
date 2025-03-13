@@ -152,13 +152,13 @@ jobs:
           zip -r -q "./zip/Class Widgets-macOS-${{ matrix.arch }}.zip" Class\ Widgets.app
 
       - name: Upload unsigned application
-        if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
+        if: ${{ matrix.os != 'windows-latest' || !startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4.4.2
         with:
           name: ${{ matrix.os }}-${{ matrix.arch }}
           path: ./zip
       - name: Upload unsigned single file
-        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
+        if: ${{ matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/') }}
         id: upload-unsigned-artifact
         uses: actions/upload-artifact@v4.4.2
         with:
@@ -176,12 +176,12 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: '.\ClassWidgets'
       - name: Recompress
-        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/') }}
         run: |
           del "zip/ClassWidgets-Windows-${{ matrix.arch }} (Unsigned).zip"
           ./zip -r -q zip/ClassWidgets-Windows-${{ matrix.arch }}.zip ClassWidgets
       - name: Upload signed application
-        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4.4.2
         with:
           name: windows-latest-${{ matrix.arch }}
