@@ -35,7 +35,6 @@ jobs:
       - name: Prepare artifacts
         run: |
           mv artifacts/windows-latest-x64/* release/
-          mv artifacts/windows-latest-x86/* release/
           mv artifacts/debian10-x64/* release/
           mv artifacts/macos-13-x64/* release/
           mv artifacts/macos-14-arm64/* release/
