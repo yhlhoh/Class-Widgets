@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "0 16 * * *"
   workflow_dispatch:
+  push:
+    tags:
+      - v*
 
 concurrency:
   group: build-${{ github.ref }}
@@ -47,7 +50,7 @@ jobs:
             arch: x86
     runs-on: ${{ matrix.os }}
     needs: check_commit
-    if: ${{ needs.check_commit.outputs.has-new-commit == 'true' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+    if: ${{ needs.check_commit.outputs.has-new-commit == 'true' || github.event_name == 'workflow_dispatch' || (startsWith(github.ref, 'refs/tags/') && github.event_name != 'schedule') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -260,4 +263,4 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
     uses: ./.github/workflows/release.yml
     with:
-      runid: ${{ github.run_id }}
+      run_id: ${{ github.run_id }}
