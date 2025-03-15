@@ -93,25 +93,6 @@ jobs:
           product-name: Class Widgets
           file-version: 1.1.7.1
           windows-icon-from-ico: ./img/favicon.ico
-      - name: Build (Linux)
-        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          mode: standalone
-          script-name: main.py
-          output-file: ClassWidgets
-          enable-plugins: pyqt5
-          include-data-files: LICENSE=LICENSE
-          include-data-dir: |
-            audio=audio
-            config=config
-            font=font
-            img=img
-            plugins=plugins
-            ui=ui
-            view=view
-          include-package: pyttsx3.drivers
-          linux-icon: ./img/favicon.ico
       - name: Build (macOS)
         if: ${{ startsWith(matrix.os, 'macos') }}
         uses: Nuitka/Nuitka-Action@main
@@ -142,17 +123,11 @@ jobs:
           xcopy build\main.dist\* ClassWidgets\ /e/y
           ./zip -r -q "./zip/ClassWidgets-Windows-${{ matrix.arch }} (Unsigned).zip" ClassWidgets
 
-      - name: Package (Linux)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          cp -R build/main.dist ClassWidgets
-          zip -r -q ./zip/ClassWidgets-UbuntuLatest.zip ClassWidgets
-
       - name: Package (macOS)
         if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
           cp -R build/main.app Class\ Widgets.app
-          zip -r -q "./zip/Class Widgets-macOS-${{ matrix.arch }}.zip" Class\ Widgets.app
+          zip -r -q "./zip/ClassWidgets-macOS-${{ matrix.arch }}.zip" Class\ Widgets.app
 
       - name: Upload unsigned application
         if: ${{ matrix.os != 'windows-latest' || !startsWith(github.ref, 'refs/tags/') }}
