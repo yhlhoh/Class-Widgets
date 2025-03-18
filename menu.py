@@ -12,6 +12,7 @@ from PyQt5.QtCore import Qt, QTime, QUrl, QDate, pyqtSignal
 from PyQt5.QtGui import QIcon, QDesktopServices, QColor
 from PyQt5.QtWidgets import QApplication, QHeaderView, QTableWidgetItem, QLabel, QHBoxLayout, QSizePolicy, \
     QSpacerItem, QFileDialog, QVBoxLayout, QScroller
+from packaging.version import Version
 from loguru import logger
 from qfluentwidgets import (
     Theme, setTheme, FluentWindow, FluentIcon as fIcon, ToolButton, ListWidget, ComboBox, CaptionLabel,
@@ -1201,15 +1202,19 @@ class SettingsMenu(FluentWindow):
                     f"检查更新失败！\n{version['error']}"
                 )
             return False
+            
+        
         channel = int(config_center.read_conf("Other", "version_channel"))
         new_version = version['version_release' if channel == 0 else 'version_beta']
+        local_version = config_center.read_conf("Other", "version")
 
-        if new_version == config_center.read_conf("Other", "version"):
-            self.version.setText(f'当前版本：{new_version}\n当前为最新版本')
+        logger.debug(f"服务端版本: {Version(new_version)}，本地版本: {Version(local_version)}")
+        if Version(new_version) <= Version(local_version):
+            self.version.setText(f'当前版本：{local_version}\n当前为最新版本')
         else:
-            self.version.setText(f'当前版本：{config_center.read_conf("Other", "version")}\n最新版本：{new_version}')
+            self.version.setText(f'当前版本：{local_version}\n最新版本：{new_version}')
 
-            if new_version != config_center.read_conf("Other", "version") and utils.tray_icon:
+            if utils.tray_icon:
                 utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
 
     def cf_import_schedule_cses(self):  # 导入课程表（CSES）
