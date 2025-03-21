@@ -303,6 +303,7 @@ class PluginCard(CardWidget):  # 插件卡片
         self.moreButton = TransparentDropDownToolButton()
         self.moreMenu = RoundMenu(parent=self.moreButton)
         self.settingsBtn = TransparentToolButton()  # 设置按钮
+        self.settingsBtn.hide()
 
         self.hBoxLayout = QHBoxLayout(self)
         self.hBoxLayout_Title = QHBoxLayout(self)
@@ -318,14 +319,13 @@ class PluginCard(CardWidget):  # 插件卡片
                 triggered=self.remove_plugin
             )
         ])
-        if enable_settings:
-            self.moreMenu.addSeparator()
-            self.moreMenu.addAction(Action(fIcon.SETTING, f'“{title}”插件设置', triggered=self.show_settings))
-        else:
-            self.settingsBtn.hide()
 
         if plugin_dir in enabled_plugins['enabled_plugins']:  # 插件是否启用
             self.enableButton.setChecked(True)
+            if enable_settings:
+                self.moreMenu.addSeparator()
+                self.moreMenu.addAction(Action(fIcon.SETTING, f'“{title}”插件设置', triggered=self.show_settings))
+                self.settingsBtn.show()
 
         self.setFixedHeight(73)
         self.iconWidget.setFixedSize(48, 48)
