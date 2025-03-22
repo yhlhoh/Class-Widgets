@@ -11,7 +11,7 @@ week_type = ['单周', '双周']
 part_type = ['节点', '休息段']
 window_status = ['无', '置于顶部', '置于底部']
 color_mode = ['浅色', '深色', '跟随系统']
-hide_mode = ['无', '上课时自动隐藏', '窗口最大化时隐藏']
+hide_mode = ['无', '上课时自动隐藏', '窗口最大化时隐藏', '灵活隐藏']
 non_nt_hide_mode = ['无', '上课时自动隐藏']
 version_channel = ['正式版 (Release)', '测试版 (Beta)']
 
