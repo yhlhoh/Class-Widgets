@@ -12,6 +12,8 @@ import conf
 from file import config_center, base_directory
 from generate_speech import TTSEngine
 
+audio_available = None
+
 system = platform.system()
 if system == 'Windows':
     try:
@@ -47,9 +49,15 @@ else:
     LINUX_VOLUME_SUPPORT = False
     MACOS_VOLUME_SUPPORT = False
 
-# 初始化pygame混音器 - 使用最小缓冲区以减少延迟
-pygame.mixer.pre_init(44100, -16, 2, 16)
-pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=16)
+try:
+    # 初始化pygame混音器 - 使用最小缓冲区以减少延迟
+    pygame.mixer.pre_init(44100, -16, 2, 16)
+    pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=16)
+    audio_available = True
+except Exception as e:
+    logger.error(f'初始化 pygame 混音器失败，将不进行音频播放: {e}')
+    audio_available = False
+    
 # 忽略警告(一些莫名的警告)
 import warnings
 warnings.filterwarnings("ignore", message="COMError attempting to get property")
@@ -58,6 +66,8 @@ audio_cache = {} # 音频缓存
 
 # 预加载常用音频文件
 def preload_audio_files():
+    if not audio_available:
+        return
     try:
         audio_files = {
             'attend_class': os.path.join(base_directory, 'audio', config_center.read_conf('Audio', 'attend_class')),
@@ -74,13 +84,16 @@ def preload_audio_files():
 
 # 应用启动时预加载音频
 try:
-    preload_audio_files()
+    if audio_available:
+        preload_audio_files()
 except Exception as e:
     logger.error(f'初始化预加载音频失败: {e}')
 
 # 音量控制器
 class VolumeController:
     def __init__(self):
+        if not audio_available:
+            return
         self.original_volumes = {}
         self.system = platform.system()
         self.is_supported = False
@@ -104,6 +117,8 @@ class VolumeController:
             self.is_supported = True
     
     def is_any_app_playing_audio(self):
+        if not audio_available:
+            return False
         """检测是否有应用正在播放音频"""
         if not self.is_supported:
             return False
@@ -143,6 +158,8 @@ class VolumeController:
             return False
     
     def lower_other_apps_volume(self, target_ratio=0.1, duration=0.2):
+        if not audio_available:
+            return
         """平滑降低音量"""
         if not self.is_supported or config_center.read_conf('Toast', 'smooth_volume') != '1':
             return
@@ -206,6 +223,8 @@ class VolumeController:
             logger.error(f"降低其他应用音量失败: {e}")
     
     def restore_other_apps_volume(self, duration=0.5):
+        if not audio_available:
+            return
         """平滑恢复音量"""
         if not self.is_supported or config_center.read_conf('Toast', 'smooth_volume') != '1':
             return
@@ -253,6 +272,8 @@ class VolumeController:
             logger.error(f"恢复其他应用音量失败: {e}")
     
     def _smooth_volume_change(self, volume_obj, start_vol, end_vol, duration):
+        if not audio_available:
+            return
         """Windows:平滑修改音量"""
         steps = max(3, int(duration * 8))
         for i in range(1, steps + 1):
@@ -270,11 +291,15 @@ class PlayAudio(QThread):
         self.tts_delete_after = tts_delete_after
 
     def run(self):
+        if not audio_available:
+            return
         play_audio(self.file_path, self.tts_delete_after)
         self.play_back_signal.emit(True)
 
 
 def play_audio(file_path: str, tts_delete_after: bool = False):
+    if not audio_available:
+        return
     global sound
     volume_controller = None
     volume_adjusted = False
