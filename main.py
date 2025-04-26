@@ -358,6 +358,26 @@ def get_countdown(toast=False):  # 重构好累aaaa
             if not return_text:
                 return_text = ['目前课程已结束', f'00:00', 100]
         else:
+            prepare_minutes_str = config_center.read_conf('Toast', 'prepare_minutes')
+            if prepare_minutes_str != '0' and toast:
+                prepare_minutes = int(prepare_minutes_str)
+                if current_dt == c_time - dt.timedelta(minutes=prepare_minutes):
+                    next_lesson_name = None
+                    next_lesson_key = None
+                    if timeline_data:
+                        for key in sorted(timeline_data.keys()):
+                            if key.startswith(f'a{str(part)}'):
+                                next_lesson_key = key
+                                break
+                    if next_lesson_key and next_lesson_key in current_lessons:
+                        lesson_name = current_lessons[next_lesson_key]
+                        if lesson_name != '暂无课程':
+                            next_lesson_name = lesson_name
+                    if current_state == 0:
+                        now = dt.datetime.now()
+                        if not last_notify_time or (now - last_notify_time).seconds >= notify_cooldown:
+                            if next_lesson_name != None:
+                                    notification.push_notification(3, next_lesson_name)
             if f'a{part}1' in timeline_data:
                 time_diff = c_time - current_dt
                 minute, sec = divmod(time_diff.seconds, 60)
