@@ -207,6 +207,10 @@ class ExtraMenu(FluentWindow):
 
         self.addSubInterface(self.interface, fIcon.INFO, '更多设置')
 
+    def closeEvent(self, e):
+        self.deleteLater()
+        return super().closeEvent(e)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
