@@ -649,12 +649,6 @@ class ErrorDialog(Dialog):  # 重大错误提示框
         if event.button() == Qt.LeftButton:
             self.is_dragging = False
 
-    def closeEvent(self, event):
-        global error_dialog
-        error_dialog = False
-        event.ignore()
-        self.hide()
-        self.deleteLater()
 
 
 class PluginManager:  # 插件管理器
@@ -954,36 +948,29 @@ class WidgetsManager:
 
     def cleanup_resources(self):
         self.hide_status = None # 重置hide_status
-        for widget in self.widgets:
+        widgets_to_clean = list(self.widgets)
+        self.widgets.clear()
+        for widget in widgets_to_clean:
+            widget_path = getattr(widget, 'path', '未知组件')
             try:
-                widget.deleteLater()
-
                 if hasattr(widget, 'weather_timer') and widget.weather_timer:
                     try:
                         widget.weather_timer.stop()
                     except RuntimeError:
-                        logger.warning(f"组件: {widget.path} 的天气定时器已被销毁，跳过操作")
-
+                        pass
                 if hasattr(widget, 'weather_thread') and widget.weather_thread:
                     try:
                         if widget.weather_thread.isRunning():
-                            widget.weather_thread.terminate()
                             widget.weather_thread.quit()
-                            widget.weather_thread.wait()
-                        else:
-                            logger.debug(f"组件: {widget.path} 的天气线程已完成任务并销毁，无需终止")
+                            if not widget.weather_thread.wait(500):
+                                logger.warning(f"组件 {widget_path} 的天气线程未正常退出，强制终止")
+                                widget.weather_thread.terminate()
+                                widget.weather_thread.wait()
                     except RuntimeError:
-                        logger.warning(f"组件: {widget.path} 的天气线程终止时发生异常，可能已被销毁")
+                        pass
+                widget.deleteLater()
             except Exception as ex:
-                widget_path = getattr(widget, 'path', 'unknown')
                 logger.error(f"清理组件 {widget_path} 时发生异常: {ex}")
-        self.widgets.clear()
-
-    def __del__(self):
-        self.cleanup_resources()
-        if hasattr(self, 'timer'):
-            self.timer.stop()
-            del self.timer
 
     def stop(self):
         if mgr:
@@ -2139,39 +2126,6 @@ class DesktopWidget(QWidget):  # 主要小组件
             self.opacity_animation.stop()
         self.close()
 
-def closeEvent(self, event):
-    if QApplication.instance().closingDown():
-        if mgr:
-            mgr.hide_status = None # 重置hide_status
-
-        if hasattr(self, 'weather_thread') and self.weather_thread:
-            try:
-                if self.weather_thread.isRunning():
-                    self.weather_thread.terminate()  # 终止天气线程
-                    self.weather_thread.quit()      # 退出天气线程
-                    self.weather_thread.wait()      # 等待线程结束
-                else:
-                    logger.debug("天气线程已完成任务并销毁，无需终止")
-            except RuntimeError:
-                logger.warning("天气线程终止过程中发生异常，可能已被销毁")
-            finally:
-                del self.weather_thread  # 删除引用以避免重复操作
-
-        if hasattr(self, 'weather_timer') and self.weather_timer:
-            try:
-                self.weather_timer.stop()  # 停止定时器
-            except RuntimeError:
-                logger.warning("天气定时器已被销毁，跳过停止操作")
-            finally:
-                del self.weather_timer  # 删除引用以避免重复操作
-        event.accept()
-        stop(0)
-
-    for child in self.findChildren(QObject):
-        child.deleteLater()
-    super().closeEvent(event)
-    self.deleteLater()
-    self.destroy()
 
 def check_windows_maximize():  # 检查窗口是否最大化
     if os.name != 'nt':
@@ -2246,22 +2200,6 @@ def check_windows_maximize():  # 检查窗口是否最大化
     return len(max_windows) > 0
 
 
-def setup_signal_handlers():
-    def shutdown(signum, frame):
-        if hasattr(shutdown, '_called'):  # 防止重复处理
-            return
-        shutdown._called = True
-        logger.debug(f"收到终止信号: {signum}, 执行清理")
-        if mgr:
-            mgr.cleanup_resources()  # 清理所有小资源
-        stop(0)
-    
-    signal.signal(signal.SIGTERM, shutdown)  # taskkill
-    signal.signal(signal.SIGINT, shutdown)   # Ctrl+C
-    signal.signal(signal.SIGABRT, shutdown)  # 异常中止
-    if os.name == 'posix':
-        signal.signal(signal.SIGQUIT, shutdown)  # POSIX退出
-        signal.signal(signal.SIGHUP, shutdown)   # 终端断开
 
 def init_config():  # 重设配置文件
     config_center.write_conf('Temp', 'set_week', '')
@@ -2307,8 +2245,39 @@ def init():
     first_start = False
 
 
+def setup_signal_handlers_optimized(app):
+    """退出信号处理器"""
+    def signal_handler(signum, frame):
+        logger.debug(f'收到信号 {signal.Signals(signum).name},退出...')
+        # utils.stop 处理退出
+        utils.stop(0)
+
+    signal.signal(signal.SIGTERM, signal_handler)  # taskkill
+    signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
+    if os.name == 'posix':
+        signal.signal(signal.SIGQUIT, signal_handler) # 终端退出
+        signal.signal(signal.SIGHUP, signal_handler)  # 终端挂起
+
 if __name__ == '__main__':
-    setup_signal_handlers()
+    if share.attach() and config_center.read_conf('Other', 'multiple_programs') != '1':
+        logger.debug('不允许多开实例')
+        from qfluentwidgets import Dialog
+        app = QApplication.instance() or QApplication(sys.argv)
+        dlg = Dialog(
+            'Class Widgets 正在运行',
+            'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
+            '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)'
+        )
+        dlg.yesButton.setText('好')
+        dlg.cancelButton.hide()
+        dlg.buttonLayout.insertStretch(0, 1)
+        dlg.setFixedWidth(550)
+        dlg.exec()
+        sys.exit(0)
+    if not share.create(1):
+        print(f'无法创建共享内存: {share.errorString()}') # logger 可能还没准备好
+        sys.exit(1)
+
     scale_factor = float(config_center.read_conf('General', 'scale'))
     os.environ['QT_SCALE_FACTOR'] = str(scale_factor)
     logger.info(f"当前缩放系数：{scale_factor * 100}%")
@@ -2360,6 +2329,8 @@ if __name__ == '__main__':
         stop(-1)
     else:
         mgr = WidgetsManager()
+        app.aboutToQuit.connect(mgr.cleanup_resources)
+        setup_signal_handlers_optimized(app)
 
         if config_center.read_conf('Other', 'initialstartup') == '1':  # 首次启动
             try:
@@ -2398,8 +2369,6 @@ if __name__ == '__main__':
         if config_center.read_conf('Other', 'auto_check_update') == '1':
             check_update()
 
-    if __name__ == '__main__':
-        try:
-            sys.exit(app.exec())
-        finally:
-            stop(0)
+    status = app.exec()
+
+    utils.stop(status)
