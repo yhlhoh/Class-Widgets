@@ -84,10 +84,13 @@ if os.name == 'nt':
     import pygetwindow
 
 # 适配高DPI缩放
-QApplication.setHighDpiScaleFactorRoundingPolicy(
-    Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+if platform.system() == 'Windows' and platform.release() not in ['7', 'XP', 'Vista']:
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+else:
+    logger.warning('不兼容的系统,跳过高DPI标识')
 
 today = dt.date.today()
 
@@ -162,6 +165,11 @@ sys.excepthook = global_exceptHook  # 设置全局异常捕获
 
 
 def setTheme_():  # 设置主题
+    if platform.system() == 'Windows' and platform.release() == '7':
+        setTheme(Theme.LIGHT)
+        logger.warning('不支持的系统,强制使用亮色主题')
+        return
+
     if config_center.read_conf('General', 'color_mode') == '2':  # 自动
         if platform.system() == 'Darwin' and Version(platform.mac_ver()[0]) < Version('10.14'):
             return
@@ -1320,7 +1328,10 @@ class FloatingWidget(QWidget):  # 浮窗
         self.activity_countdown.setStyleSheet(f"color: {time_color.name()};")
         if self.animating:  # 执行动画时跳过更新
             return
-        self.setWindowOpacity(int(config_center.read_conf('General', 'opacity')) / 100)  # 设置窗口透明度
+        if platform.system() == 'Windows' and platform.release() != '7':
+            self.setWindowOpacity(int(config_center.read_conf('General', 'opacity')) / 100)  # 设置窗口透明度
+        else:
+            self.setWindowOpacity(1.0)
         cd_list = get_countdown()
         self.text_changed = False
         if self.current_lesson_name_text.text() != current_lesson_name:
@@ -1643,20 +1654,27 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         if hasattr(self, 'img'):  # 自定义图片主题兼容
             img = self.findChild(QLabel, 'img')
-            opacity = QGraphicsOpacityEffect(self)
-            opacity.setOpacity(0.65)
-            img.setGraphicsEffect(opacity)
+            if platform.system() == 'Windows' and platform.release() != '7':
+                opacity = QGraphicsOpacityEffect(self)
+                opacity.setOpacity(0.65)
+                img.setGraphicsEffect(opacity)
 
         self.resize(self.w, self.height())
 
         # 设置窗口位置
         if first_start:
             self.animate_window(self.position)
-            self.setWindowOpacity(int(config_center.read_conf('General', 'opacity')) / 100)
+            if platform.system() == 'Windows' and platform.release() != '7':
+                self.setWindowOpacity(int(config_center.read_conf('General', 'opacity')) / 100)
+            else:
+                self.setWindowOpacity(1.0)
         else:
-            self.setWindowOpacity(0)
-            self.animate_show_opacity()
-            self.move(self.position[0], self.position[1])
+            if platform.system() == 'Windows' and platform.release() != '7':
+                self.setWindowOpacity(0)
+                self.animate_show_opacity()
+            else:
+                self.setWindowOpacity(1.0)
+                self.move(self.position[0], self.position[1])
             self.resize(self.w, self.height())
 
         self.update_data('')
@@ -2169,8 +2187,6 @@ class DesktopWidget(QWidget):  # 主要小组件
             else:
                 mgr.show_windows()
                 mgr.hide_status = (current_state, 0)
-                
-            
         else:
             event.ignore()
 
