@@ -698,19 +698,6 @@ class SettingsMenu(FluentWindow):
         save_config_button = self.findChild(PrimaryPushButton, 'save_config')
         save_config_button.clicked.connect(self.ct_save_widget_config)
 
-        # set_wcc_title = self.findChild(LineEdit, 'set_wcc_title')  # 倒计时标题
-        # set_wcc_title.setText(config_center.read_conf('Date', 'cd_text_custom'))
-        # set_wcc_title.textChanged.connect(
-        #     lambda: config_center.write_conf('Date', 'cd_text_custom', set_wcc_title.text()))
-
-        # set_countdown_date = self.findChild(CalendarPicker, 'set_countdown_date')  # 倒计时日期
-        # if config_center.read_conf('Date', 'countdown_date') != '':
-        #     set_countdown_date.setDate(QDate.fromString(config_center.read_conf('Date', 'countdown_date'), 'yyyy-M-d'))
-        # set_countdown_date.dateChanged.connect(
-        #     lambda: config_center.write_conf(
-        #         'Date', 'countdown_date', set_countdown_date.date.toString('yyyy-M-d'))
-        # )
-
         set_ac_color = self.findChild(PushButton, 'set_ac_color')  # 主题色
         set_ac_color.clicked.connect(self.ct_set_ac_color)
         set_fc_color = self.findChild(PushButton, 'set_fc_color')
@@ -1988,7 +1975,7 @@ class SettingsMenu(FluentWindow):
         if selected_items:
             selected_item = selected_items[0]
             selected_item.setText(
-                f"{cd_set_countdown_date.text().replace('/', '-')} - {cd_text_cd.text()}"
+                f"{cd_set_countdown_date.date.toString('yyyy-M-d')} - {cd_text_cd.text()}"
             )
 
     def cd_delete_item(self):
@@ -2003,7 +1990,7 @@ class SettingsMenu(FluentWindow):
         cd_text_cd = self.findChild(LineEdit, 'text_cd')
         cd_set_countdown_date = self.findChild(CalendarPicker, 'set_countdown_date')
         cd_countdown_list.addItem(
-            f'{cd_set_countdown_date.text().replace("/", "-")} - {cd_text_cd.text()}'
+            f"{cd_set_countdown_date.date.toString('yyyy-M-d')} - {cd_text_cd.text()}"
         )
 
     def cd_save_item(self):
