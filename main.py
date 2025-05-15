@@ -131,6 +131,7 @@ last_error_time = dt.datetime.now() - error_cooldown  # 上一次错误
 
 ex_menu = None
 dark_mode_watcher = None
+was_floating_mode = False  # 浮窗状态
 
 if config_center.read_conf('Other', 'do_not_log') != '1':
     logger.add(f"{base_directory}/log/ClassWidgets_main_{{time}}.log", rotation="1 MB", encoding="utf-8",
@@ -1010,8 +1011,12 @@ class WidgetsManager:
             widget.animate_show()
 
     def clear_widgets(self):
-        if fw.isVisible():
+        global fw, was_floating_mode
+        if fw and fw.isVisible():
             fw.close()
+            was_floating_mode = True
+        else:
+            was_floating_mode = False
         for widget in self.widgets:
             widget.animate_hide_opacity()
         for widget in self.widgets:
@@ -1815,13 +1820,14 @@ class DesktopWidget(QWidget):  # 主要小组件
             else:
                 self.setWindowOpacity(1.0)
         else:
+            self.move(self.position[0], self.position[1])
+            self.resize(self.w, self.height())
             if platform.system() == 'Windows' and platform.release() != '7':
                 self.setWindowOpacity(0)
                 self.animate_show_opacity()
             else:
                 self.setWindowOpacity(1.0)
-                self.move(self.position[0], self.position[1])
-            self.resize(self.w, self.height())
+                self.show()
 
         self.update_data('')
 
@@ -2007,7 +2013,7 @@ class DesktopWidget(QWidget):  # 主要小组件
             return
 
         utils.tray_icon = utils.TrayIcon(self)
-        utils.tray_icon.setToolTip(f"ClassWidgets - {config_center.schedule_name[:-5]}")
+        utils.tray_icon.setToolTip(f"Class Widgets - {config_center.schedule_name[:-5]}")
         self.tray_menu = SystemTrayMenu(title='Class Widgets', parent=self)
         self.tray_menu.addActions([
             Action(fIcon.HIDE, '完全隐藏/显示小组件', triggered=lambda: self.hide_show_widgets()),
@@ -2679,7 +2685,7 @@ def init_config():  # 重设配置文件
 
 
 def init():
-    global theme, radius, mgr, screen_width, first_start, fw
+    global theme, radius, mgr, screen_width, first_start, fw, was_floating_mode
     update_timer.remove_all_callbacks()
 
     theme = config_center.read_conf('General', 'theme')  # 主题
@@ -2702,11 +2708,15 @@ def init():
             widgets.remove(widget)  # 移除不存在的组件(确保移除插件后不会出错)
 
     mgr.init_widgets()
+    if not first_start and was_floating_mode:
+        if fw:
+            fw.show()
+            mgr.full_hide_windows()
 
     update_timer.add_callback(mgr.update_widgets)
     update_timer.start()
 
-    logger.info(f'Class Widgets 启动。版本: {config_center.read_conf("Other", "version")}')
+    logger.info(f'Class Widgets 初始化完成。版本: {config_center.read_conf("Other", "version")}')
     p_loader.run_plugins()  # 运行插件
 
     first_start = False
@@ -2787,7 +2797,7 @@ if __name__ == '__main__':
 
     logger.info(f"操作系统：{system}，版本：{osRelease}/{osVersion}")
 
-    list_pyttsx3_voices()
+    # list_pyttsx3_voices()
 
     if share.attach() and config_center.read_conf('Other', 'multiple_programs') != '1':
         msg_box = Dialog(
