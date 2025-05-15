@@ -1644,13 +1644,20 @@ class FloatingWidget(QWidget):  # 浮窗
         hide_mode = config_center.read_conf('General', 'hide')
         if hide_mode == '1' or hide_mode == '2':
              return # 阻止手动展开/收起
-
         if (
                 hasattr(self, "p_Position")
                 and self.r_Position == self.p_Position
                 and not self.animating
         ): # 非特定隐藏模式下执行点击事件
-            mgr.show_windows()
+            if hide_mode == '3':
+                if mgr.state:
+                    mgr.decide_to_hide()
+                    mgr.hide_status = (current_state, 1)
+                else:
+                    mgr.show_windows()
+                    mgr.hide_status = (current_state, 0)
+            elif hide_mode == '1': 
+                mgr.show_windows()
             self.close()
 
     def focusInEvent(self, event):
