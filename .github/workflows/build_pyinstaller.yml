@@ -19,36 +19,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  builder_matrix:
+  build:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x86, x64 ]
-        os: [ windows-latest ]
+        include:
+          - arch: x86
+            os: windows-latest
+          - arch: x64
+            os: windows-latest
     runs-on: ${{ matrix.os }}
     if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == '${{ matrix.arch }}'))
-
+      github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     steps:
+      - name: 跳过构建
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.architecture != 'all' && github.event.inputs.architecture != matrix.arch
+        run: echo "跳过构建"
+
       - name: Checkout repository
+        if: github.event_name == 'pull_request' || github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch
         uses: actions/checkout@v4.2.2
 
       - name: Setup Python
+        if: github.event_name == 'pull_request' || github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch
         uses: actions/setup-python@v5.3.0
         with:
           python-version: '3.8.10'
           architecture: ${{ matrix.arch }}
 
       - name: Setup uv
+        if: github.event_name == 'pull_request' || github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch
         uses: astral-sh/setup-uv@v4
 
       - name: Prepare output directory
+        if: github.event_name == 'pull_request' || github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch
         run: |
           if (Test-Path zip) { Remove-Item zip -Recurse -Force }
           mkdir zip
 
       - name: Run Windows build & package
+        if: github.event_name == 'pull_request' || github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch
         run: |
           curl -o zip.exe -L http://www.stahlworks.com/dev/zip.exe
           uv venv
@@ -71,7 +81,8 @@ jobs:
           ./zip -r -q zip/ClassWidgets-Windows-${{ matrix.arch }}.zip dist/ClassWidgets/*
 
       - name: Upload build artifact
+        if: github.event_name == 'pull_request' || github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch
         uses: actions/upload-artifact@v4.4.2
         with:
-          name: windows-latest-${{ matrix.arch }}
+          name: windows-debug-${{ matrix.arch }}
           path: zip
