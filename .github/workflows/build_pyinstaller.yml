@@ -1,9 +1,18 @@
 name: 临时构建(pyinstaller)
 
 on:
-  push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      architecture:
+        description: '构建架构'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - x86
+          - x64
+          - all
 
 concurrency:
   group: build-${{ github.ref }}
@@ -17,6 +26,9 @@ jobs:
         arch: [ x86, x64 ]
         os: [ windows-latest ]
     runs-on: ${{ matrix.os }}
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == '${{ matrix.arch }}'))
 
     steps:
       - name: Checkout repository
