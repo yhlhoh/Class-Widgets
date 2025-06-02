@@ -125,7 +125,7 @@ jobs:
       - name: Comment summary on PR
         uses: peter-evans/create-or-update-comment@v4
         with:
-          issue-number: ${{ github.event.pull_request.number}}
+          issue-number: ${{ github.event.pull_request.number }}
           body: |
             **🧪 Python 静态检查汇总（自动注释已附加）**
             
@@ -233,10 +233,11 @@ jobs:
 
       - name: Run Windows build & package
         if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        shell: pwsh
         run: |
           curl -o zip.exe -L http://www.stahlworks.com/dev/zip.exe
-          uv venv
-          .venv\Scripts\activate
+          uv venv --path .venv
+          .venv\Scripts\activate.ps1
           uv pip install -r requirements.txt pyinstaller
           pyinstaller main.py `
             -w `
