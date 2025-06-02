@@ -34,13 +34,12 @@ jobs:
   lint:
     name: Python Syntax Check
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target'
     permissions:
       contents: read
       pull-requests: write
 
     steps:
-      - name: Checkout PR (merged ref)
+      - name: Checkout PR (merge ref)
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
@@ -51,23 +50,20 @@ jobs:
         with:
           python-version: "3.8"
 
-      - name: Install linters
+      - name: Install linters and tools
         run: |
           pip install ruff pylint
+          npm install -g pyright
+          pip install sarif-om
 
       - name: Detect changed Python files
         id: changed
         run: |
-          echo "🔍 获取合并前后的改动文件..."
-          changed_files=$(git diff --name-only HEAD^ HEAD | grep '\.py$' || true)
+          echo "🔍 获取改动 Python 文件..."
+          changed=$(git diff --name-only HEAD^ HEAD | grep '\.py$' || true)
           echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$changed_files" >> $GITHUB_OUTPUT
+          echo "$changed" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Show changed files (debug)
-        run: |
-          echo "📝 检测到的 Python 改动文件："
-          echo "${{ steps.changed.outputs.changed_files }}"
 
       - name: Skip if no Python files changed
         if: steps.changed.outputs.changed_files == ''
@@ -75,15 +71,33 @@ jobs:
           echo "✅ 没有 Python 文件改动，跳过检查"
           exit 0
 
-      - name: Run ruff
-        id: ruff
+      - name: Run Ruff (with SARIF)
         continue-on-error: true
         run: |
           echo "${{ steps.changed.outputs.changed_files }}" > changed_files.txt
-          ruff $(cat changed_files.txt) > ruff_output.txt || true
-          cat ruff_output.txt
+          cat changed_files.txt | xargs ruff --output-format sarif > ruff.sarif || true
 
-      - name: Run pylint
+      - name: Upload Ruff annotations
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ruff.sarif
+          category: ruff
+
+      - name: Run Pyright and convert to SARIF
+        id: pyright
+        continue-on-error: true
+        run: |
+          pyright $(cat changed_files.txt) --outputjson > pyright_raw.json || true
+          curl -sSL https://raw.githubusercontent.com/yuchanns/pyright-to-sarif/main/pyright2sarif.py -o pyright2sarif.py
+          python pyright2sarif.py pyright_raw.json pyright.sarif || true
+
+      - name: Upload Pyright annotations
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pyright.sarif
+          category: pyright
+
+      - name: Run PyLint
         id: pylint
         continue-on-error: true
         run: |
@@ -91,41 +105,34 @@ jobs:
           cat pylint_output.txt
           grep -q "fatal" pylint_output.txt && exit 1 || true
 
-      - name: Prepare comment content
+      - name: Prepare PR comment
         id: comment_summary
         run: |
-          echo "ruff_output<<EOF" >> $GITHUB_OUTPUT
-          head -c 5000 ruff_output.txt || echo '无警告 🎉' >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "pylint_fatal<<EOF" >> $GITHUB_OUTPUT
-          grep -i 'fatal' pylint_output.txt || echo '无致命错误 🎉' >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "pylint_fatal<<EOF"
+            grep -i 'fatal' pylint_output.txt || echo '无 PyLint 致命错误 🎉'
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
-      - name: Comment results on PR
+      - name: Comment summary on PR
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            **🧪 PyLint 检查结果**
-              <details><summary>🐍 Ruff 警告</summary>
-      
-            ```
-            ${{ steps.comment_summary.outputs.ruff_output }}
-            ```
-
-            </details>
-            <details><summary>🚨 PyLint 致命错误</summary>
+            **🧪 Python 静态检查汇总（自动注释已附加）**
             
+            <details><summary>🚨 PyLint 致命错误</summary>
+
             ```
             ${{ steps.comment_summary.outputs.pylint_fatal }}
             ```
 
             </details>
 
-      - name: Stop build on fatal error
+      - name: Fail on fatal issues
         if: steps.pylint.outcome == 'failure'
         run: |
-          echo "⛔ 检测到 PyLint 致命错误，终止构建流程"
+          echo "❌ 存在 PyLint 致命错误，终止流程"
           exit 1
 
   build:
@@ -139,7 +146,7 @@ jobs:
           - arch: x64
             os: windows-latest
     env:
-      BUILD_TRIGGERED: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch' }}
+      BUILD_TRIGGERED: ${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch') && 'true' || 'false' }}
     runs-on: ${{ matrix.os }}
     if: |
       github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request_target'
@@ -149,28 +156,28 @@ jobs:
         run: echo "Skip build ${{ matrix.arch }}"
 
       - name: Checkout repository
-        if: env.BUILD_TRIGGERED && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: actions/checkout@v4.2.2
 
       - name: Setup Python
-        if: env.BUILD_TRIGGERED && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: actions/setup-python@v5.3.0
         with:
           python-version: '3.8.10'
           architecture: ${{ matrix.arch }}
 
       - name: Setup uv
-        if: env.BUILD_TRIGGERED && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: astral-sh/setup-uv@v4
 
       - name: Prepare output directory
-        if: env.BUILD_TRIGGERED && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         run: |
           if (Test-Path zip) { Remove-Item zip -Recurse -Force }
           mkdir zip
 
       - name: Set Build Info
-        if: env.BUILD_TRIGGERED && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         shell: bash
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -205,7 +212,7 @@ jobs:
           echo "🧪 BUILD_TYPE:  $build_type"
 
       - name: Run Windows build & package
-        if: env.BUILD_TRIGGERED && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         run: |
           curl -o zip.exe -L http://www.stahlworks.com/dev/zip.exe
           uv venv
@@ -228,7 +235,7 @@ jobs:
           ./zip -r -q zip/ClassWidgets_${{ github.run_id }}-${{ matrix.arch }}.zip dist/ClassWidgets/*
 
       - name: Upload build artifact
-        if: env.BUILD_TRIGGERED && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: actions/upload-artifact@v4.4.2
         with:
           name: windows-${{ matrix.arch }}_debug_#${{ github.run_number }}
