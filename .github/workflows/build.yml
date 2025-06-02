@@ -114,7 +114,7 @@ jobs:
             comtypes
           disable-console: true
           product-name: Class Widgets
-          file-version: 1.1.7.1
+          file-version: 1.1.7.2
           windows-icon-from-ico: ./img/favicon.ico
       - name: Build (macOS)
         if: ${{ startsWith(matrix.os, 'macos') }}
@@ -136,7 +136,7 @@ jobs:
           macos-app-icon: ./img/favicon.icns
           macos-signed-app-name: cn.rinlit.classwidgets
           macos-app-name: Class Widgets
-          macos-app-version: 1.1.7.1
+          macos-app-version: 1.1.7.2
 
 
       - name: Package (Windows)
