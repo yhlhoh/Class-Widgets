@@ -22,6 +22,7 @@ on:
           - x86
           - x64
           - all
+
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
@@ -167,18 +168,15 @@ jobs:
         uses: actions/checkout@v4.2.2
 
       - name: Setup Python
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: actions/setup-python@v5.3.0
         with:
           python-version: '3.8.10'
           architecture: ${{ matrix.arch }}
 
       - name: Setup uv
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: astral-sh/setup-uv@v4
 
       - name: Cache Python dependencies
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
@@ -186,18 +184,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-uv-
 
-      - name: Install dependencies
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
-        run: uv pip install -r requirements.txt pyinstaller
+      - name: Create venv and install dependencies
+        shell: pwsh
+        run: |
+          uv venv --path .venv
+          $env:UV_VENV_PATH = ".venv"
+          uv pip install --system -r requirements.txt pyinstaller
 
       - name: Prepare output directory
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         run: |
           if (Test-Path zip) { Remove-Item zip -Recurse -Force }
           mkdir zip
 
       - name: Set Build Info
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         shell: bash
         env:
           PR_NUMBER: ${{ github.event.pull_request.number || 0 }}
@@ -232,13 +231,10 @@ jobs:
           echo "🧪 BUILD_TYPE:  $build_type"
 
       - name: Run Windows build & package
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         shell: pwsh
         run: |
           curl -o zip.exe -L http://www.stahlworks.com/dev/zip.exe
-          uv venv --path .venv
-          .venv\Scripts\activate.ps1
-          uv pip install -r requirements.txt pyinstaller
+          .\.venv\Scripts\activate.ps1
           pyinstaller main.py `
             -w `
             -i ./img/favicon.ico `
@@ -256,7 +252,6 @@ jobs:
           ./zip -r -q zip/ClassWidgets_${{ github.run_id }}-${{ matrix.arch }}.zip dist/ClassWidgets/*
 
       - name: Upload build artifact
-        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: actions/upload-artifact@v4.4.2
         with:
           name: windows-${{ matrix.arch }}_debug_#${{ github.run_number }}
