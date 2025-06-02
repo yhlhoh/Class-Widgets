@@ -91,21 +91,35 @@ jobs:
           cat pylint_output.txt
           grep -q "fatal" pylint_output.txt && exit 1 || true
 
+      - name: Prepare comment content
+        id: comment_summary
+        run: |
+          echo "ruff_output<<EOF" >> $GITHUB_OUTPUT
+          head -c 5000 ruff_output.txt || echo '无警告 🎉' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "pylint_fatal<<EOF" >> $GITHUB_OUTPUT
+          grep -i 'fatal' pylint_output.txt || echo '无致命错误 🎉' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Comment results on PR
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             **🧪 PyLint 检查结果**
-            <details><summary>🐍 Ruff 警告</summary>
-            ```txt
-            $(cat ruff_output.txt | head -c 5000 || echo '无警告 🎉')
+              <details><summary>🐍 Ruff 警告</summary>
+      
             ```
+            ${{ steps.comment_summary.outputs.ruff_output }}
+            ```
+
             </details>
             <details><summary>🚨 PyLint 致命错误</summary>
-            ```txt
-            $(cat pylint_output.txt | grep -i 'fatal' || echo '无致命错误 🎉')
+            
             ```
+            ${{ steps.comment_summary.outputs.pylint_fatal }}
+            ```
+
             </details>
 
       - name: Stop build on fatal error
@@ -183,7 +197,7 @@ jobs:
           config_text="${config_text//__BUILD_RUNID__/$build_runid}"
           config_text="${config_text//__BUILD_TYPE__/$build_type}"
           printf "%s" "$config_text" > "$config_path"
-          echo "🧾 写入的构建信息："
+          echo "📜 写入的构建信息："
           echo "⏰ BUILD_TIME(UTC+8):   $build_time"
           echo "🔗 COMMIT_HASH: $build_commit"
           echo "🌿 BRANCH:      $build_branch"
