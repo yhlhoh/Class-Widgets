@@ -72,7 +72,11 @@ jobs:
       - name: Set Build Info
         shell: bash
         run: |
-          build_time=$(date -u -d "+8 hours" +"%Y-%m-%d %H:%M")
+          if [[ "$(uname)" == "Darwin" ]]; then
+            build_time=$(date -u -v+8H +"%Y-%m-%d %H:%M")
+          else
+            build_time=$(date -u -d "+8 hours" +"%Y-%m-%d %H:%M")
+          fi
           build_commit="${GITHUB_SHA:0:7}"
           build_branch="${GITHUB_REF_NAME}"
           build_runid="${GITHUB_RUN_ID}"
@@ -227,7 +231,11 @@ jobs:
       - name: Set Build Info
         shell: bash
         run: |
-          build_time=$(date -u -d "+8 hours" +"%Y-%m-%d %H:%M")
+          if [[ "$(uname)" == "Darwin" ]]; then
+            build_time=$(date -u -v+8H +"%Y-%m-%d %H:%M")
+          else
+            build_time=$(date -u -d "+8 hours" +"%Y-%m-%d %H:%M")
+          fi
           build_commit="${GITHUB_SHA:0:7}"
           build_branch="${GITHUB_REF_NAME}"
           build_runid="${GITHUB_RUN_ID}"
