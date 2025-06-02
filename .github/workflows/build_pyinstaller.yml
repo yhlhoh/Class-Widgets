@@ -51,10 +51,17 @@ jobs:
         with:
           python-version: "3.8"
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
+
       - name: Install linters and tools
         run: |
           pip install ruff pylint
-          npm install -g pyright
           pip install sarif-om
 
       - name: Detect changed Python files
@@ -118,7 +125,7 @@ jobs:
       - name: Comment summary on PR
         uses: peter-evans/create-or-update-comment@v4
         with:
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ github.event.pull_request.number}}
           body: |
             **🧪 Python 静态检查汇总（自动注释已附加）**
             
@@ -137,7 +144,6 @@ jobs:
           exit 1
 
   build:
-    needs: lint
     strategy:
       fail-fast: false
       matrix:
@@ -171,6 +177,19 @@ jobs:
         if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         uses: astral-sh/setup-uv@v4
 
+      - name: Cache Python dependencies
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install dependencies
+        if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
+        run: uv pip install -r requirements.txt pyinstaller
+
       - name: Prepare output directory
         if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         run: |
@@ -181,8 +200,8 @@ jobs:
         if: env.BUILD_TRIGGERED == 'true' && (github.event.inputs.architecture == 'all' || github.event.inputs.architecture == matrix.arch)
         shell: bash
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BRANCH: ${{ github.event.pull_request.head.repo.owner.login }}:${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number || 0 }}
+          PR_BRANCH: ${{ github.event.pull_request.head.repo.owner.login || github.repository_owner }}:${{ github.event.pull_request.head.ref || github.ref_name }}
         run: |
           build_time=$(date -u -d "+8 hours" +"%Y-%m-%d %H:%M")
           build_commit="${GITHUB_SHA:0:7}"
