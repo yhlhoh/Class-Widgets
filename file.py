@@ -9,6 +9,8 @@ import configparser
 from packaging.version import Version
 import configparser as config
 
+import utils
+
 base_directory = Path(os.path.dirname(os.path.abspath(__file__)))
 '''
 if str(base_directory).endswith('MacOS'):
