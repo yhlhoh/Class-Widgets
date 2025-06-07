@@ -9,7 +9,6 @@ import configparser
 from packaging.version import Version
 import configparser as config
 
-import utils
 
 base_directory = Path(os.path.dirname(os.path.abspath(__file__)))
 '''
@@ -61,6 +60,7 @@ class ConfigCenter:
             dlg.buttonLayout.insertStretch(0, 1)
             dlg.setFixedWidth(550)
             dlg.exec()
+            import utils
             utils.stop(0)
 
     def _load_user_config(self):
