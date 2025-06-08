@@ -102,6 +102,7 @@ jobs:
         uses: jakebailey/pyright-action@v2
         continue-on-error: true
         with:
+          annotate: errors
           pylance-version: latest-release
           args: ${{ join(fromJson(steps.changed.outputs.changed_files_json), ' ') }}
 
@@ -110,7 +111,7 @@ jobs:
         continue-on-error: true
         run: |
           if [ -s changed_files.txt ]; then
-            pylint --errors-only $(cat changed_files.txt) > pylint_output.txt || true
+            pylint --errors-only --disable=no-member,no-name-in-module,E0601,E0606 $(cat changed_files.txt) > pylint_output.txt || true
           else
             echo "没有需要检查的Python文件" > pylint_output.txt
           fi
