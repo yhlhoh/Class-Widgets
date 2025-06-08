@@ -23,7 +23,7 @@ from qfluentwidgets import (
     CalendarPicker, BodyLabel, ColorDialog, isDarkTheme, TimeEdit, EditableComboBox, MessageBoxBase,
     SearchLineEdit, Slider, PlainTextEdit, ToolTipFilter, ToolTipPosition, RadioButton, HyperlinkLabel,
     PrimaryDropDownPushButton, Action, RoundMenu, CardWidget, ImageLabel, StrongBodyLabel,
-    TransparentDropDownToolButton, Dialog, SmoothScrollArea, TransparentToolButton, HyperlinkButton, HyperlinkLabel
+    TransparentDropDownToolButton, Dialog, SmoothScrollArea, TransparentToolButton, HyperlinkButton, HyperlinkLabel, themeColor
 )
 
 import conf
@@ -2008,25 +2008,82 @@ class SettingsMenu(FluentWindow):
             print(f'切换配置文件时发生错误：{e}')
             logger.error(f'切换配置文件时发生错误：{e}')
 
+    def check_and_disable_schedule_edit(self):
+        """检查是否存在调休状态，如果存在则禁用课程表编辑功能"""
+        adjusted_classes = schedule_center.schedule_data.get('adjusted_classes', {})
+        is_adjusted = bool(adjusted_classes)
+
+        if is_adjusted:
+            se_set_button = self.findChild(ToolButton, 'set_button')
+            se_clear_button = self.findChild(ToolButton, 'clear_button')
+            se_class_kind_combo = self.findChild(ComboBox, 'class_combo')
+            se_custom_class_text = self.findChild(LineEdit, 'custom_class')
+            se_save_button = self.findChild(PrimaryPushButton, 'save_schedule')
+            se_copy_schedule_button = self.findChild(PushButton, 'copy_schedule')
+            quick_set_schedule = self.findChild(ListWidget, 'subject_list')
+            quick_select_week_button = self.findChild(PushButton, 'quick_select_week')
+            se_set_button.setEnabled(False)
+            se_clear_button.setEnabled(False)
+            se_class_kind_combo.setEnabled(False)
+            se_custom_class_text.setEnabled(False)
+            se_save_button.setEnabled(False)
+            se_copy_schedule_button.setEnabled(False)
+            quick_set_schedule.setEnabled(False)
+            quick_select_week_button.setEnabled(False)
+
+    def check_and_disable_timeline_edit(self):
+        """检查是否存在调休状态，如果存在则禁用时间线编辑功能"""
+        adjusted_classes = schedule_center.schedule_data.get('adjusted_classes', {})
+        is_adjusted = bool(adjusted_classes)
+        if is_adjusted:
+            te_add_button = self.findChild(ToolButton, 'add_button')
+            te_add_part_button = self.findChild(ToolButton, 'add_part_button')
+            te_delete_part_button = self.findChild(ToolButton, 'delete_part_button')
+            te_edit_button = self.findChild(ToolButton, 'edit_button')
+            te_delete_button = self.findChild(ToolButton, 'delete_button')
+            te_save_button = self.findChild(PrimaryPushButton, 'save')
+            te_add_button.setEnabled(False)
+            te_add_part_button.setEnabled(False)
+            te_delete_part_button.setEnabled(False)
+            te_edit_button.setEnabled(False)
+            te_delete_button.setEnabled(False)
+            te_save_button.setEnabled(False)
+
     def sp_fill_grid_row(self):  # 填充预览表格
         subtitle = self.findChild(SubtitleLabel, 'subtitle_file')
-        subtitle.setText(f'预览  -  {config_center.schedule_name[:-5]}')
+        adjusted_classes = schedule_center.schedule_data.get('adjusted_classes', {})
+
         sp_week_type_combo = self.findChild(ComboBox, 'pre_week_type_combo')
-        schedule_view = self.findChild(TableWidget, 'schedule_view')
-        schedule_view.setRowCount(sp_get_class_num())
         if sp_week_type_combo.currentIndex() == 1:
             schedule_dict_sp = schedule_even_dict
+            week_type = 'even'
         else:
             schedule_dict_sp = schedule_dict
+            week_type = 'odd'
+        is_adjusted = any(adjusted_classes.get(f'{week_type}_{i}', False) for i in range(len(schedule_dict_sp)))
+        schedule_name = config_center.schedule_name[:-5]
+        if is_adjusted:
+            subtitle.setText(f'预览  -  [调休] {schedule_name}')
+        else:
+            subtitle.setText(f'预览  -  {schedule_name}')
+        schedule_view = self.findChild(TableWidget, 'schedule_view')
+        schedule_view.setRowCount(sp_get_class_num())
+
         for i in range(len(schedule_dict_sp)):  # 周数
             for j in range(len(schedule_dict_sp[str(i)])):  # 一天内全部课程
                 item_text = schedule_dict_sp[str(i)][j].split('-')[0]
                 if item_text != '未添加':
-                    item = QTableWidgetItem(item_text)
+                    if adjusted_classes.get(f'{week_type}_{i}', False):
+                        item = QTableWidgetItem(f'{item_text}')
+                        color = themeColor()
+                        color.setAlpha(64)
+                        item.setBackground(color)
+                    else:
+                        item = QTableWidgetItem(item_text)
                 else:
                     item = QTableWidgetItem('')
                 schedule_view.setItem(j, i, item)
-                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)  # 设置单元格文本居中对齐
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
     # 加载时间线
     def te_load_item(self):
@@ -2633,6 +2690,8 @@ class SettingsMenu(FluentWindow):
     def init_window(self):
         self.stackedWidget.setCurrentIndex(0)  # 设置初始页面
         self.load_all_item()
+        self.check_and_disable_schedule_edit()
+        self.check_and_disable_timeline_edit()
         self.setMinimumWidth(700)
         self.setMinimumHeight(400)
         self.navigationInterface.setExpandWidth(250)
