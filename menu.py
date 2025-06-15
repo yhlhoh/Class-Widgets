@@ -1274,6 +1274,11 @@ class SettingsMenu(FluentWindow):
             lambda checked: config_center.write_conf('General', 'blur_floating_countdown', int(checked))
         )
 
+        switch_enable_display_full_next_lessons = self.findChild(SwitchButton, 'switch_enable_display_full_next_lessons')
+        switch_enable_display_full_next_lessons.setChecked(int(config_center.read_conf('General', 'enable_display_full_next_lessons')))
+        switch_enable_display_full_next_lessons.checkedChanged.connect(
+            lambda checked: switch_checked('General', 'enable_display_full_next_lessons', checked))
+
         select_weather_api = self.findChild(ComboBox, 'select_weather_api')  # 天气API选择
         select_weather_api.addItems(weather.weather_manager.api_config['weather_api_list_zhCN'])
         select_weather_api.setCurrentIndex(weather.weather_manager.api_config['weather_api_list'].index(
