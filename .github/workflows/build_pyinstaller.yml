@@ -61,14 +61,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-python-
 
-      - name: Install project dependencies
-        run: |
-          pip install -r requirements.txt
-  
-      - name: Install linters and tools
-        run: |
-          pip install ruff pylint pyright
-
       - name: Detect changed Python files
         id: changed
         run: |
@@ -89,6 +81,11 @@ jobs:
         run: |
           echo "✅ 没有 Python 文件改动，跳过检查"
           echo "::set-output name=should_skip_lint::true"
+      - name: Install linters, tools and project dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ruff pylint pyright
+          pip install -r requirements.txt
 
       - name: Run Ruff
         if: steps.changed.outputs.has_changed_files == 'true'
@@ -265,7 +262,6 @@ jobs:
             --add-data font:font `
             --add-data view:view `
             --add-data LICENSE:. `
-            --add-data plugins:plugins `
             --hidden-import darkdetect
           ./zip -r -q zip/ClassWidgets_${{ github.run_id }}-${{ matrix.arch }}.zip dist/ClassWidgets/*
 
