@@ -197,6 +197,12 @@ jobs:
           report="## 🧪 静态检查结果\n\n"
           report+="> 检查已完成,以下为结果~喵~\n\n"
           report+="🕒 **检查时间**：$(date '+%Y-%m-%d %H:%M:%S UTC')\n"
+          commit_msg=$(git log -1 --pretty=format:'%s' HEAD)
+          commit_hash=$(git log -1 --pretty=format:'%h' HEAD)
+          commit_full_hash=$(git log -1 --pretty=format:'%H' HEAD)
+          repo_url="https://github.com/${{ github.repository }}"
+          short_link="**[${commit_hash}](${repo_url}/commit/${commit_full_hash})**"
+          report+="📝 提交信息：${short_link} ${commit_msg}\n"
           file_count=$(echo '${{ needs.detect-changes.outputs.changed_files_json }}' | jq '. | length')
           file_list=$(echo '${{ needs.detect-changes.outputs.changed_files_json }}' | jq -r '.[] | "`" + . + "`"' | paste -sd ',' - | sed 's/,/, /g')
           report+="📁 检查的文件数：${file_count} 个 [${file_list}]\n\n"
