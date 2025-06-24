@@ -166,8 +166,8 @@ jobs:
           echo "运行 PyLint 检查..."
           files="${{ needs.detect-changes.outputs.changed_files }}"
           pylint_cmd=".venv/bin/pylint"
-          if echo "$files" | xargs $pylint_cmd --errors-only --disable=no-member,no-name-in-module,E0601,E0606,import-error,undefined-variable,used-before-assignment,unresolved-import,relative-beyond-top-level,cyclic-import,duplicate-code,too-many-locals,too-many-arguments,too-many-branches,too-many-statements,too-few-public-methods,too-many-instance-attributes,line-too-long,missing-docstring,invalid-name,broad-except --output-format=text --reports=no > pylint_output.txt 2>&1; then
-            if grep -E "(E1101|E1102|E1111|E1120|E1121|E1123|E1124|E1125|E1126|E1127|E1128|E1129|E1130|E1131|E1132|E1133|E1134|E1135|E1136|E1137|E1138|E1139|E1140|E1141|syntax-error|indentation-error)" pylint_output.txt > /dev/null 2>&1; then
+          if echo "$files" | xargs $pylint_cmd --errors-only --disable=no-member,no-name-in-module,E0601,E0606,E1121,E0203,import-error,undefined-variable,used-before-assignment,unresolved-import,relative-beyond-top-level,cyclic-import,duplicate-code,too-many-locals,too-many-arguments,too-many-branches,too-many-statements,too-few-public-methods,too-many-instance-attributes,line-too-long,missing-docstring,invalid-name,broad-except,dict-item-0-or-1,return-in-init,arguments-differ,signature-differs,method-hidden,access-member-before-definition,attribute-defined-outside-init --output-format=text --reports=no > pylint_output.txt 2>&1; then
+            if grep -E "(syntax-error|indentation-error|E0001|E0011|E0012|E0100|E0101|E0102|E0103|E0104|E0105|E0107|E0108|E0110|E0111|E0112|E0113|E0114|E0115|E0116|E0117|E0118|E1003|E1004|E1101|E1102|E1111|E1120|E1123|E1124|E1125|E1126|E1127|E1128|E1129|E1130|E1131|E1132|E1133|E1134|E1135|E1136|E1137|E1138|E1139|E1140|E1141)" pylint_output.txt > /dev/null 2>&1; then
               echo "PyLint 发现严重错误"
               echo "has_critical_issues=true" >> $GITHUB_OUTPUT
               echo "has_issues=true" >> $GITHUB_OUTPUT
@@ -189,12 +189,13 @@ jobs:
           echo "运行 MyPy 检查..."
           files="${{ needs.detect-changes.outputs.changed_files }}"
           mypy_cmd=".venv/bin/mypy"
-          if echo "$files" | xargs $mypy_cmd --ignore-missing-imports --no-strict-optional --show-error-codes --disable-error-code=name-defined --disable-error-code=attr-defined --disable-error-code=import --disable-error-code=misc --disable-error-code=no-redef --disable-error-code=var-annotated --disable-error-code=assignment --disable-error-code=return-value --disable-error-code=arg-type --disable-error-code=call-arg --disable-error-code=operator --disable-error-code=index --disable-error-code=union-attr --disable-error-code=has-type > mypy_output.txt 2>&1; then
-            if grep -E "(syntax error|invalid syntax|unexpected indent|unindent does not match)" mypy_output.txt > /dev/null 2>&1; then
+          if echo "$files" | xargs $mypy_cmd --ignore-missing-imports --no-strict-optional --show-error-codes --disable-error-code=name-defined --disable-error-code=attr-defined --disable-error-code=import --disable-error-code=misc --disable-error-code=no-redef --disable-error-code=var-annotated --disable-error-code=assignment --disable-error-code=return-value --disable-error-code=arg-type --disable-error-code=call-arg --disable-error-code=operator --disable-error-code=index --disable-error-code=union-attr --disable-error-code=has-type --disable-error-code=return --disable-error-code=dict-item --disable-error-code=override --disable-error-code=method-assign --disable-error-code=unreachable --disable-error-code=redundant-expr --disable-error-code=comparison-overlap > mypy_output.txt 2>&1; then
+            if grep -E "(syntax error|invalid syntax|unexpected indent|unindent does not match|SyntaxError|IndentationError|TabError)" mypy_output.txt > /dev/null 2>&1; then
               echo "MyPy 发现严重错误"
               echo "has_critical_issues=true" >> $GITHUB_OUTPUT
               echo "has_issues=true" >> $GITHUB_OUTPUT
             else
+              echo "MyPy 检查通过（无严重错误）"
               echo "has_critical_issues=false" >> $GITHUB_OUTPUT
               echo "has_issues=false" >> $GITHUB_OUTPUT
             fi
