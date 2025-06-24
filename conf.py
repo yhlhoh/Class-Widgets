@@ -282,7 +282,7 @@ def save_widget_conf_to_json(new_data: Dict[str, Any]) -> bool:
         return False
 
 
-def load_plugins() -> Dict[Dict[str, str]]:  # 加载插件配置文件
+def load_plugins() -> Dict[str, Dict[str, str]]:  # 加载插件配置文件
     plugin_dict = {}
     for folder in Path(PLUGINS_DIR).iterdir():
         if folder.is_dir() and (folder / 'plugin.json').exists():
