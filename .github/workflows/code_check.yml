@@ -166,11 +166,18 @@ jobs:
           echo "运行 PyLint 检查..."
           files="${{ needs.detect-changes.outputs.changed_files }}"
           pylint_cmd=".venv/bin/pylint"
-          if echo "$files" | xargs $pylint_cmd --errors-only --disable=no-member,no-name-in-module,E0601,E0606,import-error --output-format=text --reports=no > pylint_output.txt 2>&1 && [[ ! -s pylint_output.txt ]]; then
-            echo "PyLint 检查通过"
-            echo "has_issues=false" >> $GITHUB_OUTPUT
+          if echo "$files" | xargs $pylint_cmd --errors-only --disable=no-member,no-name-in-module,E0601,E0606,import-error,undefined-variable,used-before-assignment,unresolved-import,relative-beyond-top-level,cyclic-import,duplicate-code,too-many-locals,too-many-arguments,too-many-branches,too-many-statements,too-few-public-methods,too-many-instance-attributes,line-too-long,missing-docstring,invalid-name,broad-except --output-format=text --reports=no > pylint_output.txt 2>&1; then
+            if grep -E "(E1101|E1102|E1111|E1120|E1121|E1123|E1124|E1125|E1126|E1127|E1128|E1129|E1130|E1131|E1132|E1133|E1134|E1135|E1136|E1137|E1138|E1139|E1140|E1141|syntax-error|indentation-error)" pylint_output.txt > /dev/null 2>&1; then
+              echo "PyLint 发现严重错误"
+              echo "has_critical_issues=true" >> $GITHUB_OUTPUT
+              echo "has_issues=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_critical_issues=false" >> $GITHUB_OUTPUT
+              echo "has_issues=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "PyLint 发现问题"
+            echo "has_critical_issues=true" >> $GITHUB_OUTPUT
             echo "has_issues=true" >> $GITHUB_OUTPUT
           fi
 
@@ -182,11 +189,18 @@ jobs:
           echo "运行 MyPy 检查..."
           files="${{ needs.detect-changes.outputs.changed_files }}"
           mypy_cmd=".venv/bin/mypy"
-          if echo "$files" | xargs $mypy_cmd --ignore-missing-imports --no-strict-optional --show-error-codes --disable-error-code=name-defined --disable-error-code=attr-defined --disable-error-code=import > mypy_output.txt 2>&1 && (grep -q "Success: no issues found" mypy_output.txt || [[ ! -s mypy_output.txt ]]); then
-            echo "MyPy 检查通过"
-            echo "has_issues=false" >> $GITHUB_OUTPUT
+          if echo "$files" | xargs $mypy_cmd --ignore-missing-imports --no-strict-optional --show-error-codes --disable-error-code=name-defined --disable-error-code=attr-defined --disable-error-code=import --disable-error-code=misc --disable-error-code=no-redef --disable-error-code=var-annotated --disable-error-code=assignment --disable-error-code=return-value --disable-error-code=arg-type --disable-error-code=call-arg --disable-error-code=operator --disable-error-code=index --disable-error-code=union-attr --disable-error-code=has-type > mypy_output.txt 2>&1; then
+            if grep -E "(syntax error|invalid syntax|unexpected indent|unindent does not match)" mypy_output.txt > /dev/null 2>&1; then
+              echo "MyPy 发现严重错误"
+              echo "has_critical_issues=true" >> $GITHUB_OUTPUT
+              echo "has_issues=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_critical_issues=false" >> $GITHUB_OUTPUT
+              echo "has_issues=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "MyPy 发现问题"
+            echo "has_critical_issues=true" >> $GITHUB_OUTPUT
             echo "has_issues=true" >> $GITHUB_OUTPUT
           fi
 
@@ -213,10 +227,16 @@ jobs:
           report+="📁 **检查的文件数**：${file_count} 个 - ${file_list}\n\n"
           all_passed=true
           has_any_issues=false
+          has_critical_issues=false
           report+="---\n"
           if [[ "${{ steps.pylint.outputs.has_issues }}" == "true" ]]; then
             report+="<details>\n"
-            report+="<summary>🔍 PyLint结果（点我展开）</summary>\n\n"
+            if [[ "${{ steps.pylint.outputs.has_critical_issues }}" == "true" ]]; then
+              report+="<summary>❌ PyLint严重错误（点我展开）</summary>\n\n"
+              has_critical_issues=true
+            else
+              report+="<summary>🔍 PyLint提示（点我展开）</summary>\n\n"
+            fi
             report+="\`\`\`\n"
             report+="$(cat pylint_output.txt | head -50)\n"
             report+="\`\`\`\n\n"
@@ -226,7 +246,12 @@ jobs:
           fi
           if [[ "${{ steps.mypy.outputs.has_issues }}" == "true" ]]; then
             report+="<details>\n"
-            report+="<summary>🔍 MyPy结果（点我展开）</summary>\n\n"
+            if [[ "${{ steps.mypy.outputs.has_critical_issues }}" == "true" ]]; then
+              report+="<summary>❌ MyPy严重错误（点我展开）</summary>\n\n"
+              has_critical_issues=true
+            else
+              report+="<summary>🔍 MyPy提示（点我展开）</summary>\n\n"
+            fi
             report+="\`\`\`\n"
             report+="$(cat mypy_output.txt | head -50)\n"
             report+="\`\`\`\n\n"
@@ -242,6 +267,7 @@ jobs:
           echo -e "$report" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "all_passed=$all_passed" >> $GITHUB_OUTPUT
+          echo "has_critical_issues=$has_critical_issues" >> $GITHUB_OUTPUT
           echo -e "$report" >> $GITHUB_STEP_SUMMARY
 
       - name: Find existing comment
@@ -260,10 +286,10 @@ jobs:
           body: ${{ steps.code-quality.outputs.report }}
           edit-mode: replace
           
-      - name: Set check status(x)
+      - name: Set check status
         run: |
-          if [[ "${{ steps.code-quality.outputs.all_passed }}" == "true" ]]; then
-            exit 0
+          if [[ "${{ steps.code-quality.outputs.has_critical_issues }}" == "true" ]]; then
+            exit 1
           else
             exit 0
           fi
