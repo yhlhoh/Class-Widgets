@@ -213,7 +213,17 @@ jobs:
           repo="${{ github.repository }}"
           file_json='${{ needs.detect-changes.outputs.changed_files_json }}'
           file_count=$(echo "$file_json" | jq '. | length')
-          file_list=$(echo "$file_json" | jq -r '.[] | "\`" + . + "\`"' | paste -sd ', ' -)
+          if [[ "$file_count" -gt 0 ]]; then
+            file_list=$(echo "$file_json" | jq -r '.[] | "\`" + . + "\`"' | tr '\n' ',' | sed 's/,$//')
+            if [[ -z "$file_list" ]]; then
+              file_list=$(echo '${{ needs.detect-changes.outputs.changed_files }}' | tr '\n' ',' | sed 's/,$//' | sed 's/^/\`/' | sed 's/$/\`/' | sed 's/,/\`, \`/g')
+            fi
+            if [[ -z "$file_list" ]]; then
+              file_list="喵?"
+            fi
+          else
+            file_list="喵?"
+          fi
           run_url="https://github.com/${repo}/actions/runs/${run_id}"
           repo_url="https://github.com/${repo}"
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
