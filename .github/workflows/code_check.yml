@@ -216,52 +216,89 @@ jobs:
           file_list=$(echo "$file_json" | jq -r '.[] | "\`" + . + "\`"' | paste -sd ', ' -)
           run_url="https://github.com/${repo}/actions/runs/${run_id}"
           repo_url="https://github.com/${repo}"
-          commit_msg="\"$(git log -1 --pretty=format:'%s' HEAD | jq -R | sed 's/^"//;s/"$//')\""
-          commit_hash=$(git log -1 --pretty=format:'%h' HEAD)
-          commit_full_hash=$(git log -1 --pretty=format:'%H' HEAD)
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            pr_head_sha="${{ github.event.pull_request.head.sha }}"
+            commit_msg="\"$(git log -1 --pretty=format:'%s' ${pr_head_sha} | jq -R | sed 's/^"//;s/"$//')\""
+            commit_hash=$(git log -1 --pretty=format:'%h' ${pr_head_sha})
+            commit_full_hash="${pr_head_sha}"
+          else
+            commit_msg="\"$(git log -1 --pretty=format:'%s' HEAD | jq -R | sed 's/^"//;s/"$//')\""
+            commit_hash=$(git log -1 --pretty=format:'%h' HEAD)
+            commit_full_hash=$(git log -1 --pretty=format:'%H' HEAD)
+          fi
           short_link="[**${commit_hash}**](${repo_url}/commit/${commit_full_hash})"
 
-          report="## 🧪 静态检查结果\n\n"
-          report+="> 检查已完成([${run_id}](${run_url})),以下为结果~喵~\n\n"
-          report+="🕒 **检查时间**：$(date -u '+%Y-%m-%d %H:%M:%S UTC')\n"
-          report+="📝 **提交信息**：${short_link}: ${commit_msg}\n"
-          report+="📁 **检查的文件数**：${file_count} 个 - ${file_list}\n\n"
           all_passed=true
           has_any_issues=false
           has_critical_issues=false
-          report+="---\n"
-          if [[ "${{ steps.pylint.outputs.has_issues }}" == "true" ]]; then
-            report+="<details>\n"
-            if [[ "${{ steps.pylint.outputs.has_critical_issues }}" == "true" ]]; then
-              report+="<summary>❌ PyLint严重错误（点我展开）</summary>\n\n"
-              has_critical_issues=true
-            else
-              report+="<summary>🔍 PyLint提示（点我展开）</summary>\n\n"
-            fi
-            report+="\`\`\`\n"
-            report+="$(cat pylint_output.txt | head -50)\n"
-            report+="\`\`\`\n\n"
-            report+="</details>\n\n"
+          has_other_issues=false
+          critical_report=""
+          other_report=""
+          if [[ "${{ steps.pylint.outputs.has_critical_issues }}" == "true" ]]; then
+            has_critical_issues=true
+            critical_report+="<details>\n"
+            critical_report+="<summary>❌ PyLint 严重错误（点我展开）</summary>\n\n"
+            critical_report+="\`\`\`\n"
+            critical_report+="$(cat pylint_output.txt | head -50)\n"
+            critical_report+="\`\`\`\n\n"
+            critical_report+="</details>\n\n"
+          fi
+          if [[ "${{ steps.mypy.outputs.has_critical_issues }}" == "true" ]]; then
+            has_critical_issues=true
+            critical_report+="<details>\n"
+            critical_report+="<summary>❌ MyPy 严重错误（点我展开）</summary>\n\n"
+            critical_report+="\`\`\`\n"
+            critical_report+="$(cat mypy_output.txt | head -50)\n"
+            critical_report+="\`\`\`\n\n"
+            critical_report+="</details>\n\n"
+          fi
+          if [[ "${{ steps.pylint.outputs.has_issues }}" == "true" && "${{ steps.pylint.outputs.has_critical_issues }}" != "true" ]]; then
+            has_other_issues=true
+            other_report+="<details>\n"
+            other_report+="<summary>🔍 PyLint 提示（点我展开）</summary>\n\n"
+            other_report+="\`\`\`\n"
+            other_report+="$(cat pylint_output.txt | head -50)\n"
+            other_report+="\`\`\`\n\n"
+            other_report+="</details>\n\n"
+          fi
+          if [[ "${{ steps.mypy.outputs.has_issues }}" == "true" && "${{ steps.mypy.outputs.has_critical_issues }}" != "true" ]]; then
+            has_other_issues=true
+            other_report+="<details>\n"
+            other_report+="<summary>🔍 MyPy 提示（点我展开）</summary>\n\n"
+            other_report+="\`\`\`\n"
+            other_report+="$(cat mypy_output.txt | head -50)\n"
+            other_report+="\`\`\`\n\n"
+            other_report+="</details>\n\n"
+          fi
+        
+          report="## 🧪 静态检查结果\n\n"
+          report+="> 检查已完成([${run_id}](${run_url})),以下为结果~喵~\n\n"
+          report+="🕒 **检查时间**：$(date -u '+%Y-%m-%d %H:%M:%S UTC') / $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S UTC+8')\n"
+          report+="📝 **触发的提交信息**：${short_link}: ${commit_msg}\n"
+          report+="📁 **检查的文件数**：${file_count} 个 - ${file_list}\n\n"
+          if [[ "$has_critical_issues" == "true" ]]; then
+            report+="---\n\n"
+            report+="## 🚨 严重错误\n\n"
+            report+="${critical_report}"
             all_passed=false
             has_any_issues=true
           fi
-          if [[ "${{ steps.mypy.outputs.has_issues }}" == "true" ]]; then
-            report+="<details>\n"
-            if [[ "${{ steps.mypy.outputs.has_critical_issues }}" == "true" ]]; then
-              report+="<summary>❌ MyPy严重错误（点我展开）</summary>\n\n"
-              has_critical_issues=true
-            else
-              report+="<summary>🔍 MyPy提示（点我展开）</summary>\n\n"
-            fi
-            report+="\`\`\`\n"
-            report+="$(cat mypy_output.txt | head -50)\n"
-            report+="\`\`\`\n\n"
-            report+="</details>\n\n"
+          if [[ "$has_other_issues" == "true" ]]; then
+            report+="---\n\n"
+            other_report+="\`\`\`\n"
+            other_report+="$(cat mypy_output.txt | head -50)\n"
+            other_report+="\`\`\`\n\n"
+            other_report+="</details>\n\n"
+            report+="## 📋 其他\n\n"
+            report+="${other_report}"
             all_passed=false
             has_any_issues=true
           fi
-          if [[ "$has_any_issues" == "true" ]]; then
-            report+="---\n"
+          if [[ "$has_any_issues" == "false" ]]; then
+            report+="---\n\n"
+            report+="## ✅ 检查通过\n\n"
+            report+="喵? 没有任何警告信息~\n\n"
+            report+="---\n\n"
           fi
           report+="**喵**"
           echo "report<<EOF" >> $GITHUB_OUTPUT
