@@ -262,7 +262,7 @@ jobs:
             critical_report+="\`\`\`\n\n"
             critical_report+="</details>\n\n"
           fi
-          if [[ "${{ steps.pylint.outputs.has_issues }}" == "true" && "${{ steps.pylint.outputs.has_critical_issues }}" != "true" ]]; then
+          if [[ "${{ steps.pylint.outputs.has_issues }}" == "true" ]]; then
             has_other_issues=true
             other_report+="<details>\n"
             other_report+="<summary>🔍 PyLint 提示（点我展开）</summary>\n\n"
@@ -271,7 +271,7 @@ jobs:
             other_report+="\`\`\`\n\n"
             other_report+="</details>\n\n"
           fi
-          if [[ "${{ steps.mypy.outputs.has_issues }}" == "true" && "${{ steps.mypy.outputs.has_critical_issues }}" != "true" ]]; then
+          if [[ "${{ steps.mypy.outputs.has_issues }}" == "true" ]]; then
             has_other_issues=true
             other_report+="<details>\n"
             other_report+="<summary>🔍 MyPy 提示（点我展开）</summary>\n\n"
@@ -284,7 +284,7 @@ jobs:
           report="## 🧪 静态检查结果\n\n"
           report+="> 检查已完成([${run_id}](${run_url})),以下为结果~喵~\n\n"
           report+="🕒 **检查时间**：$(date -u '+%Y-%m-%d %H:%M:%S UTC') / $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S UTC+8')\n"
-          report+="📝 **触发的提交信息**：${short_link}: ${commit_msg}\n"
+          report+="📝 **触发提交信息**：${short_link}: ${commit_msg}\n"
           report+="📁 **检查的文件数**：${file_count} 个 - ${file_list}\n\n"
           if [[ "$has_critical_issues" == "true" ]]; then
             report+="---\n\n"
@@ -295,10 +295,6 @@ jobs:
           fi
           if [[ "$has_other_issues" == "true" ]]; then
             report+="---\n\n"
-            other_report+="\`\`\`\n"
-            other_report+="$(cat mypy_output.txt | head -50)\n"
-            other_report+="\`\`\`\n\n"
-            other_report+="</details>\n\n"
             report+="## 📋 其他\n\n"
             report+="${other_report}"
             all_passed=false
@@ -307,9 +303,9 @@ jobs:
           if [[ "$has_any_issues" == "false" ]]; then
             report+="---\n\n"
             report+="## ✅ 检查通过\n\n"
-            report+="喵? 没有任何警告信息~\n\n"
-            report+="---\n\n"
+            report+="喵? 没有警告信息~\n\n"
           fi
+          report+="---\n\n"
           report+="**喵**"
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo -e "$report" >> $GITHUB_OUTPUT
