@@ -87,7 +87,7 @@ if __name__ == "__main__":
     from loguru import logger
     source_dir = "./"#测backup和update的时候../，测extract_updpackage用./
     # 实例化 Updater，注意这里缺少 files_to_keep 参数，需补充
-    updater = Updater(source_dir, logger)
+    updater = Updater(source_dir, logger,[])
     updater.extract_updpackage("Class-Widgets.zip")
     updater.backup()
     updater.update("")
