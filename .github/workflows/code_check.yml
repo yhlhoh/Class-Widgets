@@ -1,4 +1,4 @@
-name: Python Syntax Check
+name: Python Quality Check
 
 on:
   pull_request_target:
@@ -323,7 +323,6 @@ jobs:
           pylance-version: latest-release
           extra-args: ${{ needs.detect-changes.outputs.python_files }}
           venv-path: .venv
-          python-path: .venv/bin/python
         continue-on-error: true
         env:
           PYTHONPATH: ".venv/lib/python${{ env.PYTHON_VERSION }}/site-packages"
