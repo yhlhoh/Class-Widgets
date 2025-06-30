@@ -7,7 +7,7 @@ on:
     inputs:
       check_all_files:
         description: '检查分支内所有Python文件'
-        required: false
+        required: true
         default: true
         type: boolean
   schedule:
@@ -71,7 +71,7 @@ jobs:
     name: CodeQL Security Analysis
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.python == 'true' && github.event_name == 'pull_request_target'
+    if: needs.detect-changes.outputs.python == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -242,8 +242,7 @@ jobs:
             "reportAssertAlwaysTrue": "warning",
             "reportSelfClsParameterName": "warning",
             "reportImplicitStringConcatenation": "warning",
-            "venvPath": ".",
-            "venv": ".venv",
+
             "pythonVersion": "${{ env.PYTHON_VERSION }}",
             "pythonPlatform": "All",
             "executionEnvironments": [
@@ -337,7 +336,7 @@ jobs:
           source .venv/bin/activate
           echo "运行 PyLint 检查..."
           files="${{ needs.detect-changes.outputs.python_files }}"
-          if echo "$files" | xargs pylint --disable=no-member,no-name-in-module,import-error,unresolved-import,relative-beyond-top-level,cyclic-import,duplicate-code,too-many-locals,too-many-arguments,too-many-branches,too-many-statements,too-few-public-methods,too-many-instance-attributes,line-too-long,missing-docstring,invalid-name,E1121,E0203,E0102,W0622,W0718,W0719,W0621 --output-format=text --reports=no --score=no --enable=unused-variable,unused-import,redefined-outer-name,redefined-builtin,dangerous-default-value,broad-except,bare-except,pointless-statement,unreachable,expression-not-assigned,unnecessary-pass,unused-argument > pylint_output.txt 2>&1; then
+          if echo "$files" | xargs pylint --disable=no-member,no-name-in-module,import-error,relative-beyond-top-level,cyclic-import,duplicate-code,too-many-locals,too-many-arguments,too-many-branches,too-many-statements,too-few-public-methods,too-many-instance-attributes,line-too-long,missing-docstring,invalid-name,E1121,E0203,E0102,W0622,W0718,W0719,W0621 --output-format=text --reports=no --score=no --enable=unused-variable,unused-import,redefined-outer-name,redefined-builtin,dangerous-default-value,broad-except,bare-except,pointless-statement,unreachable,expression-not-assigned,unnecessary-pass,unused-argument > pylint_output.txt 2>&1; then
             critical_errors=$(grep -E '^[^:]+:[0-9]+:[0-9]+: [EF][0-9]+:' pylint_output.txt || true)
             if [[ -n "$critical_errors" ]]; then
               echo "PyLint 发现严重错误"
