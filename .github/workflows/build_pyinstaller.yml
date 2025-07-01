@@ -196,7 +196,6 @@ jobs:
             -n ClassWidgets `
             --contents-directory . `
             --add-data config:config `
-            --add-data updater:updater `
             --add-data audio:audio `
             --add-data img:img `
             --add-data ui:ui `
