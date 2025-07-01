@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>765</width>
-    <height>1331</height>
+    <height>1942</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,12 +54,12 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
-        <width>717</width>
-        <height>2192</height>
+        <y>-43</y>
+        <width>700</width>
+        <height>1931</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_21">
+      <layout class="QVBoxLayout" name="verticalLayout_14">
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <property name="spacing">
@@ -138,11 +138,11 @@
              </layout>
             </item>
             <item>
-             <widget class="SwitchButton" name="switch_enable_alt_schedule">
-              <property name="onText">
+             <widget class="SwitchButton" name="switch_enable_alt_schedule" native="true">
+              <property name="onText" stdset="0">
                <string>启用</string>
               </property>
-              <property name="offText">
+              <property name="offText" stdset="0">
                <string>关闭</string>
               </property>
              </widget>
@@ -680,11 +680,11 @@
                 <widget class="SpinBox" name="ntp_refresh_picker"/>
                </item>
                <item>
-                <widget class="SwitchButton" name="switch_enable_ntp_auto_sync">
-                 <property name="onText">
+                <widget class="SwitchButton" name="switch_enable_ntp_auto_sync" native="true">
+                 <property name="onText" stdset="0">
                   <string>启用</string>
                  </property>
-                 <property name="offText">
+                 <property name="offText" stdset="0">
                   <string>关闭</string>
                  </property>
                 </widget>
@@ -1057,11 +1057,11 @@
              </layout>
             </item>
             <item>
-             <widget class="SwitchButton" name="switch_exclude_startup">
-              <property name="onText">
+             <widget class="SwitchButton" name="switch_exclude_startup" native="true">
+              <property name="onText" stdset="0">
                <string>启用</string>
               </property>
-              <property name="offText">
+              <property name="offText" stdset="0">
                <string>禁用</string>
               </property>
              </widget>
@@ -1227,11 +1227,11 @@
                </layout>
               </item>
               <item>
-               <widget class="SwitchButton" name="switch_enable_click">
-                <property name="onText">
+               <widget class="SwitchButton" name="switch_enable_click" native="true">
+                <property name="onText" stdset="0">
                  <string>启用</string>
                 </property>
-                <property name="offText">
+                <property name="offText" stdset="0">
                  <string>禁用</string>
                 </property>
                </widget>
@@ -1558,11 +1558,11 @@
              </widget>
             </item>
             <item>
-             <widget class="SwitchButton" name="switch_startup">
-              <property name="onText">
+             <widget class="SwitchButton" name="switch_startup" native="true">
+              <property name="onText" stdset="0">
                <string>启用</string>
               </property>
-              <property name="offText">
+              <property name="offText" stdset="0">
                <string>禁用</string>
               </property>
              </widget>
@@ -1573,10 +1573,7 @@
         </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_14">
-         <property name="spacing">
-          <number>3</number>
-         </property>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
          <item>
           <widget class="SubtitleLabel" name="SubtitleLabel_4">
            <property name="text">
@@ -1650,11 +1647,11 @@
              </layout>
             </item>
             <item>
-             <widget class="SwitchButton" name="switch_safe_mode">
-              <property name="onText">
+             <widget class="SwitchButton" name="switch_safe_mode" native="true">
+              <property name="onText" stdset="0">
                <string>启用</string>
               </property>
-              <property name="offText">
+              <property name="offText" stdset="0">
                <string>禁用</string>
               </property>
              </widget>
@@ -1725,11 +1722,11 @@
              </layout>
             </item>
             <item>
-             <widget class="SwitchButton" name="switch_disable_log">
-              <property name="onText">
+             <widget class="SwitchButton" name="switch_disable_log" native="true">
+              <property name="onText" stdset="0">
                <string>启用</string>
               </property>
-              <property name="offText">
+              <property name="offText" stdset="0">
                <string>禁用</string>
               </property>
              </widget>
@@ -1872,14 +1869,14 @@
              </layout>
             </item>
             <item>
-             <widget class="SwitchButton" name="switch_multiple_programs">
-              <property name="text">
+             <widget class="SwitchButton" name="switch_multiple_programs" native="true">
+              <property name="text" stdset="0">
                <string>不允许</string>
               </property>
-              <property name="onText">
+              <property name="onText" stdset="0">
                <string>允许</string>
               </property>
-              <property name="offText">
+              <property name="offText" stdset="0">
                <string>不允许</string>
               </property>
              </widget>
@@ -1929,6 +1926,16 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>CaptionLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>TitleLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
    <class>ComboBox</class>
    <extends>QPushButton</extends>
    <header>qfluentwidgets</header>
@@ -1976,22 +1983,12 @@
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
-   <class>CaptionLabel</class>
-   <extends>QLabel</extends>
-   <header>qfluentwidgets</header>
-  </customwidget>
-  <customwidget>
    <class>StrongBodyLabel</class>
    <extends>QLabel</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
    <class>SubtitleLabel</class>
-   <extends>QLabel</extends>
-   <header>qfluentwidgets</header>
-  </customwidget>
-  <customwidget>
-   <class>TitleLabel</class>
    <extends>QLabel</extends>
    <header>qfluentwidgets</header>
   </customwidget>
