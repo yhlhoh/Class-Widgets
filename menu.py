@@ -1720,6 +1720,17 @@ class SettingsMenu(FluentWindow):
             lambda checked: switch_checked("Version", "auto_check_update", checked)
         )  # 自动检查更新
 
+        self.auto_upgrade = self.ifInterface.findChild(SwitchButton,"switch_auto_upgrade_2")
+        self.auto_upgrade.setChecked(int(config_center.read_conf("Version", "auto_upgrade", "1")))
+        self.auto_upgrade.checkedChanged.connect(
+            lambda checked: switch_checked("Version","auto_upgrade",checked)
+        )
+        self.auto_check_update.checkedChanged.connect(
+            lambda checked: self.auto_upgrade.setEnabled(checked)
+        )
+        self.auto_check_update.checkedChanged.connect(
+            lambda checked: self.auto_upgrade.setChecked(checked)
+        )
         self.version_channel = self.findChild(ComboBox, 'version_channel')
         self.version_channel.addItems(list_.version_channel)
         self.version_channel.setCurrentIndex(int(config_center.read_conf("Version", "version_channel")))

@@ -2843,7 +2843,7 @@ def setup_signal_handlers_optimized(app: QApplication) -> None:
     signal.signal(signal.SIGTERM, signal_handler)  # taskkill
     signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
     if os.name == 'posix':
-        signal.signal(signal.SIGQUIT, signal_handler) # 终端退出
+        signal.signal(signal.SIGQUIT, signal_handler) # 终端退出      
         signal.signal(signal.SIGHUP, signal_handler)  # 终端挂起
 
 if __name__ == '__main__':

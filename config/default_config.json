@@ -93,7 +93,8 @@
     "build_commit": "__BUILD_COMMIT__",
     "build_branch": "__BUILD_BRANCH__",
     "build_runid": "__BUILD_RUNID__",
-    "build_type": "__BUILD_TYPE__"
+    "build_type": "__BUILD_TYPE__",
+    "auto_upgrade": 1
   },
   "Other": {
     "do_not_log": 0,

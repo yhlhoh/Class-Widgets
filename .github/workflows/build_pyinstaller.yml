@@ -202,8 +202,7 @@ jobs:
             --add-data font:font `
             --add-data view:view `
             --add-data LICENSE:. `
-            --hidden-import darkdetect `
-            --hidden-import updater
+            --hidden-import darkdetect
           ./zip -r -q zip/ClassWidgets_${{ github.run_id }}-${{ matrix.arch }}.zip dist/ClassWidgets/*
           $zip_file = "zip/ClassWidgets_${{ github.run_id }}-${{ matrix.arch }}.zip"
           if (Test-Path $zip_file) {

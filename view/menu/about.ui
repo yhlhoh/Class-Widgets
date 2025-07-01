@@ -708,7 +708,7 @@
               <item>
                <widget class="CaptionLabel" name="CaptionLabel_23">
                 <property name="text">
-                 <string>检测到新版本时，进行自动更新。最多会消耗400MB的磁盘空间。</string>
+                 <string>检测到新版本时，进行自动更新。最多会消耗300MB的磁盘空间。</string>
                 </property>
                 <property name="lightColor" stdset="0">
                  <color alpha="150">
@@ -731,13 +731,13 @@
             <item>
              <widget class="SwitchButton" name="switch_auto_upgrade_2" native="true">
               <property name="text" stdset="0">
-               <string>不允许</string>
+               <string>是</string>
               </property>
               <property name="onText" stdset="0">
-               <string>允许</string>
+               <string>是</string>
               </property>
               <property name="offText" stdset="0">
-               <string>不允许</string>
+               <string>否</string>
               </property>
              </widget>
             </item>
