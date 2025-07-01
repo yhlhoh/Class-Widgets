@@ -191,19 +191,20 @@ jobs:
           curl -o zip.exe -L http://www.stahlworks.com/dev/zip.exe
           .\.venv\Scripts\activate
           pyinstaller main.py `
-          --paths .`
             -w `
             -i ./img/favicon.ico `
             -n ClassWidgets `
             --contents-directory . `
             --add-data config:config `
+            --add-data updater:updater `
             --add-data audio:audio `
             --add-data img:img `
             --add-data ui:ui `
             --add-data font:font `
             --add-data view:view `
             --add-data LICENSE:. `
-            --hidden-import darkdetect
+            --hidden-import darkdetect `
+            --hidden-import updater
           ./zip -r -q zip/ClassWidgets_${{ github.run_id }}-${{ matrix.arch }}.zip dist/ClassWidgets/*
           $zip_file = "zip/ClassWidgets_${{ github.run_id }}-${{ matrix.arch }}.zip"
           if (Test-Path $zip_file) {
