@@ -2902,6 +2902,7 @@ class SettingsMenu(FluentWindow):
 
             if utils.tray_icon:
                 utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
+            if config_center.read_conf("Version","auto_upgrade"):
 
     def cf_import_schedule_cses(self, file_path):  # 导入课程表（CSES）
         if file_path:
