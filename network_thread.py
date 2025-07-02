@@ -298,9 +298,8 @@ class getDownloadUrl(QThread):
             logger.error(f"获取下载链接错误: {e}")
             self.geturl_signal.emit(f"获取下载链接错误: {e}")
 class GetUPDPack(QThread):  # 下载并解压更新包
-    progress_signal = pyqtSignal(float)  # 进度
-    status_signal = pyqtSignal(str)      # 状态
-
+    update_signal = pyqtSignal(list)  # 进度
+    finish_signal = pyqtSignal(str)      # 完成
     def __init__(self, url: str) -> None:
         super().__init__()
         self.download_url = url
@@ -310,14 +309,13 @@ class GetUPDPack(QThread):  # 下载并解压更新包
     def run(self) -> None:
         try:
             os.makedirs(self.extract_dir, exist_ok=True)
-            self.status_signal.emit("DOWNLOADING")
+            self.update_signal.emit(["下载中",0])
             self.download_file(self.zip_path)
-            self.status_signal.emit("EXTRACTING")
+            self.update_signal.emit(["解压中",50])
             self.extract_zip(self.zip_path)
             os.remove(self.zip_path)
-            self.status_signal.emit("DONE")
         except Exception as e:
-            self.status_signal.emit(f"错误: {e}")
+            self.update_signal.emit([f"错误: {e}",100])
             logger.error(f"更新包下载/解压失败: {e}")
 
     def stop(self) -> None:
@@ -328,29 +326,31 @@ class GetUPDPack(QThread):  # 下载并解压更新包
             response = requests.get(self.download_url, stream=True, proxies=proxies)
             if response.status_code != 200:
                 logger.error(f"更新包下载失败，错误代码: {response.status_code}")
-                self.status_signal.emit(f'ERROR: 网络连接错误：{response.status_code}')
+                self.update_signal.emit([f'ERROR: 网络连接错误：{response.status_code}',100])
                 return
-
             total_size = int(response.headers.get('content-length', 0))
             downloaded_size = 0
-
             with open(file_path, 'wb') as file:
                 for chunk in response.iter_content(1024):
                     file.write(chunk)
                     downloaded_size += len(chunk)
                     progress = (downloaded_size / total_size) * 100 if total_size > 0 else 0
-                    self.progress_signal.emit(progress)
+                    self.update_signal.emit([f"下载中{downloaded_size}/{total_size}",rogress])
         except Exception as e:
-            self.status_signal.emit(f'ERROR: {e}')
+            self.update_signal.emit([f'ERROR: {e}',100])
             logger.error(f"更新包下载错误: {e}")
 
     def extract_zip(self, zip_path: str) -> None:
         try:
+            self.update_signal.emit(["解压中",50])
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(self.extract_dir)
+            self.update_signal.emit(["更新包解压完成，即将重启软件",100])
+            time.sleep(3)
+            self.finish_signal.emit()
         except Exception as e:
             logger.error(f"更新包解压失败: {e}")
-            self.status_signal.emit(f"ERROR: 解压失败: {e}")     
+            self.update_signal.emit([f"ERROR: 解压失败: {e}",100])     
 class DownloadAndExtract(QThread):  # 下载并解压插件
     progress_signal = pyqtSignal(float)  # 进度
     status_signal = pyqtSignal(str)  # 状态

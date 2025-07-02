@@ -14,7 +14,6 @@ from qfluentwidgets import *
 class Updater(QThread):
     update_signal = pyqtSignal(list)
     finish_signal = pyqtSignal()
-    show_finish_text = pyqtSignal()
     def __init__(self, source_dir, files_to_keep='', executable = ""):
         # 初始化，设置源目录、日志记录器和需要保留的文件列表
         super().__init__()
@@ -81,7 +80,7 @@ class Updater(QThread):
             shutil.copy(os.path.join(self.source_dir, file), os.path.join(self.source_dir, "backup", file))
             self.update_signal.emit([f"迁入配置:{self.progress_3}/{self.total_3}", (self.progress_3 / self.total_3 * 5)+95])
         self.logger.info("更新完成")
-        self.show_finish_text.emit()
+        self.update_signal.emit(["更新完成，即将重启软件",100])
         time.sleep(3)
         logger.debug("完成等待")
         self.finish_signal.emit()
@@ -131,12 +130,6 @@ class Updater(QThread):
                 shutil.rmtree(os.path.join(self.source_dir, "backup"))
                 self.finish_signal.emit()
             traceback.print_exc()
-    def extract_updpackage(self, packdir):
-        # 解压更新包到 updpackage 目录
-        self.logger.debug("开始解压")
-        with zipfile.ZipFile(packdir, 'r') as zip_ref:
-            zip_ref.extractall("updpackage")
-        self.logger.debug("解压完成")
 
 class UpgradeProgressWindow(FluentWindow):
     def __init__(self,worker,parent=None):
@@ -159,11 +152,8 @@ class UpgradeProgressWindow(FluentWindow):
             self.do_upgrade()
     def do_upgrade(self):
         self.worker.update_signal.connect(self.update_w)
-        self.worker.show_finish_text.connect(self.show_finish_text)
         self.worker.finish_signal.connect(self.finish)
         self.worker.start()
-    def show_finish_text(self):
-        self.upgradeprograsslabel.setText("更新完成，即将重启软件")
     def finish(self):
         """更新完成"""
         #post_upgrade()

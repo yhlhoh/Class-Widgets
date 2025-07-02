@@ -49,8 +49,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>773</width>
-        <height>735</height>
+        <width>756</width>
+        <height>796</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -668,6 +668,9 @@
          </item>
          <item>
           <widget class="CardWidget" name="CardWidget_22">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -738,6 +741,37 @@
               </property>
               <property name="offText" stdset="0">
                <string>否</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="CardWidget" name="CardWidget_23">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>70</height>
+            </size>
+           </property>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
+             <widget class="PrimaryPushButton" name="do_upgrade">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>暂无新版本可用</string>
               </property>
              </widget>
             </item>
@@ -840,7 +874,7 @@
   <customwidget>
    <class>PrimaryPushButton</class>
    <extends>PushButton</extends>
-   <header>qfluentwidgets</header>
+   <header location="global">qfluentwidgets</header>
   </customwidget>
  </customwidgets>
  <resources/>

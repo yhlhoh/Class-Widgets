@@ -49,9 +49,10 @@ from generate_speech import get_tts_voices, get_voice_id_by_name, get_voice_name
 import generate_speech
 from file import config_center, schedule_center
 import file
-from network_thread import VersionThread, scheduleThread
+from network_thread import VersionThread, scheduleThread, GetUPDPack
 from plugin import p_loader
 from plugin_plaza import PluginPlaza
+import updater
 
 # 适配高DPI缩放
 QApplication.setHighDpiScaleFactorRoundingPolicy(
@@ -1737,6 +1738,8 @@ class SettingsMenu(FluentWindow):
         self.version_channel.currentIndexChanged.connect(
             lambda: config_center.write_conf("Version", "version_channel", self.version_channel.currentIndex())
         )  # 版本更新通道
+        self.do_upgrade_button = self.findChild(PrimaryPushButton,"do_upgrade")
+        self.do_upgrade_button.clicked.connect(self.do_upgrade)
 
         github_page = self.findChild(PushButton, "button_github")
         github_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
@@ -2903,7 +2906,9 @@ class SettingsMenu(FluentWindow):
             if utils.tray_icon:
                 utils.tray_icon.push_update_notification(f"新版本速递：{new_version}")
             if config_center.read_conf("Version","auto_upgrade"):
-
+                self.do_upgrade_button.setEnabled(True)
+                self.do_upgrade_button.setText("立即更新")
+        self.version_info = version
     def cf_import_schedule_cses(self, file_path):  # 导入课程表（CSES）
         if file_path:
             file_name = file_path.split("/")[-1]
@@ -3932,7 +3937,40 @@ class SettingsMenu(FluentWindow):
                 self.stackedWidget.currentChanged.connect(self._on_page_changed)
             except AttributeError:
                 pass
-
+    def do_upgrade(self):# 手动更新
+        system=platform.system()
+        if system == "Windows":
+            system = "x64" if platform.architecture()[0]=="64bit" else "x86"
+        if system == 'Darwin':
+            system = 'macOS'
+        channel = int(config_center.read_conf("Version", "version_channel"))
+        if channel == 0:
+            release_info = self.version_info["releases"]
+        else:
+            release_info = self.version_info["releases_beta"]
+        if not system in release_info:  # 没有更新包，退出
+            logger.info("无可用更新包")
+            self.do_upgrade_button.setEnabled(False)
+            self.do_upgrade_button.setText("没有可用的自动更新包，请手动更新")
+            InfoBar.error(
+                title='更新失败',
+                content=f"无可用更新包",
+                parent=self,
+                isClosable=True,
+                orient=Qt.Horizontal,
+                position=InfoBarPosition.TOP,
+                duration=2000
+            )
+        else:
+            self.do_upgrade_button.setEnabled(False)
+            self.do_upgrade_button.setText("正在更新")
+            release_to_upgrade = release_info[system]
+            logger.info(f"开始更新，更新频道：{channel}，系统：{system}")
+            download_url = release_to_upgrade["url"]
+            logger.debug(f"下载更新包：{download_url}，系统：{system}")
+            updthread = GetUPDPack(download_url)
+            updwindow = updater.UpgradeProgressWindow(updthread,self)
+            updwindow.show()
     def init_window(self):
         self.stackedWidget.setCurrentIndex(0)  # 设置初始页面
         self.load_all_item()
