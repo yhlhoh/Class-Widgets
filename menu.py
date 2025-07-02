@@ -3969,6 +3969,7 @@ class SettingsMenu(FluentWindow):
             download_url = release_to_upgrade["url"]
             logger.debug(f"下载更新包：{download_url}，系统：{system}")
             params = []
+            params.append("--do-upgrade")
             params.append(os.getcwd())
             params.append(';'.join(release_to_upgrade["files_to_keep"]))
             params.append( #运行参数

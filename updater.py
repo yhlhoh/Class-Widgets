@@ -7,6 +7,7 @@ import time
 from loguru import logger
 from PyQt5.QtWidgets import QApplication
 import sys
+import utils
 
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -45,7 +46,7 @@ class Updater(QThread):
                 if not os.path.exists(backup_path):
                     shutil.copy2(file_path, backup_path)
                     self.logger.info(f"已备份 {file} -> {backup_path}")
-            self.update_signal.emit([f"备份中{progress}/{total}",progress/total*50])
+            self.update_signal.emit([f"备份中{progress}/{total} {file}",progress/total*50])
         files_to_remove = [dir for dir in os.listdir(self.source_dir) if (dir != "backup" and dir != "updpackage" and dir != ".git")]
         self.total_1 = len(files_to_remove)
 
@@ -60,7 +61,7 @@ class Updater(QThread):
             elif os.path.isfile(file_path):
                 os.remove(file_path)
                 self.logger.info(f"已删除文件 {file}")
-            self.update_signal.emit([f"删除旧文件：{self.progress_1}/{self.total_1}", (self.progress_1 / self.total_1 * 25)+50])
+            self.update_signal.emit([f"删除旧文件：{self.progress_1}/{self.total_1} {file}", (self.progress_1 / self.total_1 * 25)+50])
         # 从 updpackage 目录复制新文件到源目录
         files_to_copy = [dir for dir in os.listdir(os.path.join(self.source_dir, "updpackage")) if (dir != "backup" and dir != ".git")]
         self.total_2 = len(files_to_copy)
@@ -76,16 +77,18 @@ class Updater(QThread):
             elif os.path.isfile(src_path):
                 shutil.copy2(src_path, dst_path)
                 self.logger.info(f"已更新文件 {file} -> {dst_path}")
-            self.update_signal.emit([f"复制新文件:{self.progress_2}/{self.total_2}", (self.progress_2 / self.total_2 * 20)+75])
+            self.update_signal.emit([f"复制新文件:{self.progress_2}/{self.total_2} {file}", (self.progress_2 / self.total_2 * 20)+75])
         # 复制需要保留的文件到 backup 目录
 
         self.total_3 = len(self.files_to_keep) + 1
         self.progress_3 = 1
-
         for file in self.files_to_keep:
             self.progress_3 += 1
-            shutil.copy(os.path.join(self.source_dir, file), os.path.join(self.source_dir, "backup", file))
-            self.update_signal.emit([f"迁入配置:{self.progress_3}/{self.total_3}", (self.progress_3 / self.total_3 * 5)+95])
+            try:
+                shutil.copy(os.path.join(self.source_dir, file), os.path.join(self.source_dir, "backup", file))
+                self.update_signal.emit([f"迁入配置:{self.progress_3}/{self.total_3} {file}", (self.progress_3 / self.total_3 * 5)+95])
+            except:
+                pass
         self.logger.info("更新完成")
         self.update_signal.emit(["更新完成，即将重启软件",100])
         time.sleep(3)
@@ -123,6 +126,7 @@ class Updater(QThread):
                             shutil.copy2(src_path, dst_path)
                             self.logger.info(f"已回滚文件 {item} -> {dst_path}")
                     self.logger.info("回滚完成")
+                    self.finish_signal.emit()
                 files_to_remove = [dir for dir in os.listdir(self.source_dir) if dir != "backup" and dir != "updpackage"]
                 for file in files_to_remove:
                     file_path = os.path.join(self.source_dir, file)
