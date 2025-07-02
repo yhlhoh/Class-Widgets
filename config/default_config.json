@@ -3,7 +3,6 @@
     "schedule": "新课表 - 1.json",
     "pin_on_top": 1,
     "margin": 10,
-    "time_offset": 0,
     "opacity": 95,
     "auto_startup": 0,
     "hide": 0,
@@ -32,6 +31,7 @@
   "TTS": {
     "enable": 0,
     "engine": "edge",
+    "language": "zh-CN",
     "voice_id": "",
     "speed": 50,
     "attend_class": "活动开始, {lesson_name}",
@@ -57,6 +57,15 @@
     "auto_delay": 5,
     "auto_enable_plugin": 1
   },
+  "Time": {
+    "time_offset": 0,
+    "type": "ntp",
+    "ntp_server": "ntp.aliyun.com",
+    "timezone": "local",
+    "enable_ntp_auto_refresh": 1,
+    "ntp_auto_refresh": 10,
+    "switch_enable_ntp_auto_sync": 1
+  },
   "Date": {
     "start_date": "",
     "cd_text_custom": "自定义",
@@ -80,11 +89,11 @@
     "version_channel": 0,
     "auto_check_update": 1,
     "cses_version": 1,
-    "build_time": "__BUILD_TIME__",
-    "build_commit": "__BUILD_COMMIT__",
-    "build_branch": "__BUILD_BRANCH__",
-    "build_runid": "__BUILD_RUNID__",
-    "build_type": "__BUILD_TYPE__"
+    "build_time": "2025-07-01 17:39",
+    "build_commit": "12b2503",
+    "build_branch": "dev",
+    "build_runid": "15995618073",
+    "build_type": "pyinstaller"
   },
   "Other": {
     "do_not_log": 0,
