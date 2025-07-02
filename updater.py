@@ -23,11 +23,12 @@ class Updater(QThread):
         self.executable = executable
     def backup(self):
         # 备份除 backup 和 updpackage 目录外的所有文件和文件夹
-        files_to_backup = [dir for dir in os.listdir(self.source_dir) if dir != "backup" and dir != "updpackage"]
+        files_to_backup = [dir for dir in os.listdir(self.source_dir) if (dir != "backup" and dir != "updpackage" and dir != ".git")]
         total = len(files_to_backup)
         progress = 1
         shutil.rmtree(os.path.join(self.source_dir, "backup"), ignore_errors=True)  # 清空旧备份
         for file in files_to_backup:
+            progress += 1
             file_path = os.path.join(self.source_dir, file)
             if os.path.isdir(file_path):
                 backup_path = os.path.join(self.source_dir, "backup", file)
@@ -39,12 +40,13 @@ class Updater(QThread):
                 if not os.path.exists(backup_path):
                     shutil.copy2(file_path, backup_path)
                     self.logger.info(f"已备份 {file} -> {backup_path}")
+            self.update_signal.emit([f"备份中{progress}/{total}",progress/total*100])
         self.logger.info("备份完成")
 
     def update(self):
         self.logger.info("更新开始")
         # 删除除 backup 和 updpackage 目录外的所有文件和文件夹
-        files_to_remove = [dir for dir in os.listdir(self.source_dir) if dir != "backup" and dir != "updpackage"]
+        files_to_remove = [dir for dir in os.listdir(self.source_dir) if (dir != "backup" and dir != "updpackage" and dir != ".git")]
         self.total_1 = len(files_to_remove)
         self.progress_1 = 1
         for file in files_to_remove:
@@ -58,7 +60,7 @@ class Updater(QThread):
                 self.logger.info(f"已删除文件 {file}")
             self.update_signal.emit([f"删除旧文件：{self.progress_1}/{self.total_1}", (self.progress_1 / self.total_1 * 25)+50])
         # 从 updpackage 目录复制新文件到源目录
-        files_to_copy = [dir for dir in os.listdir(os.path.join(self.source_dir, "updpackage")) if dir != "backup" and dir != ".git"]
+        files_to_copy = [dir for dir in os.listdir(os.path.join(self.source_dir, "updpackage")) if (dir != "backup" and dir != ".git")]
         self.total_2 = len(files_to_copy)
         self.progress_2 = 1
         for file in files_to_copy:
@@ -96,7 +98,7 @@ class Updater(QThread):
             import sys
             self.logger.error("更新失败！")
             import traceback
-            
+            logger.error(traceback.format_exc(limit=1))
             if self.stage == 2:
                 self.update_signal.emit(["更新失败，正在回滚",100])
                 # 更新失败时，清理已删除的文件和目录并回滚

@@ -4,9 +4,12 @@ import shutil
 import zipfile  # 解压插件zip
 from datetime import datetime
 from typing import Optional, Union, List, Tuple, Dict, Any
+import platform
+import updater
 
 import requests
 from PyQt5.QtCore import QThread, pyqtSignal, QEventLoop
+from qfluentwidgets import InfoBar
 from loguru import logger
 from packaging.version import Version
 
@@ -441,7 +444,37 @@ class DownloadAndExtract(QThread):  # 下载并解压插件
         except Exception as e:
             logger.error(f"解压失败: {e}")
 
-
+def do_upgrade(version_info):# 自动更新
+    system=platform.system()
+    if system == "Windows":
+        system = "x64" if platform.architecture()[0]=="64bit" else "x86"
+    if system == 'Darwin':
+        system = 'macOS'
+    channel = int(config_center.read_conf("Version", "version_channel"))
+    if channel == 0:
+        release_info = version_info["releases"]
+    else:
+        release_info = version_info["releases_beta"]
+    if not system in release_info:  # 没有更新包，退出
+        logger.info("无可用更新包")
+    else:
+        release_to_upgrade = release_info[system]
+        logger.info(f"开始更新，更新频道：{channel}，系统：{system}")
+        download_url = release_to_upgrade["url"]
+        logger.debug(f"下载更新包：{download_url}，系统：{system}")
+        params = []
+        params.append(os.getcwd())
+        params.append(';'.join(release_to_upgrade["files_to_keep"]))
+        params.append( #运行参数
+            os.path.join(
+                os.getcwd(),
+                os.path.split(release_to_upgrade["executable"])[1]
+            )
+        )
+        logger.debug(f"传入参数：{params}")
+        updthread = GetUPDPack(download_url,os.path.join(os.getcwd(),release_to_upgrade["executable"],),*params)
+        updwindow = updater.UpgradeProgressWindow(updthread)
+        updwindow.show()
 def check_update() -> None:
     global threads
 
@@ -477,7 +510,8 @@ def check_version(version: Dict[str, Any]) -> bool:  # 检查更新
     logger.debug(f"服务端版本: {Version(server_version)}，本地版本: {Version(local_version)}")
     if Version(server_version) > Version(local_version):
         utils.tray_icon.push_update_notification(f"新版本速递：{server_version}\n请在“设置”中了解更多。")
-
+        if config_center.read_conf("Version","auto_upgrade"):
+            do_upgrade(version)
 
 class scheduleThread(QThread):  # 获取课表
     update_signal = pyqtSignal(dict)
