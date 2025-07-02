@@ -3968,7 +3968,17 @@ class SettingsMenu(FluentWindow):
             logger.info(f"开始更新，更新频道：{channel}，系统：{system}")
             download_url = release_to_upgrade["url"]
             logger.debug(f"下载更新包：{download_url}，系统：{system}")
-            updthread = GetUPDPack(download_url)
+            params = []
+            params.append(os.getcwd())
+            params.append(';'.join(release_to_upgrade["files_to_keep"]))
+            params.append( #运行参数
+                os.path.join(
+                    os.getcwd(),
+                    os.path.split(release_to_upgrade["executable"])[1]
+                )
+            )
+            logger.debug(f"传入参数：{params}")
+            updthread = GetUPDPack(download_url,os.path.join(os.getcwd(),release_to_upgrade["executable"],),*params)
             updwindow = updater.UpgradeProgressWindow(updthread,self)
             updwindow.show()
     def init_window(self):

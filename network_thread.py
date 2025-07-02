@@ -300,12 +300,13 @@ class getDownloadUrl(QThread):
 class GetUPDPack(QThread):  # 下载并解压更新包
     update_signal = pyqtSignal(list)  # 进度
     finish_signal = pyqtSignal(str)      # 完成
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str,executable:str,*params) -> None:
         super().__init__()
         self.download_url = url
         self.zip_path = os.path.join(os.getcwd(), "updpack.zip")
         self.extract_dir = os.path.join(os.getcwd(), "updpackage")
-
+        self.executable_path = executable
+        self.params = params
     def run(self) -> None:
         try:
             os.makedirs(self.extract_dir, exist_ok=True)
@@ -335,7 +336,7 @@ class GetUPDPack(QThread):  # 下载并解压更新包
                     file.write(chunk)
                     downloaded_size += len(chunk)
                     progress = (downloaded_size / total_size) * 100 if total_size > 0 else 0
-                    self.update_signal.emit([f"下载中{downloaded_size}/{total_size}",rogress])
+                    self.update_signal.emit([f"下载中{downloaded_size}/{total_size}",progress])
         except Exception as e:
             self.update_signal.emit([f'ERROR: {e}',100])
             logger.error(f"更新包下载错误: {e}")
@@ -348,6 +349,8 @@ class GetUPDPack(QThread):  # 下载并解压更新包
             self.update_signal.emit(["更新包解压完成，即将重启软件",100])
             time.sleep(3)
             self.finish_signal.emit()
+            os.execv(self.executable_path,[self.executable_path,*self.params])
+            utils.stop()
         except Exception as e:
             logger.error(f"更新包解压失败: {e}")
             self.update_signal.emit([f"ERROR: 解压失败: {e}",100])     

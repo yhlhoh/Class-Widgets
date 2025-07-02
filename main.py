@@ -9,6 +9,7 @@ import sys
 import psutil
 import signal
 import traceback
+import updater
 from shutil import copy
 from typing import Optional, Dict, List, Any, Union, Tuple
 
