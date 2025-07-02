@@ -27,6 +27,8 @@ from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Actio
     PrimaryPushButton, IconWidget
 
 from PyQt5.QtGui import QCloseEvent, QShowEvent, QHideEvent, QMouseEvent, QFocusEvent
+import updater
+
 
 import conf
 import list_
@@ -2852,10 +2854,12 @@ if __name__ == '__main__':
         if sys.argv[1] == "--finish-update":
             logger.debug("自动更新收尾")
             updater.post_upgrade()
+
         else:
             '''--do-upgrade的参数分别对应updater.do_upgrade的参数'''
             logger.debug("调用自动更新")
             updater.do_upgrade(*sys.argv[2:])
+
     if share.attach() and config_center.read_conf('Other', 'multiple_programs') != '1':
         logger.debug('不允许多开实例')
         from qfluentwidgets import Dialog
