@@ -27,12 +27,7 @@ class Updater(QThread):
         self.executable = executable
     def backup(self):
         # 备份除 backup 和 updpackage 目录外的所有文件和文件夹
-<<<<<<< HEAD
         files_to_backup = [dir for dir in os.listdir(self.source_dir) if (dir != "backup" and dir != "updpackage" and dir != ".git")]
-=======
-        files_to_backup = [dir for dir in os.listdir(self.source_dir) if dir != "backup" and dir != "updpackage"]
-
->>>>>>> f278640104ae52b2af0383041683b73129f8c2fe
         total = len(files_to_backup)
         progress = 1
 
@@ -50,16 +45,7 @@ class Updater(QThread):
                 if not os.path.exists(backup_path):
                     shutil.copy2(file_path, backup_path)
                     self.logger.info(f"已备份 {file} -> {backup_path}")
-<<<<<<< HEAD
-            self.update_signal.emit([f"备份中{progress}/{total}",progress/total*100])
-=======
-            self.update_signal.emit([f"备份: {progress}/{total}", progress / total * 50])
->>>>>>> f278640104ae52b2af0383041683b73129f8c2fe
-        self.logger.info("备份完成")
-
-    def update(self):
-        self.logger.info("更新开始")
-        # 删除除 backup 和 updpackage 目录外的所有文件和文件夹
+            self.update_signal.emit([f"备份中{progress}/{total}",progress/total*50])
         files_to_remove = [dir for dir in os.listdir(self.source_dir) if (dir != "backup" and dir != "updpackage" and dir != ".git")]
         self.total_1 = len(files_to_remove)
 
@@ -76,12 +62,7 @@ class Updater(QThread):
                 self.logger.info(f"已删除文件 {file}")
             self.update_signal.emit([f"删除旧文件：{self.progress_1}/{self.total_1}", (self.progress_1 / self.total_1 * 25)+50])
         # 从 updpackage 目录复制新文件到源目录
-<<<<<<< HEAD
         files_to_copy = [dir for dir in os.listdir(os.path.join(self.source_dir, "updpackage")) if (dir != "backup" and dir != ".git")]
-=======
-
-        files_to_copy = [dir for dir in os.listdir(os.path.join(self.source_dir, "updpackage")) if dir != "backup" and dir != ".git"]
->>>>>>> f278640104ae52b2af0383041683b73129f8c2fe
         self.total_2 = len(files_to_copy)
         self.progress_2 = 1
 
