@@ -1496,8 +1496,8 @@ class SettingsMenu(FluentWindow):
             self.url = file_path
             is_db = False
             for db in list_.schedule_dbs:
-                if file_path.startswith(list_.schedule_dbs[db]):
-                    file_path = file_path.replace(list_.schedule_dbs[db], db)
+                if file_path.startswith(f"{list_.schedule_dbs[db]}/"):
+                    file_path = f"{db}/{file_path[len(list_.schedule_dbs[db]) + 1:]}"
                     is_db = True
                     break
             if not is_db:
@@ -3216,8 +3216,8 @@ class SettingsMenu(FluentWindow):
                 url = n2_dialog.textField.text()
 
                 for db in list_.schedule_dbs:
-                    if url.startswith(db):
-                        url = url.replace(db, list_.schedule_dbs[db])
+                    if url.startswith(f"{db}/"):
+                        url = f"{list_.schedule_dbs[db]}/{url[len(db)+1:]}"
                         break
                 
                 self.cf_file_list[self.table.currentIndex().row()].set_file_path(url)
