@@ -45,7 +45,7 @@ import weather
 import weather as wd
 from conf import base_directory, load_theme_config
 from cses_mgr import CSES_Converter
-from generate_speech import get_tts_voices, get_voice_id_by_name, get_voice_name_by_id, get_available_engines
+from generate_speech import get_tts_voices
 import generate_speech
 from file import config_center, schedule_center
 import file
@@ -545,26 +545,33 @@ class TTSVoiceLoaderThread(QThread):
     errorOccurred = pyqtSignal(str)
     previewFinished = pyqtSignal(bool)
 
-    def __init__(self, engine_filter=None, parent=None):
+    def __init__(self, engine_filter=None, language_filter=None, parent=None):
         super().__init__(parent)
         self.engine_filter = engine_filter
+        self.language_filter = language_filter
 
     def run(self):
+        loop = None
         try:
-            if self.engine_filter == "pyttsx3" and platform.system() != "Windows":
-                logger.warning("当前系统不是Windows,跳过pyttsx3 TTS预览")
-                self.previewFinished.emit(False)
-                return
             if self.isInterruptionRequested():
                 return
             if self.engine_filter == "pyttsx3" and platform.system() != "Windows":
                 logger.warning("当前系统不是Windows,跳过pyttsx3语音加载")
                 self.voicesLoaded.emit([])
                 return
+            
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            available_voices, error_message = loop.run_until_complete(get_tts_voices(engine_filter=self.engine_filter))
-            loop.close()
+            
+            try:
+                available_voices, error_message = loop.run_until_complete(
+                    get_tts_voices(engine_filter=self.engine_filter, language_filter=self.language_filter)
+                )
+            except Exception as e:
+                if loop and not loop.is_closed():
+                    loop.close()
+                raise e
+                
             if self.isInterruptionRequested():
                 return
 
@@ -575,6 +582,16 @@ class TTSVoiceLoaderThread(QThread):
         except Exception as e:
             logger.error(f"加载TTS语音列表时出错: {e}")
             self.errorOccurred.emit(str(e))
+        finally:
+            if loop and not loop.is_closed():
+                try:
+                    loop.close()
+                except Exception as e:
+                    logger.warning(f"关闭事件循环时出错: {e}")
+            try:
+                asyncio.set_event_loop(None)
+            except Exception as e:
+                logger.warning(f"清理事件循环引用时出错: {e}")
 
 
 class TTSPreviewThread(QThread):
@@ -605,27 +622,19 @@ class TTSPreviewThread(QThread):
             audio_file = generate_speech_sync(
                 text=self.text,
                 engine=self.engine,
-                voice=self.voice,
-                auto_fallback=True,
+                voice_id=self.voice,
+                auto_fallback=False,
                 timeout=10.0
             )
-            
-            # 再次检查是否有中断请求
             if self.isInterruptionRequested():
                 logger.info("TTS预览线程收到中断请求，正在退出...")
-                # 删除已生成的音频文件
                 TTSEngine.delete_audio_file(audio_file)
                 return
-            
-            # 检查文件是否存在且有效
             if not os.path.exists(audio_file):
                 raise FileNotFoundError(f"生成的音频文件不存在: {audio_file}")
-                
-            # 检查文件大小是否正常（小于10字节的文件可能是损坏的）
             file_size = os.path.getsize(audio_file)
             if file_size < 10:
                 logger.warning(f"生成的音频文件可能无效，大小仅为 {file_size} 字节: {audio_file}")
-                # 删除可能损坏的文件
                 TTSEngine.delete_audio_file(audio_file)
                 raise ValueError(f"生成的音频文件可能无效，大小仅为 {file_size} 字节")
                 
@@ -1055,10 +1064,11 @@ class SettingsMenu(FluentWindow):
 
         self.voice_selector = None
         self.switch_enable_TTS = None
+        self.voice_language_selector = None
 
     def available_voices_cnt(self, voices):
         self.available_voices = voices
-        if hasattr(self, 'voice_selector') and self.voice_selector and hasattr(self, 'update_tts_voices') and self.TTSSettingsDialog and not self.TTSSettingsDialog.isHidden():
+        if hasattr(self, 'voice_selector') and self.voice_selector and hasattr(self, 'update_tts_voices'):
             self.update_tts_voices(self.available_voices)
         self.switch_enable_TTS.setEnabled(True if voices else False)
         self.voice_selector.setEnabled(True if voices else False)
@@ -1102,6 +1112,13 @@ class SettingsMenu(FluentWindow):
 
             parent.voice_selector = self.widget.findChild(ComboBox, 'voice_selector')
             parent.switch_enable_TTS = self.widget.findChild(SwitchButton, 'switch_enable_tts')
+            
+            # 语言选择器初始化
+            parent.voice_language_selector = self.widget.findChild(ComboBox, 'voice_language')
+            if parent.voice_language_selector:
+                parent.setup_voice_language_selector()
+                parent.voice_language_selector.currentTextChanged.connect(parent.on_voice_language_changed)
+            
             self.tts_vocab_button = self.widget.findChild(PushButton, 'tts_vocab_button')
             def show_vocab_note():
                 w = MessageBox('小语法?',
@@ -1253,20 +1270,27 @@ class SettingsMenu(FluentWindow):
             logger.debug(f"TTS引擎被更改,尝试更新列表: {selected_engine_key}")
             config_center.write_conf('TTS', 'engine', selected_engine_key)
             self.current_loaded_engine = selected_engine_key # 更新当前加载的引擎
-            self.load_tts_voices_for_engine(selected_engine_key)
+            current_language = None
+            if hasattr(self, 'voice_language_selector') and self.voice_language_selector:
+                current_language = self.voice_language_selector.currentData()
+            self.load_tts_voices_for_engine(selected_engine_key, current_language)
         elif not selected_engine_key:
             logger.warning("选择的TTS引擎键为空")
 
-    def load_tts_voices_for_engine(self, engine_key):
+    def load_tts_voices_for_engine(self, engine_key, language_filter=None):
         if config_center.read_conf('TTS', 'enable') == '0':
             self.voice_selector.clear()
             self.voice_selector.addItem("未启用", userData=None)
             self.voice_selector.setEnabled(False)
             self.switch_enable_TTS.setEnabled(True)
+            if hasattr(self, 'voice_language_selector') and self.voice_language_selector:
+                self.voice_language_selector.setEnabled(True)
             return
         self.voice_selector.clear()
         self.voice_selector.addItem("加载中...", userData=None)
         self.voice_selector.setEnabled(False)
+        if hasattr(self, 'voice_language_selector') and self.voice_language_selector:
+            self.voice_language_selector.setEnabled(False)
         if hasattr(self, 'TTSSettingsDialog') and self.TTSSettingsDialog.isVisible():
             self.switch_enable_TTS.setEnabled(False) # 临时禁用TTS开关
 
@@ -1279,9 +1303,9 @@ class SettingsMenu(FluentWindow):
 
         self.current_loaded_engine = engine_key
         self.available_voices = None
-        self.tts_voice_loader_thread = TTSVoiceLoaderThread(engine_filter=engine_key)
-        self.tts_voice_loader_thread.voicesLoaded.connect(lambda voices: self.available_voices_cnt(voices) or self.switch_enable_TTS.setEnabled(True))
-        self.tts_voice_loader_thread.errorOccurred.connect(lambda error: self.handle_tts_load_error(error) or self.switch_enable_TTS.setEnabled(True))
+        self.tts_voice_loader_thread = TTSVoiceLoaderThread(engine_filter=engine_key, language_filter=language_filter)
+        self.tts_voice_loader_thread.voicesLoaded.connect(lambda voices: self.available_voices_cnt(voices) or self.switch_enable_TTS.setEnabled(True) or self._enable_language_selector())
+        self.tts_voice_loader_thread.errorOccurred.connect(lambda error: self.handle_tts_load_error(error) or self.switch_enable_TTS.setEnabled(True) or self._enable_language_selector())
         self.tts_voice_loader_thread.start()
 
     def populate_tts_engines(self):
@@ -1372,7 +1396,10 @@ class SettingsMenu(FluentWindow):
             self.switch_enable_TTS.setEnabled(False)
             current_engine = self.engine_selector.currentData()
             if current_engine:
-                self.load_tts_voices_for_engine(current_engine)
+                current_language = None
+                if hasattr(self, 'voice_language_selector') and self.voice_language_selector:
+                    current_language = self.voice_language_selector.currentData()
+                self.load_tts_voices_for_engine(current_engine, current_language)
             else:
                 logger.warning("TTS启用但未选择引擎，无法加载语音")
                 self.voice_selector.clear()
@@ -1419,7 +1446,8 @@ class SettingsMenu(FluentWindow):
         for voice in available_voices:
             voice_selector.addItem(voice['name'], userData=voice['id'])
         current_voice_id = config_center.read_conf('TTS', 'voice_id')
-        current_voice_name = get_voice_name_by_id(current_voice_id, available_voices)
+        from generate_speech import get_voice_name_by_id_sync
+        current_voice_name = get_voice_name_by_id_sync(current_voice_id, available_voices)
         if current_voice_name:
             index_to_select = -1
             for i in range(voice_selector.count()):
@@ -1446,12 +1474,74 @@ class SettingsMenu(FluentWindow):
              switch_enable_TTS.setEnabled(False)
 
         voice_selector.setEnabled(True)
-        switch_enable_TTS.setEnabled(True)
-        voice_selector.currentTextChanged.connect(lambda name: config_center.write_conf('TTS', 'voice_id', voice_selector.currentData()) if voice_selector.currentData() else None)
+        self._enable_language_selector()
+
+    def setup_voice_language_selector(self):
+        """设置语言选择器"""
+        if not self.voice_language_selector:
+            return
+        
+        # 导入语言支持函数
+        from generate_speech import get_supported_languages
+        
+        # 清空并添加语言选项
+        self.voice_language_selector.clear()
+        self.voice_language_selector.addItem("全部语言", userData=None)
+        
+        supported_languages = get_supported_languages()
+        for lang_code, lang_name in supported_languages.items():
+            self.voice_language_selector.addItem(lang_name, userData=lang_code)
+        
+        # 加载保存的语言配置
+        saved_language = config_center.read_conf('TTS', 'language')
+        if saved_language:
+            index = self.voice_language_selector.findData(saved_language)
+            if index != -1:
+                self.voice_language_selector.setCurrentIndex(index)
+            else:
+                zh_index = self.voice_language_selector.findData('zh-CN')
+                if zh_index != -1:
+                    self.voice_language_selector.setCurrentIndex(zh_index)
+                else:
+                    self.voice_language_selector.setCurrentIndex(0)
+        else:
+            zh_index = self.voice_language_selector.findData('zh-CN')
+            if zh_index != -1:
+                self.voice_language_selector.setCurrentIndex(zh_index)
+                config_center.write_conf('TTS', 'language', 'zh-CN')
+            else:
+                self.voice_language_selector.setCurrentIndex(0)
+        
+    def _enable_language_selector(self):
+        """启用语言选择器"""
+        if hasattr(self, 'voice_language_selector') and self.voice_language_selector:
+            self.voice_language_selector.setEnabled(True)
+        return True
+    
+    def on_voice_language_changed(self, language_text):
+        """语言选择器变化处理"""
+        if not hasattr(self, 'voice_language_selector') or not self.voice_language_selector:
+            return
+        if not self.voice_language_selector.isEnabled():
+            return
+            
+        selected_language = self.voice_language_selector.currentData()
+        current_engine = self.engine_selector.currentData() if hasattr(self, 'engine_selector') and self.engine_selector else None
+        
+        # 保存语言配置
+        config_center.write_conf('TTS', 'language', selected_language or '')
+        
+        if current_engine and config_center.read_conf('TTS', 'enable') == '1':
+            # logger.debug(f"语言筛选已更改为: {selected_language or '全部语言'}")
+            if hasattr(self, 'voice_selector') and self.voice_selector:
+                self.voice_selector.clear()
+                self.voice_selector.addItem("正在加载语音...", userData=None)
+                self.voice_selector.setEnabled(False)
+            self.load_tts_voices_for_engine(current_engine, selected_language)
 
     def handle_tts_load_error(self, error_message):
         if not self.voice_selector or not self.switch_enable_TTS:
-            logger.warning("voice_selector 或 switch_enable_TTS 未初始化")
+            # logger.warning("voice_selector 或 switch_enable_TTS 未初始化")
             return
             
         voice_selector = self.voice_selector
@@ -4084,6 +4174,28 @@ class SettingsMenu(FluentWindow):
             self._remove_ntp_auto_sync_callback()
         except Exception as e:
             logger.error(f"清理NTP自动同步回调失败: {e}")
+        
+        # 清理TTS相关线程和资源
+        try:
+            if hasattr(self, 'tts_voice_loader_thread') and self.tts_voice_loader_thread:
+                if self.tts_voice_loader_thread.isRunning():
+                    self.tts_voice_loader_thread.requestInterruption()
+                    self.tts_voice_loader_thread.quit()
+                    if not self.tts_voice_loader_thread.wait(1000):
+                        logger.warning("TTS语音加载线程未能在超时时间内退出")
+        except Exception as e:
+            logger.error(f"清理TTS语音加载线程失败: {e}")
+        
+        try:
+            if hasattr(self, 'TTSSettingsDialog') and self.TTSSettingsDialog:
+                if hasattr(self.TTSSettingsDialog, 'tts_preview_thread') and self.TTSSettingsDialog.tts_preview_thread:
+                    if self.TTSSettingsDialog.tts_preview_thread.isRunning():
+                        self.TTSSettingsDialog.tts_preview_thread.requestInterruption()
+                        self.TTSSettingsDialog.tts_preview_thread.quit()
+                        if not self.TTSSettingsDialog.tts_preview_thread.wait(1000):
+                            logger.warning("TTS预览线程未能在超时时间内退出")
+        except Exception as e:
+            logger.error(f"清理TTS预览线程失败: {e}")
         
         self.closed.emit()
         event.accept()
