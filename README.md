@@ -1,5 +1,6 @@
-
-简体中文（当前选择） | [English](/docs/readme/README.en_US.md) | [日本語](/docs/readme/README.ja.md)
+<div align="right">
+简体中文 | <a href="/docs/readme/README.en_US.md">English</a> | <a href="/docs/readme/README.ja.md">日本語</a>
+</div>
 
 > [!Warning]
 > Class Widgets *1* 目前完全由社区开发者进行开发
@@ -7,9 +8,6 @@
 > [![](https://github.com/pizeroLOL.png?size=80)](https://github.com/pizeroLOL) [![](https://github.com/IsHPDuwu.png?size=80)](https://github.com/IsHPDuwu) [![](https://github.com/baiyao105.png?size=80)](https://github.com/baiyao105) [![](https://github.com/Artist-MOBAI.png?size=80)](https://github.com/Artist-MOBAI)
 > 
 > 有任何需要社区开发者帮忙的地方，请前往 QQ 群或提 issue
-
-> [!NOTE]
-> Class Widgets 有 QQ 群和 Discord 服务器啦！详见[此处](#社区)
 
 <p align="center">
   <img width="16%" align="center" src="img/Logo.png" alt="logo">

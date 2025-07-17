@@ -1,4 +1,6 @@
-[简体中文](/README.md) | [English](/docs/readme/README.en_US.md) | 日本語（現在）
+<div align="right">
+<a href="/README.md">简体中文</a> | <a href="/docs/readme/README.en_US.md">English</a> | 日本語
+</div>
 
 > [!Warning]
 > Class Widgets *1* は現在、完全にコミュニティ開発者によって開発されています。
@@ -6,9 +8,6 @@
 > [![](https://github.com/pizeroLOL.png?size=80)](https://github.com/pizeroLOL) [![](https://github.com/IsHPDuwu.png?size=80)](https://github.com/IsHPDuwu) [![](https://github.com/baiyao105.png?size=80)](https://github.com/baiyao105) [![](https://github.com/Artist-MOBAI.png?size=80)](https://github.com/Artist-MOBAI)
 >
 > コミュニティ開発者のサポートが必要な場合は、プロジェクトの QQ グループに参加するか、 GitHub で Issue を作成してください。
-
-> [!NOTE]
-> Class Widgets は QQ グループと Discord サーバーを開設しました！詳細は[こちら](#community)をご覧ください。
 
 <p align="center">
   <img width="16%" align="center" src="../../img/Logo.png" alt="logo">
@@ -145,5 +144,4 @@ Class Widgets への貢献を希望される方は、 [Contributing Guide](CONTR
 </picture>
 
 ##
-
 これは私の新人としての練習作品です。ご意見・ご感想をお待ちしています！

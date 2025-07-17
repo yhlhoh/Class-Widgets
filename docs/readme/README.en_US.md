@@ -1,4 +1,6 @@
-[简体中文](/README.md) | English (Current) | [日本語](/docs/readme/README.ja.md)
+<div align="right">
+<a href="/README.md">简体中文</a> | English | <a href="/docs/readme/README.ja.md">日本語</a>
+</div>
 
 > [!Warning]
 > Class Widgets *1* is currently developed entirely by community contributors.
@@ -6,9 +8,6 @@
 > [![](https://github.com/pizeroLOL.png?size=80)](https://github.com/pizeroLOL) [![](https://github.com/IsHPDuwu.png?size=80)](https://github.com/IsHPDuwu) [![](https://github.com/baiyao105.png?size=80)](https://github.com/baiyao105) [![](https://github.com/Artist-MOBAI.png?size=80)](https://github.com/Artist-MOBAI)
 > 
 > If you need help from community contributors, please join the project's QQ group or open an GitHub issue.
-
-> [!NOTE]
-> Class Widgets now has a QQ group and a Discord server! See [here](#community) for details.
 
 <p align="center">
   <img width="16%" align="center" src="../../img/Logo.png" alt="logo">
@@ -146,5 +145,4 @@ We currently have [Discussions](https://github.com/orgs/Class-Widgets/discussion
  </picture>
 
 ##
-
 This is just my practice project as a newcomer developers, so feedback is deservedly welcome!
