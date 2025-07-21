@@ -164,9 +164,9 @@ class I18nManager:
                 self.load_language_view(current_lang)
                 return False
 
-            current_theme = config_center.read_conf('General', 'theme')
+            current_theme = load_theme_config(config_center.read_conf('General', 'theme'))
             theme_translator = self._load_translation_file(
-                Path(conf.base_directory) / 'ui' / current_theme / 'i18n' / f'{lang_code}.qm'
+                Path(current_theme.path / 'i18n' / f'{lang_code}.qm')
             )
             if theme_translator:
                 self.translators.append(theme_translator)
