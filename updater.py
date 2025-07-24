@@ -106,44 +106,49 @@ class Updater(QThread):
             self.backup()
             self.stage += 1
             self.update()
-        except:
-            import sys
-            self.logger.error("更新失败！")
-            import traceback
-            
-            if self.stage == 2:
-                self.update_signal.emit(["更新失败，正在回滚",100])
-                # 更新失败时，清理已删除的文件和目录并回滚
+        except Exception:
+            self._handle_update_exception()
 
-                # 回滚：将 backup 目录下的文件和文件夹恢复到源目录
-                backup_dir = os.path.join(self.source_dir, "backup")
-                if os.path.exists(backup_dir):
-                    for item in os.listdir(backup_dir):
-                        src_path = os.path.join(backup_dir, item)
-                        dst_path = os.path.join(self.source_dir, item)
-                        if os.path.isdir(src_path):
-                            if os.path.exists(dst_path):
-                                shutil.rmtree(dst_path, ignore_errors=True)
-                            shutil.copytree(src_path, dst_path)
-                            self.logger.info(f"已回滚目录 {item} -> {dst_path}")
-                        elif os.path.isfile(src_path):
-                            shutil.copy2(src_path, dst_path)
-                            self.logger.info(f"已回滚文件 {item} -> {dst_path}")
-                    self.logger.info("回滚完成")
-                files_to_remove = [dir for dir in os.listdir(self.source_dir) if dir != "backup" and dir != "updpackage"]
-                for file in files_to_remove:
-                    file_path = os.path.join(self.source_dir, file)
-                    if os.path.isdir(file_path):
-                        shutil.rmtree(file_path, ignore_errors=True)
-                        self.logger.info(f"已删除目录 {file}")
-                    elif os.path.isfile(file_path):
-                        os.remove(file_path)
-                        self.logger.info(f"已删除文件 {file}")
-            else:
-                self.update_signal.emit(["更新失败，正在删除备份",100])
-                shutil.rmtree(os.path.join(self.source_dir, "backup"))
-                self.finish_signal.emit()
+    def _handle_update_exception(self):
+        import sys
+        import traceback
+        self.logger.error("更新失败！")
+        if self.stage != 2:
+            self.update_signal.emit(["更新失败，正在删除备份", 100])
+            shutil.rmtree(os.path.join(self.source_dir, "backup"))
+            self.finish_signal.emit()
             traceback.print_exc()
+            return
+
+        self.update_signal.emit(["更新失败，正在回滚", 100])
+        backup_dir = os.path.join(self.source_dir, "backup")
+        if not os.path.exists(backup_dir):
+            traceback.print_exc()
+            return
+
+        for item in os.listdir(backup_dir):
+            src_path = os.path.join(backup_dir, item)
+            dst_path = os.path.join(self.source_dir, item)
+            if os.path.isdir(src_path):
+                if os.path.exists(dst_path):
+                    shutil.rmtree(dst_path, ignore_errors=True)
+                shutil.copytree(src_path, dst_path)
+                self.logger.info(f"已回滚目录 {item} -> {dst_path}")
+            elif os.path.isfile(src_path):
+                shutil.copy2(src_path, dst_path)
+                self.logger.info(f"已回滚文件 {item} -> {dst_path}")
+        self.logger.info("回滚完成")
+
+        files_to_remove = [dir for dir in os.listdir(self.source_dir) if dir != "backup" and dir != "updpackage"]
+        for file in files_to_remove:
+            file_path = os.path.join(self.source_dir, file)
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path, ignore_errors=True)
+                self.logger.info(f"已删除目录 {file}")
+            elif os.path.isfile(file_path):
+                os.remove(file_path)
+                self.logger.info(f"已删除文件 {file}")
+        traceback.print_exc()
 
 class UpgradeProgressWindow(FluentWindow):
     def __init__(self,worker,parent=None):
