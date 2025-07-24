@@ -59,7 +59,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../main.py" line="2006"/>
         <source>额外选项</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Qoşumcha tallimlar</translation>
     </message>
     <message>
         <location filename="../main.py" line="2007"/>
@@ -177,27 +177,27 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
 <context>
     <name>Form</name>
     <message>
-        <location filename="../view/extra_menu.ui" line="14"/>
-        <location filename="../view/widget-toast-bar.ui" line="26"/>
-        <location filename="../view/menu/about.ui" line="14"/>
-        <location filename="../view/menu/advance.ui" line="20"/>
-        <location filename="../view/menu/configs.ui" line="20"/>
-        <location filename="../view/menu/countdown_custom_edit.ui" line="14"/>
-        <location filename="../view/menu/custom.ui" line="20"/>
-        <location filename="../view/menu/file_item.ui" line="14"/>
-        <location filename="../view/menu/help.ui" line="14"/>
-        <location filename="../view/menu/plugin_mgr.ui" line="14"/>
-        <location filename="../view/menu/preview.ui" line="14"/>
-        <location filename="../view/menu/schedule_db_edit.ui" line="14"/>
-        <location filename="../view/menu/schedule_edit.ui" line="14"/>
-        <location filename="../view/menu/sound.ui" line="20"/>
-        <location filename="../view/menu/subject.ui" line="14"/>
-        <location filename="../view/menu/timeline_edit.ui" line="14"/>
-        <location filename="../view/pp/home.ui" line="20"/>
+        <location filename="../view/pp/settings.ui" line="20"/>
         <location filename="../view/pp/latests.ui" line="20"/>
+        <location filename="../view/pp/home.ui" line="20"/>
         <location filename="../view/pp/plugin_detail.ui" line="20"/>
         <location filename="../view/pp/search.ui" line="20"/>
-        <location filename="../view/pp/settings.ui" line="20"/>
+        <location filename="../view/menu/advance.ui" line="20"/>
+        <location filename="../view/menu/about.ui" line="14"/>
+        <location filename="../view/menu/subject.ui" line="14"/>
+        <location filename="../view/menu/schedule_edit.ui" line="14"/>
+        <location filename="../view/menu/sound.ui" line="20"/>
+        <location filename="../view/menu/help.ui" line="14"/>
+        <location filename="../view/menu/plugin_mgr.ui" line="14"/>
+        <location filename="../view/menu/custom.ui" line="20"/>
+        <location filename="../view/menu/schedule_db_edit.ui" line="14"/>
+        <location filename="../view/menu/configs.ui" line="20"/>
+        <location filename="../view/menu/timeline_edit.ui" line="14"/>
+        <location filename="../view/menu/file_item.ui" line="14"/>
+        <location filename="../view/menu/preview.ui" line="14"/>
+        <location filename="../view/menu/countdown_custom_edit.ui" line="14"/>
+        <location filename="../view/extra_menu.ui" line="14"/>
+        <location filename="../view/widget-toast-bar.ui" line="26"/>
         <source>Form</source>
         <translation>Form</translation>
     </message>
@@ -232,14 +232,14 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <translation>Bir künlük dersni müwäqqit almashturush, qaytidin qozghitishidin keyin ishlemsiz bolidu</translation>
     </message>
     <message>
-        <location filename="../view/extra_menu.ui" line="208"/>
         <location filename="../view/menu/schedule_edit.ui" line="294"/>
+        <location filename="../view/extra_menu.ui" line="208"/>
         <source>课程/活动</source>
         <translation>Ders/Tädbir</translation>
     </message>
     <message>
-        <location filename="../view/extra_menu.ui" line="234"/>
         <location filename="../view/menu/schedule_edit.ui" line="320"/>
+        <location filename="../view/extra_menu.ui" line="234"/>
         <source>自定义课程</source>
         <translation>Özige xas ders</translation>
     </message>
@@ -254,12 +254,12 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <translation>Köproq bexatlarni körüp chiq</translation>
     </message>
     <message>
-        <location filename="../view/extra_menu.ui" line="306"/>
-        <location filename="../view/menu/countdown_custom_edit.ui" line="229"/>
-        <location filename="../view/menu/schedule_db_edit.ui" line="160"/>
-        <location filename="../view/menu/schedule_edit.ui" line="378"/>
         <location filename="../view/menu/subject.ui" line="89"/>
+        <location filename="../view/menu/schedule_edit.ui" line="378"/>
+        <location filename="../view/menu/schedule_db_edit.ui" line="160"/>
         <location filename="../view/menu/timeline_edit.ui" line="520"/>
+        <location filename="../view/menu/countdown_custom_edit.ui" line="229"/>
+        <location filename="../view/extra_menu.ui" line="306"/>
         <source>保存</source>
         <translation>Saqla</translation>
     </message>
@@ -371,7 +371,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <translation>agar qozghitilsa, Class Widgets qozghalghan chaghda torqa ulinip tallanghan yangilanma kanilida əng yəngi nəshir yangilanmisi barmu yoqmu təkshüridu.</translation>
     </message>
     <message>
-        <location filename="../view/menu/about.ui" line="668"/>
+        <location filename="../view/pp/settings.ui" line="144"/>
         <location filename="../view/menu/advance.ui" line="143"/>
         <location filename="../view/menu/advance.ui" line="685"/>
         <location filename="../view/menu/advance.ui" line="1167"/>
@@ -379,30 +379,30 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <location filename="../view/menu/advance.ui" line="1668"/>
         <location filename="../view/menu/advance.ui" line="1760"/>
         <location filename="../view/menu/advance.ui" line="1835"/>
+        <location filename="../view/menu/about.ui" line="668"/>
         <location filename="../view/menu/sound.ui" line="136"/>
         <location filename="../view/menu/sound.ui" line="214"/>
         <location filename="../view/menu/sound.ui" line="292"/>
         <location filename="../view/menu/sound.ui" line="383"/>
         <location filename="../view/menu/sound.ui" line="608"/>
         <location filename="../view/menu/sound.ui" line="687"/>
-        <location filename="../view/pp/settings.ui" line="144"/>
         <source>启用</source>
         <translation>qozghat</translation>
     </message>
     <message>
-        <location filename="../view/menu/about.ui" line="671"/>
+        <location filename="../view/pp/settings.ui" line="147"/>
         <location filename="../view/menu/advance.ui" line="1170"/>
         <location filename="../view/menu/advance.ui" line="1340"/>
         <location filename="../view/menu/advance.ui" line="1671"/>
         <location filename="../view/menu/advance.ui" line="1763"/>
         <location filename="../view/menu/advance.ui" line="1838"/>
+        <location filename="../view/menu/about.ui" line="671"/>
         <location filename="../view/menu/sound.ui" line="139"/>
         <location filename="../view/menu/sound.ui" line="217"/>
         <location filename="../view/menu/sound.ui" line="295"/>
         <location filename="../view/menu/sound.ui" line="386"/>
         <location filename="../view/menu/sound.ui" line="611"/>
         <location filename="../view/menu/sound.ui" line="690"/>
-        <location filename="../view/pp/settings.ui" line="147"/>
         <source>禁用</source>
         <translation>chəklə</translation>
     </message>
@@ -748,8 +748,8 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../view/menu/preview.ui" line="35"/>
         <location filename="../view/menu/schedule_edit.ui" line="44"/>
+        <location filename="../view/menu/preview.ui" line="35"/>
         <source>课程表</source>
         <translation type="unfinished"></translation>
     </message>
@@ -909,22 +909,22 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../view/menu/plugin_mgr.ui" line="706"/>
+        <location filename="../view/menu/plugin_mgr.ui" line="712"/>
         <location filename="../view/menu/custom.ui" line="738"/>
         <location filename="../view/menu/custom.ui" line="744"/>
         <location filename="../view/menu/custom.ui" line="816"/>
         <location filename="../view/menu/custom.ui" line="822"/>
         <location filename="../view/menu/custom.ui" line="911"/>
         <location filename="../view/menu/custom.ui" line="917"/>
-        <location filename="../view/menu/plugin_mgr.ui" line="706"/>
-        <location filename="../view/menu/plugin_mgr.ui" line="712"/>
         <source>关</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../view/menu/plugin_mgr.ui" line="709"/>
         <location filename="../view/menu/custom.ui" line="741"/>
         <location filename="../view/menu/custom.ui" line="819"/>
         <location filename="../view/menu/custom.ui" line="914"/>
-        <location filename="../view/menu/plugin_mgr.ui" line="709"/>
         <source>开</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1099,8 +1099,8 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../view/menu/plugin_mgr.ui" line="35"/>
         <location filename="../view/pp/settings.ui" line="71"/>
+        <location filename="../view/menu/plugin_mgr.ui" line="35"/>
         <source>插件</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1215,8 +1215,8 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../view/menu/preview.ui" line="50"/>
         <location filename="../view/menu/sound.ui" line="742"/>
+        <location filename="../view/menu/preview.ui" line="50"/>
         <source>预览</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1494,7 +1494,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../view/pp/settings.ui" line="41"/>
         <source>设置</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Bexat</translation>
     </message>
     <message>
         <location filename="../view/pp/settings.ui" line="104"/>
@@ -1621,7 +1621,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../plugin_plaza.py" line="420"/>
         <source>更新</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">yangilanma</translation>
     </message>
 </context>
 <context>
@@ -1645,7 +1645,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../plugin_plaza.py" line="308"/>
         <source>更新</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">yangilanma</translation>
     </message>
     <message>
         <location filename="../plugin_plaza.py" line="314"/>
@@ -1856,7 +1856,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../menu.py" line="1588"/>
         <source>知道啦~</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tushundum~</translation>
     </message>
     <message>
         <location filename="../menu.py" line="1629"/>
@@ -2463,7 +2463,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <location filename="../menu.py" line="3217"/>
         <location filename="../menu.py" line="3218"/>
         <source>获取失败！</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">erishshə almidi!</translation>
     </message>
     <message>
         <location filename="../menu.py" line="3238"/>
@@ -2636,7 +2636,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <location filename="../menu.py" line="3817"/>
         <location filename="../menu.py" line="3972"/>
         <source>课程</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">dərs</translation>
     </message>
     <message>
         <location filename="../menu.py" line="3955"/>
@@ -2748,7 +2748,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../menu.py" line="4384"/>
         <source>高级选项</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">aliy tallanmilar</translation>
     </message>
     <message>
         <location filename="../menu.py" line="4385"/>
@@ -2813,12 +2813,12 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../view/menu/tts_settings.ui" line="169"/>
         <source>启用</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">qozghat</translation>
     </message>
     <message>
         <location filename="../view/menu/tts_settings.ui" line="172"/>
         <source>禁用</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">chəklə</translation>
     </message>
     <message>
         <location filename="../view/menu/tts_settings.ui" line="208"/>
@@ -3356,7 +3356,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
         <location filename="../list_.py" line="64"/>
         <location filename="../list_.py" line="169"/>
         <source>英语</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">inglizchə</translation>
     </message>
     <message>
         <location filename="../list_.py" line="35"/>
@@ -3484,7 +3484,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../list_.py" line="58"/>
         <source>课程</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">dərs</translation>
     </message>
     <message>
         <location filename="../list_.py" line="59"/>
@@ -3792,12 +3792,12 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../menu.py" line="598"/>
         <source>禁用</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">chəklə</translation>
     </message>
     <message>
         <location filename="../menu.py" line="599"/>
         <source>启用</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">qozghat</translation>
     </message>
     <message>
         <location filename="../menu.py" line="644"/>
@@ -3864,7 +3864,7 @@ Siz sistem bexatliridin ta yana köp avaaz qoshaliysiz (*≧▽≦)</translation
     <message>
         <location filename="../tip_toast.py" line="110"/>
         <source>当前课程</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">hazirqi dərs</translation>
     </message>
     <message>
         <location filename="../tip_toast.py" line="117"/>
