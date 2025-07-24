@@ -2852,24 +2852,34 @@ def setup_signal_handlers_optimized(app: QApplication) -> None:
         signal.signal(signal.SIGHUP, signal_handler)  # 终端挂起
 
 if __name__ == '__main__':
-    if share.attach() and config_center.read_conf('Other', 'multiple_programs') != '1':
-        logger.debug('不允许多开实例')
-        from qfluentwidgets import Dialog
-        app = QApplication.instance() or QApplication(sys.argv)
-        dlg = Dialog(
-            'Class Widgets 正在运行',
-            'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
-            '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)'
-        )
-        dlg.yesButton.setText('好')
-        dlg.cancelButton.hide()
-        dlg.buttonLayout.insertStretch(0, 1)
-        dlg.setFixedWidth(550)
-        dlg.exec()
-        sys.exit(0)
-    if not share.create(1):
-        print(f'无法创建共享内存: {share.errorString()}') # logger 可能还没准备好
-        sys.exit(1)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--finish-update":
+            logger.debug("自动更新收尾")
+            updater.post_upgrade()
+
+        else:
+            '''--do-upgrade的参数分别对应updater.do_upgrade的参数'''
+            logger.debug("调用自动更新")
+            updater.do_upgrade(*sys.argv[2:])
+
+    utils.guard = utils.SingleInstanceGuard("ClassWidgets.lock")
+    if config_center.read_conf('Other', 'multiple_programs') != '1':
+        if not utils.guard.try_acquire():
+            if (info:=utils.guard.get_lock_info()):
+                logger.debug(f'不允许多开实例，{info}')
+                from qfluentwidgets import Dialog
+                app = QApplication.instance() or QApplication(sys.argv)
+                dlg = Dialog(
+                    QCoreApplication.translate('main', 'Class Widgets 正在运行'),
+                    QCoreApplication.translate('main', 'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
+                    '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)')
+                )
+                dlg.yesButton.setText(QCoreApplication.translate('main', '好'))
+                dlg.cancelButton.hide()
+                dlg.buttonLayout.insertStretch(0, 1)
+                dlg.setFixedWidth(550)
+                dlg.exec()
+                sys.exit(0)
 
     scale_factor = float(config_center.read_conf('General', 'scale'))
     os.environ['QT_SCALE_FACTOR'] = str(scale_factor)
