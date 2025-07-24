@@ -10,6 +10,8 @@ import configparser
 from packaging.version import Version
 import json
 
+from PyQt5.QtCore import QCoreApplication
+
 
 base_directory = Path(os.path.dirname(os.path.abspath(__file__)))
 '''
@@ -55,10 +57,10 @@ class ConfigCenter:
             import sys
             app = QApplication.instance() or QApplication(sys.argv)
             dlg = Dialog(
-                'Class Widgets 启动失败w(ﾟДﾟ)w',
-                f'加载默认配置文件失败,请检查文件完整性或尝试重新安装。\n错误信息: {e}'
+                QCoreApplication.translate("file", 'Class Widgets 启动失败w(ﾟДﾟ)w'),
+                QCoreApplication.translate("file", '加载默认配置文件失败,请检查文件完整性或尝试重新安装。\n错误信息: {e}')
             )
-            dlg.yesButton.setText('好')
+            dlg.yesButton.setText(QCoreApplication.translate("file", '好'))
             dlg.cancelButton.hide()
             dlg.buttonLayout.insertStretch(0, 1)
             dlg.setFixedWidth(550)
@@ -72,16 +74,6 @@ class ConfigCenter:
             self.config.read(self.user_config_path, encoding='utf-8')
         except Exception as e:
             logger.error(f"加载配置文件失败: {e}")
-
-    def _initialize_config(self) -> None:
-        """初始化配置文件（当配置文件不存在时）"""
-        logger.debug("配置文件不存在，已创建并写入默认配置。")
-        self.config.read_dict(self.default_data)
-        self._write_config_to_file()
-        if sys.platform != 'win32':
-            self.config.set('General', 'hide_method', '2')
-            self._write_config_to_file()
-        copy(base_directory / 'config' / 'default.json', base_directory / 'config' / 'schedule' / '新课表 - 1.json')
 
     def _migrate_config(self) -> None:
         """迁移配置文件（当配置文件版本不一致时）"""
@@ -266,34 +258,6 @@ class ConfigCenter:
         return results
 
     def _check_and_migrate_config(self) -> None:
-        """检查并迁移配置文件"""
-        if not self.user_config_path.exists():
-            self._initialize_config()
-        else:
-            self._load_user_config()
-    
-            if 'Version' in self.config:
-                user_config_version_str = self.config['Version'].get('version', '0.0.0')
-            else:
-                user_config_version_str = '0.0.0'
-
-            default_config_version_str = self.default_data.get('Version', {}).get('version', '0.0.0')
-
-            try:
-                user_config_version = Version(user_config_version_str)
-            except ValueError:
-                logger.warning(f"配置文件中的版本号 '{user_config_version_str}' 无效")
-                user_config_version = Version('0.0.0')
-
-            try:
-                default_config_version = Version(default_config_version_str)
-            except ValueError:
-                logger.error(f"默认配置文件中的版本号 '{default_config_version_str}' 无效")
-                return
-            if user_config_version < default_config_version:
-                logger.debug(f"检测到配置文件版本不一致或缺失 (配置版本: {user_config_version}, 默认版本: {default_config_version})，正在执行配置迁移...")
-                self._migrate_config()
-                self._write_config_to_file()
         self._check_schedule_config()
         self._check_plugins_directory()
 
@@ -337,11 +301,12 @@ class ConfigCenter:
         if section in self.default_data:
             item_info = self.default_data[section].get(key)
             if item_info is not None:
+                if (translation := QCoreApplication.translate('config', f'{section}.{key}')) != f'{section}.{key}':
+                    return translation
                 if isinstance(item_info, dict) and "type" in item_info and "default" in item_info:
                     return self._convert_value(item_info["default"], item_info["type"])
                 else:
                     return item_info
-
         logger.warning(f"配置项未找到: Section='{section}', Key='{key}'")
         return fallback
 
@@ -483,3 +448,13 @@ def save_data_to_json(data: Dict[str, Any], filename: str) -> None:
 config_center = ConfigCenter(base_directory)
 schedule_center = ScheduleCenter(config_center)
 config_center.schedule_update_callback = schedule_center.update_schedule
+
+if __name__ == '__main__':
+    QCoreApplication.translate('config', 'General.schedule')
+    QCoreApplication.translate('config', 'TTS.language')
+    QCoreApplication.translate('config', 'TTS.attend_class')
+    QCoreApplication.translate('config', 'TTS.finish_class')
+    QCoreApplication.translate('config', 'TTS.prepare_class')
+    QCoreApplication.translate('config', 'TTS.after_school')
+    QCoreApplication.translate('config', 'Weather.api')
+    QCoreApplication.translate('config', 'Plugin.mirror')
