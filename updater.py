@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QIcon
 from qfluentwidgets import *
-class Updater(QThread):
+
 
 def silent_update_check():
     """
@@ -65,7 +65,7 @@ def silent_update_check():
         version_thread.start()
     except Exception as e:
         logger.error(f"自动更新检测异常: {e}")
-
+class Updater(QThread):
     update_signal = pyqtSignal(list)
     finish_signal = pyqtSignal()
     def __init__(self, source_dir, files_to_keep='', executable = ""):
