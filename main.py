@@ -27,6 +27,7 @@ from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Actio
     PrimaryPushButton, IconWidget
 
 from PyQt5.QtGui import QCloseEvent, QShowEvent, QHideEvent, QMouseEvent, QFocusEvent
+from PyQt5.QtCore import QCoreApplication
 import updater
 
 
@@ -35,30 +36,28 @@ import list_
 import tip_toast
 from tip_toast import active_windows
 import utils
+import menu
 import weather as db
 from conf import base_directory, load_theme_config
 from extra_menu import ExtraMenu, open_settings
 from generate_speech import generate_speech_sync, list_pyttsx3_voices
-from menu import open_plaza
-from network_thread import check_update
+from menu import open_plaza, I18nManager
 from weather import WeatherReportThread as weatherReportThread
 from weather import get_unified_weather_alerts, get_alert_image
+from network_thread import check_update
 from play_audio import play_audio
 from plugin import p_loader
-from utils import restart, stop, share, update_timer, DarkModeWatcher, TimeManagerFactory
+from utils import restart, stop, update_timer, DarkModeWatcher, TimeManagerFactory
 from file import config_center, schedule_center
 
 if os.name == 'nt':
     import pygetwindow
 
 # 适配高DPI缩放
-if platform.system() == 'Windows' and platform.release() not in ['7', 'XP', 'Vista']:
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
-else:
-    logger.warning('不兼容的系统,跳过高DPI标识')
+QApplication.setHighDpiScaleFactorRoundingPolicy(
+    Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
 today = dt.date.today()
 
@@ -83,7 +82,7 @@ timeline_data = {}
 next_lessons = []
 parts_start_time = []
 
-temperature = '未设置'
+temperature = QCoreApplication.translate("main", '未设置')
 weather_icon = 0
 weather_name = ''
 weather_data_temp = None
@@ -334,18 +333,18 @@ def get_current_lessons() -> None:  # 获取当前课程
         if item_name.startswith('a'):
             if schedule[str(current_week)]:
                 try:
-                    if schedule[str(current_week)][class_count] != '未添加':
+                    if schedule[str(current_week)][class_count] != QCoreApplication.translate('main', '未添加'):
                         current_lessons[item_name] = schedule[str(current_week)][class_count]
                     else:
-                        current_lessons[item_name] = '暂无课程'
+                        current_lessons[item_name] = QCoreApplication.translate('main', '暂无课程')
                 except IndexError:
-                    current_lessons[item_name] = '暂无课程'
+                    current_lessons[item_name] = QCoreApplication.translate('main', '暂无课程')
                 except Exception as e:
-                    current_lessons[item_name] = '暂无课程'
+                    current_lessons[item_name] = QCoreApplication.translate('main', '暂无课程')
                     logger.debug(f'加载课程表文件出错：{e}')
                 class_count += 1
             else:
-                current_lessons[item_name] = '暂无课程'
+                current_lessons[item_name] = QCoreApplication.translate('main', '暂无课程')
                 class_count += 1
 
 
@@ -362,7 +361,8 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
             if config_center.read_conf('Toast', 'after_school') == '1':
                 notification.push_notification(2)  # 放学
 
-    current_dt = TimeManagerFactory.get_instance().get_current_time()  # 当前时间
+    # 当前时间舍去毫秒，否则后面判定时间相等始终是False
+    current_dt = TimeManagerFactory.get_instance().get_current_time_without_ms()  
     return_text = []
     got_return_data = False
 
@@ -375,7 +375,7 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
                     # 判断时间是否上下课，发送通知
                     if current_dt == c_time and toast:
                         if item_name.startswith('a'):
-                            notification.push_notification(1, current_lesson_name)  # 上课
+                            notification.push_notification(1, next_lessons[0])  # 上课
                             last_notify_time = current_dt
                         else:
                             if next_lessons:  # 下课/放学
@@ -384,17 +384,17 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
                             else:
                                 after_school()
 
-                    if current_dt == c_time - dt.timedelta(
-                            minutes=int(config_center.read_conf('Toast', 'prepare_minutes'))):
-                        if config_center.read_conf('Toast',
-                                                   'prepare_minutes') != '0' and toast and item_name.startswith('a'):
+                    if (current_dt == c_time - dt.timedelta(
+                            minutes=int(config_center.read_conf('Toast', 'prepare_minutes')))
+                            and current_dt != last_notify_time):
+                        if (config_center.read_conf('Toast', 'prepare_minutes') != '0' and toast and item_name.startswith('a')):
                             if not current_state:  # 课间
                                 notification.push_notification(3, next_lessons[0])  # 准备上课（预备铃）
                                 last_notify_time = current_dt
 
                     # 放学
-                    if (c_time + dt.timedelta(minutes=int(item_time)) == current_dt and not next_lessons and
-                            not current_state and toast):
+                    if (c_time + dt.timedelta(minutes=int(item_time)) == current_dt 
+                        and not next_lessons and toast):
                         after_school()
                         last_notify_time = current_dt
 
@@ -407,9 +407,9 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
                     if c_time >= current_dt:
                         # 根据所在时间段使用不同标语
                         if item_name.startswith('a'):
-                            return_text.append('当前活动结束还有')
+                            return_text.append(QCoreApplication.translate('main', '当前活动结束还有'))
                         else:
-                            return_text.append('课间时长还有')
+                            return_text.append(QCoreApplication.translate('main', '课间时长还有'))
                         # 返回倒计时、进度条
                         time_diff = c_time - current_dt
                         minute, sec = divmod(time_diff.seconds, 60)
@@ -419,7 +419,7 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
                         return_text.append(int(100 - seconds / (int(item_time) * 60) * 100))
                         got_return_data = True
             if not return_text:
-                return_text = ['目前课程已结束', f'00:00', 100]
+                return_text = [QCoreApplication.translate('main', '目前课程已结束'), f'00:00', 100]
         else:
             prepare_minutes_str = config_center.read_conf('Toast', 'prepare_minutes')
             if prepare_minutes_str != '0' and toast:
@@ -434,7 +434,7 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
                                 break
                     if next_lesson_key and next_lesson_key in current_lessons:
                         lesson_name = current_lessons[next_lesson_key]
-                        if lesson_name != '暂无课程':
+                        if lesson_name != QCoreApplication.translate('main', '暂无课程'):
                             next_lesson_name = lesson_name
                     if current_state == 0:
                         now = TimeManagerFactory.get_instance().get_current_time()
@@ -444,9 +444,9 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
             if f'a{part}1' in timeline_data:
                 time_diff = c_time - current_dt
                 minute, sec = divmod(time_diff.seconds, 60)
-                return_text = ['距离上课还有', f'{minute:02d}:{sec:02d}', 100]
+                return_text = [QCoreApplication.translate('main', '距离上课还有'), f'{minute:02d}:{sec:02d}', 100]
             else:
-                return_text = ['目前课程已结束', f'00:00', 100]
+                return_text = [QCoreApplication.translate('main', '目前课程已结束'), f'00:00', 100]
         return return_text
 
 
@@ -487,7 +487,7 @@ def get_next_lessons() -> None:
 def get_next_lessons_text() -> str: 
     MAX_DISPLAY_LENGTH = 16
     if not next_lessons:
-        return '当前暂无课程'
+        return QCoreApplication.translate('main', '暂无课程')
     if config_center.read_conf('General', 'enable_display_full_next_lessons') == '0':
         return utils.slice_str_by_length(f"{next_lessons[0]} {'...' if len(next_lessons) > 1 else ''}", MAX_DISPLAY_LENGTH)
     if utils.get_str_length(full_text := (' '.join(next_lessons))) <= MAX_DISPLAY_LENGTH:
@@ -498,7 +498,7 @@ def get_next_lessons_text() -> str:
 def get_current_lesson_name() -> None:
     global current_lesson_name, current_state
     current_dt = TimeManagerFactory.get_instance().get_current_time()  # 当前时间
-    current_lesson_name = '暂无课程'
+    current_lesson_name = QCoreApplication.translate('main', '暂无课程')
     current_state = 0
 
     if parts_start_time:
@@ -518,7 +518,7 @@ def get_current_lesson_name() -> None:
                             current_lesson_name = current_lessons[item_name]
                             current_state = 1
                         else:
-                            current_lesson_name = '课间'
+                            current_lesson_name = QCoreApplication.translate('main', '课间')
                             current_state = 0
                         return
 
@@ -532,7 +532,7 @@ def get_hide_status() -> int:
         '1': lambda: current_state,
         '2': lambda: check_windows_maximize() or check_fullscreen(),
         '3': lambda: current_state
-    }[config_center.read_conf('General', 'hide')]() and not (current_lesson_name in excluded_lessons) else 0
+    }[str(config_center.read_conf('General', 'hide'))]() and not (current_lesson_name in excluded_lessons) else 0
 
 
 # 定义 RECT 结构体
@@ -622,9 +622,9 @@ class ErrorDialog(Dialog):  # 重大错误提示框
             stop()
         
         super().__init__(
-            'Class Widgets 崩溃报告',
-            '抱歉！Class Widgets 发生了严重的错误从而无法正常运行。您可以保存下方的错误信息并向他人求助。'
-            '若您认为这是程序的Bug，请点击“报告此问题”或联系开发者。',
+            self.tr('Class Widgets 崩溃报告'),
+            self.tr('抱歉！Class Widgets 发生了严重的错误从而无法正常运行。您可以保存下方的错误信息并向他人求助。'
+            '若您认为这是程序的Bug，请点击“报告此问题”或联系开发者。'),
             parent
         )
         global error_dialog
@@ -639,16 +639,16 @@ class ErrorDialog(Dialog):  # 重大错误提示框
         self.iconLabel = ImageLabel()
         self.iconLabel.setImage(f"{base_directory}/img/logo/favicon-error.ico")
         self.error_log = PlainTextEdit()
-        self.report_problem = PushButton(fIcon.FEEDBACK, '报告此问题')
-        self.copy_log_btn = PushButton(fIcon.COPY, '复制日志')
-        self.ignore_error_btn = PushButton(fIcon.INFO, '忽略错误')
+        self.report_problem = PushButton(fIcon.FEEDBACK, self.tr('报告此问题'))
+        self.copy_log_btn = PushButton(fIcon.COPY, self.tr('复制日志'))
+        self.ignore_error_btn = PushButton(fIcon.INFO, self.tr('忽略错误'))
         self.ignore_same_error = CheckBox()
-        self.ignore_same_error.setText('在下次启动之前，忽略此错误')
-        self.restart_btn = PrimaryPushButton(fIcon.SYNC, '重新启动')
+        self.ignore_same_error.setText(self.tr('在下次启动之前，忽略此错误'))
+        self.restart_btn = PrimaryPushButton(fIcon.SYNC, self.tr('重新启动'))
 
         self.iconLabel.setScaledContents(True)
         self.iconLabel.setFixedSize(50, 50)
-        self.titleLabel.setText('出错啦！ヽ(*。>Д<)o゜')
+        self.titleLabel.setText(self.tr('出错啦！ヽ(*。>Д<)o゜'))
         self.titleLabel.setStyleSheet("font-family: Microsoft YaHei UI; font-size: 25px; font-weight: 500;")
         self.error_log.setReadOnly(True)
         self.error_log.setPlainText(error_details)
@@ -684,8 +684,8 @@ class ErrorDialog(Dialog):  # 重大错误提示框
         QApplication.clipboard().setText(self.error_log.toPlainText())
         Flyout.create(
             icon=InfoBarIcon.SUCCESS,
-            title='复制成功！ヾ(^▽^*)))',
-            content="日志已成功复制到剪贴板。",
+            title=self.tr('复制成功！ヾ(^▽^*)))'),
+            content=self.tr("日志已成功复制到剪贴板。"),
             target=self.copy_log_btn,
             parent=self,
             isClosable=True,
@@ -798,8 +798,8 @@ class PluginMethod:  # 插件方法
             return False
 
     @staticmethod
-    def send_notification(state: int = 1, lesson_name: str = '示例课程', title: str = '通知示例', subtitle: str = '副标题',
-                          content: str = '这是一条通知示例', icon: Optional[Any] = None, duration: int = 2000) -> None:  # 发送通知
+    def send_notification(state: int = 1, lesson_name: str = QCoreApplication.translate('main', '示例课程'), title: str = QCoreApplication.translate('main', '通知示例'), subtitle: str = QCoreApplication.translate('main', '副标题'),
+                          content: str = QCoreApplication.translate('main', '这是一条通知示例'), icon: Optional[Any] = None, duration: int = 2000) -> None:  # 发送通知
         notification.push_notification(state, lesson_name, title, subtitle, content, icon, duration)
 
     @staticmethod
@@ -842,7 +842,7 @@ class PluginMethod:  # 插件方法
         return generate_speech_sync(
             text=text,
             engine=engine,
-            voice=voice,
+            voice_id=voice,
             auto_fallback=auto_fallback,
             timeout=timeout
         )
@@ -1039,7 +1039,7 @@ class WidgetsManager:
         widgets_to_clean = list(self.widgets)
         self.widgets.clear()
         for widget in widgets_to_clean:
-            widget_path = getattr(widget, 'path', '未知组件')
+            widget_path = getattr(widget, 'path', self.tr('未知组件'))
             try:
                 if hasattr(widget, 'weather_timer') and widget.weather_timer:
                     try:
@@ -1075,7 +1075,7 @@ class openProgressDialog(QWidget):
     def __init__(self, action_title='打开 记事本', action='notepad'):
         super().__init__()
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint | Qt.Tool)
-        time = int(config_center.read_conf('Plugin', 'auto_delay'))
+        time = int(config_center.read_conf('Plugin', 'aguto_delay'))
         self.action = action
 
         screen_geometry = app.primaryScreen().availableGeometry()
@@ -1436,10 +1436,10 @@ class FloatingWidget(QWidget):  # 浮窗
             blur_floating = config_center.read_conf('General', 'blur_floating_countdown') == '1'
             if blur_floating:  # 模糊显示
                 if cd_list[1] == '00:00':
-                    self.activity_countdown.setText(f"< - 分钟")
+                    self.activity_countdown.setText(self.tr("< - 分钟"))
                 else:
                     minutes = int(cd_list[1].split(':')[0]) + 1
-                    self.activity_countdown.setText(f"< {minutes} 分钟")
+                    self.activity_countdown.setText(self.tr("< {minutes} 分钟").format(minutes=minutes))
             else:  # 精确显示
                 self.activity_countdown.setText(cd_list[1])
             self.countdown_progress_bar.setValue(cd_list[2])
@@ -1698,7 +1698,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         self.weather_alert_text = None
         self.alert_showing = False
 
-        self.position = parent.get_widget_pos(self.path) if position is None else position
+        self.position = parent.get_widget_pos(self.path, None) if position is None else position
         self.animation = None
         self.opacity_animation = None
         mgr.hide_status = None
@@ -1728,9 +1728,9 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         if path == 'widget-time.ui':  # 日期显示
             self.date_text = self.findChild(QLabel, 'date_text')
-            self.date_text.setText(f'{today.year} 年 {today.month} 月')
+            self.date_text.setText(self.tr('{year} 年 {month}').format(year=today.year, month=list_.month[today.month]))
             self.day_text = self.findChild(QLabel, 'day_text')
-            self.day_text.setText(f'{today.day}日  {list_.week[today.weekday()]}')
+            self.day_text.setText(self.tr('{day}日  {week}').format(day=today.day, week=list_.week[today.weekday()]))
 
         elif path == 'widget-countdown.ui':  # 活动倒计时
             self.countdown_progress_bar = self.findChild(QProgressBar, 'progressBar')
@@ -2001,18 +2001,18 @@ class DesktopWidget(QWidget):  # 主要小组件
         utils.tray_icon.setToolTip(f"Class Widgets - {config_center.schedule_name[:-5]}")
         self.tray_menu = SystemTrayMenu(title='Class Widgets', parent=self)
         self.tray_menu.addActions([
-            Action(fIcon.HIDE, '完全隐藏/显示小组件', triggered=lambda: self.hide_show_widgets()),
-            Action(fIcon.BACK_TO_WINDOW, '最小化为浮窗', triggered=lambda: self.minimize_to_floating()),
+            Action(fIcon.HIDE, self.tr('完全隐藏/显示小组件'), triggered=lambda: self.hide_show_widgets()),
+            Action(fIcon.BACK_TO_WINDOW, self.tr('最小化为浮窗'), triggered=lambda: self.minimize_to_floating()),
         ])
         self.tray_menu.addSeparator()
         self.tray_menu.addActions([
-            Action(fIcon.SHOPPING_CART, '插件广场', triggered=open_plaza),
-            Action(fIcon.DEVELOPER_TOOLS, '额外选项', triggered=self.open_extra_menu),
-            Action(fIcon.SETTING, '设置', triggered=open_settings)
+            Action(fIcon.SHOPPING_CART, self.tr('插件广场'), triggered=open_plaza),
+            Action(fIcon.DEVELOPER_TOOLS, self.tr('额外选项'), triggered=self.open_extra_menu),
+            Action(fIcon.SETTING, self.tr('设置'), triggered=open_settings)
         ])
         self.tray_menu.addSeparator()
-        self.tray_menu.addAction(Action(fIcon.SYNC, '重新启动', triggered=restart))
-        self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=stop))
+        self.tray_menu.addAction(Action(fIcon.SYNC, self.tr('重新启动'), triggered=restart))
+        self.tray_menu.addAction(Action(fIcon.CLOSE, self.tr('退出'), triggered=stop))
         utils.tray_icon.setContextMenu(self.tray_menu)
 
         utils.tray_icon.activated.connect(self.on_tray_icon_clicked)
@@ -2079,8 +2079,8 @@ class DesktopWidget(QWidget):  # 主要小组件
         cd_list = get_countdown()
 
         if path == 'widget-time.ui':  # 日期显示
-            self.date_text.setText(f'{today.year} 年 {today.month} 月')
-            self.day_text.setText(f'{today.day} 日 {list_.week[today.weekday()]}')
+            self.date_text.setText(self.tr('{year} 年 {month}').format(year=today.year, month=list_.month[today.month]))
+            self.day_text.setText(self.tr('{day}日  {week}').format(day=today.day, week=list_.week[today.weekday()]))
 
         if path == 'widget-current-activity.ui':  # 当前活动
             self.current_subject.setText(f'  {current_lesson_name}')
@@ -2118,9 +2118,9 @@ class DesktopWidget(QWidget):  # 主要小组件
             if cd_list:
                 if config_center.read_conf('General', 'blur_countdown') == '1':  # 模糊倒计时
                     if cd_list[1] == '00:00':
-                        self.activity_countdown.setText(f"< - 分钟")
+                        self.activity_countdown.setText(self.tr("< - 分钟"))
                     else:
-                        self.activity_countdown.setText(f"< {int(cd_list[1].split(':')[0]) + 1} 分钟")
+                        self.activity_countdown.setText(self.tr("< {minutes} 分钟").format(minutes=int(cd_list[1].split(':')[0]) + 1))
                 else:
                     self.activity_countdown.setText(cd_list[1])
                 self.ac_title.setText(cd_list[0])
@@ -2128,7 +2128,7 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         if path == 'widget-countdown-day.ui':  # 自定义倒计时
             conf.update_countdown(self.cnt)
-            self.custom_title.setText(f'距离 {conf.get_cd_text_custom()} 还有')
+            self.custom_title.setText(self.tr('距离 {cd_text} 还有').format(cd_text=conf.get_cd_text_custom()))
             self.custom_countdown.setText(conf.get_custom_countdown())
         self.update()
 
@@ -2326,7 +2326,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         if self.current_alert_index >= len(self.current_alerts):
             self.current_alert_index = 0
         current_alert = self.current_alerts[self.current_alert_index]
-        alert_text = self._simplify_alert_text(current_alert.get('title', '预警'))
+        alert_text = self._simplify_alert_text(current_alert.get('title', self.tr('预警')))
         font = self.weather_alert_text.font()
         if len(alert_text) <= 4:
             font.setPointSize(14)
@@ -2346,10 +2346,10 @@ class DesktopWidget(QWidget):  # 主要小组件
     def _simplify_alert_text(self, text: str) -> str:
         """简化预警文本"""
         if not text:
-            return '预警'
+            return self.tr('预警')
         match = re.search(r'(发布|升级为)(\w+)(蓝色|黄色|橙色|红色)预警', text)
         if match:
-            return f"{match.group(2)}预警"
+            return self.tr("{data}预警").format(data=match.group(2))
         return '未知预警'
 
     def _get_alert_icon_by_severity(self, severity: Union[str, int]) -> str:
@@ -2471,7 +2471,7 @@ class DesktopWidget(QWidget):  # 主要小组件
                     self.temperature.setText('--°')
                     current_city = self.findChild(QLabel, 'current_city')
                     if current_city:
-                        current_city.setText(f"{db.search_by_num(config_center.read_conf('Weather', 'city'))} · 未知")
+                        current_city.setText(self.tr("{city} · 未知").format(city=db.search_by_num(config_center.read_conf('Weather', 'city'))))
                     if hasattr(self, 'backgnd'):
                         path = db.get_weather_stylesheet('99').replace('\\', '/')
                         update_stylesheet = re.sub(
@@ -2503,17 +2503,18 @@ class DesktopWidget(QWidget):  # 主要小组件
     def hide_show_widgets() -> None:  # 隐藏/显示主界面（全部隐藏）
         hide_mode = config_center.read_conf('General', 'hide')
         if hide_mode == '1' or hide_mode == '2':
-            hide_mode_text = "上课时自动隐藏" if hide_mode == '1' else "窗口最大化时隐藏"
+            hide_mode_text = QCoreApplication.translate('main', "上课时自动隐藏") if hide_mode == '1' else QCoreApplication.translate('main', "窗口最大化时隐藏")
             w = Dialog(
-                "暂时无法变更“状态”",
-                f"您正在使用 {hide_mode_text} 模式，无法变更隐藏状态\n"
+                QCoreApplication.translate('main', "暂时无法变更“状态”"),
+                QCoreApplication.translate('main', "您正在使用 {hide_mode_text} 模式，无法变更隐藏状态\n"
                 "若变更状态，将修改隐藏模式“灵活隐藏” (您稍后可以在“设置”中更改此选项)\n"
-                "您确定要隐藏组件吗?",
+                "您确定要隐藏组件吗?").format(
+                    hide_mode_text=hide_mode_text),
                 None
             )
-            w.yesButton.setText("确定")
+            w.yesButton.setText(QCoreApplication.translate('main', "确定"))
             w.yesButton.clicked.connect(lambda: config_center.write_conf('General', 'hide', '3'))
-            w.cancelButton.setText("取消")
+            w.cancelButton.setText(QCoreApplication.translate('main', "取消"))
             w.buttonLayout.insertStretch(1)
             w.setFixedWidth(550)
             if w.exec():
@@ -2531,17 +2532,18 @@ class DesktopWidget(QWidget):  # 主要小组件
     def minimize_to_floating() -> None:  # 最小化到浮窗
         hide_mode = config_center.read_conf('General', 'hide')
         if hide_mode == '1' or hide_mode == '2':
-            hide_mode_text = "上课时自动隐藏" if hide_mode == '1' else "窗口最大化时隐藏"
+            hide_mode_text = QCoreApplication.translate('main', "上课时自动隐藏") if hide_mode == '1' else QCoreApplication.translate('main', "窗口最大化时隐藏")
             w = Dialog(
-                "暂时无法变更“状态”",
-                f"您正在使用 {hide_mode_text} 模式，无法变更隐藏状态\n"
+                QCoreApplication.translate('main', "暂时无法变更“状态”"),
+                QCoreApplication.translate('main', "您正在使用 {hide_mode_text} 模式，无法变更隐藏状态\n"
                 "若变更状态，将修改隐藏模式“灵活隐藏” (您可以在“设置”中更改此选项)\n"
-                "您确定要隐藏组件吗?",
+                "您确定要隐藏组件吗?").format(
+                    hide_mode_text=hide_mode_text),
                 None
             )
-            w.yesButton.setText("确定")
+            w.yesButton.setText(QCoreApplication.translate('main', "确定"))
             w.yesButton.clicked.connect(lambda: config_center.write_conf('General', 'hide', '3'))
-            w.cancelButton.setText("取消")
+            w.cancelButton.setText(QCoreApplication.translate('main', "取消"))
             w.buttonLayout.insertStretch(1)
             w.setFixedWidth(550)
             if w.exec():
@@ -2803,6 +2805,7 @@ def init() -> None:
     logger.info(f'应用主题：{theme}')
 
     mgr = WidgetsManager()
+    utils.main_mgr = mgr 
     fw = FloatingWidget()
 
     # 获取屏幕横向分辨率
@@ -2850,6 +2853,7 @@ def setup_signal_handlers_optimized(app: QApplication) -> None:
         signal.signal(signal.SIGHUP, signal_handler)  # 终端挂起
 
 if __name__ == '__main__':
+    utils.guard = utils.SingleInstanceGuard("ClassWidgets.lock")
     # 启动参数处理
     if len(sys.argv) > 1:
         if sys.argv[1] == "--finish-update":
@@ -2872,24 +2876,23 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error(f"自动更新检测异常: {e}")
 
-    if share.attach() and config_center.read_conf('Other', 'multiple_programs') != '1':
-        logger.debug('不允许多开实例')
-        from qfluentwidgets import Dialog
-        app = QApplication.instance() or QApplication(sys.argv)
-        dlg = Dialog(
-            'Class Widgets 正在运行',
-            'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
-            '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)'
-        )
-        dlg.yesButton.setText('好')
-        dlg.cancelButton.hide()
-        dlg.buttonLayout.insertStretch(0, 1)
-        dlg.setFixedWidth(550)
-        dlg.exec()
-        sys.exit(0)
-    if not share.create(1):
-        print(f'无法创建共享内存: {share.errorString()}') # logger 可能还没准备好
-        sys.exit(1)
+    if config_center.read_conf('Other', 'multiple_programs') != '1':
+        if not utils.guard.try_acquire():
+            if (info:=utils.guard.get_lock_info()):
+                logger.debug(f'不允许多开实例，{info}')
+                from qfluentwidgets import Dialog
+                app = QApplication.instance() or QApplication(sys.argv)
+                dlg = Dialog(
+                    QCoreApplication.translate('main', 'Class Widgets 正在运行'),
+                    QCoreApplication.translate('main', 'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
+                    '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)')
+                )
+                dlg.yesButton.setText(QCoreApplication.translate('main', '好'))
+                dlg.cancelButton.hide()
+                dlg.buttonLayout.insertStretch(0, 1)
+                dlg.setFixedWidth(550)
+                dlg.exec()
+                sys.exit(0)
 
     scale_factor = float(config_center.read_conf('General', 'scale'))
     os.environ['QT_SCALE_FACTOR'] = str(scale_factor)
@@ -2897,9 +2900,15 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    share.create(1)  # 创建共享内存
+
+    global_i18n_manager = I18nManager()
+    global_i18n_manager.init_from_config()
+    
+    logger.debug(f"i18n加载,界面: {global_i18n_manager.get_current_language_view_name()},组件: {global_i18n_manager.get_current_language_widgets_name()}")
+    menu.global_i18n_manager = global_i18n_manager
+
     logger.info(
-        f"共享内存：{share.isAttached()} 是否允许多开实例：{config_center.read_conf('Other', 'multiple_programs')}")
+        f"是否允许多开实例：{config_center.read_conf('Other', 'multiple_programs')}")
     try:
         dark_mode_watcher = DarkModeWatcher(parent=app)
         dark_mode_watcher.darkModeChanged.connect(handle_dark_mode_change) # 连接信号
@@ -2910,9 +2919,9 @@ if __name__ == '__main__':
 
     if scale_factor > 1.8 or scale_factor < 1.0:
         logger.warning("当前缩放系数可能导致显示异常，建议使缩放系数在 100% 到 180% 之间")
-        msg_box = Dialog('缩放系数过大',
-                         f"当前缩放系数为 {scale_factor * 100}%，可能导致显示异常。\n建议将缩放系数设置为 100% 到 180% 之间。")
-        msg_box.yesButton.setText('好')
+        msg_box = Dialog(QCoreApplication.translate('main', '缩放系数过大'),
+                         QCoreApplication.translate('main', "当前缩放系数为 {scale_factor}%，可能导致显示异常。\n建议将缩放系数设置为 100% 到 180% 之间。").format(scale_factor=scale_factor*100))
+        msg_box.yesButton.setText(QCoreApplication.translate('main', '好'))
         msg_box.cancelButton.hide()
         msg_box.buttonLayout.insertStretch(0, 1)
         msg_box.setFixedWidth(550)
@@ -2935,59 +2944,43 @@ if __name__ == '__main__':
 
     # list_pyttsx3_voices()
 
-    if share.attach() and config_center.read_conf('Other', 'multiple_programs') != '1':
-        msg_box = Dialog(
-            'Class Widgets 正在运行',
-            'Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。'
-            '\n(若您需要打开多个实例，请在“设置”->“高级选项”中启用“允许程序多开”)'
-        )
-        msg_box.yesButton.setText('好')
-        msg_box.cancelButton.hide()
-        msg_box.buttonLayout.insertStretch(0, 1)
-        msg_box.setFixedWidth(550)
-        msg_box.exec()
-        stop(-1)
+    mgr = WidgetsManager()
+    app.aboutToQuit.connect(mgr.cleanup_resources)
+    setup_signal_handlers_optimized(app)
+    utils.main_mgr = mgr
+
+    if config_center.read_conf('Other', 'initialstartup') == '1':  # 首次启动
+        try:
+            conf.add_shortcut('ClassWidgets.exe', f'{base_directory}/img/favicon.ico')
+            conf.add_shortcut_to_startmenu(f'{base_directory}/ClassWidgets.exe',
+                                            f'{base_directory}/img/favicon.ico')
+            config_center.write_conf('Other', 'initialstartup', '')
+        except Exception as e:
+            logger.error(f'添加快捷方式失败：{e}')
+
+    p_mgr = PluginManager()
+    p_loader.set_manager(p_mgr)
+    p_loader.load_plugins()
+
+    init()
+    get_start_time()
+    get_current_lessons()
+    get_current_lesson_name()
+    get_next_lessons()
+
+    # 如果在全屏或最大化模式下启动，首先折叠主组件后显示浮动窗口动画。
+    if check_windows_maximize() or check_fullscreen():
+        mgr.decide_to_hide()  # 折叠动画,其实这里可用`mgr.full_hide_windows()`但是播放动画似乎更好()
+
+    if current_state == 1:
+        setThemeColor(f"#{config_center.read_conf('Color', 'attend_class')}")
     else:
-        mgr = WidgetsManager()
-        app.aboutToQuit.connect(mgr.cleanup_resources)
-        setup_signal_handlers_optimized(app)
+        setThemeColor(f"#{config_center.read_conf('Color', 'finish_class')}")
 
-        if config_center.read_conf('Other', 'initialstartup') == '1':  # 首次启动
-            try:
-                conf.add_shortcut('ClassWidgets.exe', f'{base_directory}/img/favicon.ico')
-                conf.add_shortcut_to_startmenu(f'{base_directory}/ClassWidgets.exe',
-                                               f'{base_directory}/img/favicon.ico')
-                config_center.write_conf('Other', 'initialstartup', '')
-            except Exception as e:
-                logger.error(f'添加快捷方式失败：{e}')
-            try:
-                list_.create_new_profile('新课表 - 1.json')
-            except Exception as e:
-                logger.error(f'创建新课表失败：{e}')
-
-        p_mgr = PluginManager()
-        p_loader.set_manager(p_mgr)
-        p_loader.load_plugins()
-
-        init()
-        get_start_time()
-        get_current_lessons()
-        get_current_lesson_name()
-        get_next_lessons()
-
-        # 如果在全屏或最大化模式下启动，首先折叠主组件后显示浮动窗口动画。
-        if check_windows_maximize() or check_fullscreen():
-            mgr.decide_to_hide()  # 折叠动画,其实这里可用`mgr.full_hide_windows()`但是播放动画似乎更好()
-
-        if current_state == 1:
-            setThemeColor(f"#{config_center.read_conf('Color', 'attend_class')}")
-        else:
-            setThemeColor(f"#{config_center.read_conf('Color', 'finish_class')}")
-
-        # w = ErrorDialog()
-        # w.exec()
-        if config_center.read_conf('Version', 'auto_check_update', '1') == '1':
-            check_update()
+    # w = ErrorDialog()
+    # w.exec()
+    if config_center.read_conf('Version', 'auto_check_update', '1') == '1':
+        check_update()
 
     status = app.exec()
 
