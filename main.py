@@ -2850,15 +2850,27 @@ def setup_signal_handlers_optimized(app: QApplication) -> None:
         signal.signal(signal.SIGHUP, signal_handler)  # 终端挂起
 
 if __name__ == '__main__':
+    # 启动参数处理
     if len(sys.argv) > 1:
         if sys.argv[1] == "--finish-update":
             logger.debug("自动更新收尾")
             updater.post_upgrade()
-
         else:
-            '''--do-upgrade的参数分别对应updater.do_upgrade的参数'''
+            # --do-upgrade的参数分别对应updater.do_upgrade的参数
             logger.debug("调用自动更新")
             updater.do_upgrade(*sys.argv[2:])
+
+    # 启动时检测 updpackage 文件夹自动更新
+    updpackage_path = os.path.join(os.getcwd(), "updpackage")
+    if os.path.exists(updpackage_path):
+        logger.info("检测到更新包目录，自动执行更新流程")
+        updater.do_upgrade(os.getcwd(), '', os.path.join(os.getcwd(), 'ClassWidgets.exe'))
+
+    # 自动更新后台检测功能入口
+    try:
+        updater.silent_update_check()
+    except Exception as e:
+        logger.error(f"自动更新检测异常: {e}")
 
     if share.attach() and config_center.read_conf('Other', 'multiple_programs') != '1':
         logger.debug('不允许多开实例')

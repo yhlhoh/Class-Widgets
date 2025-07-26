@@ -8,6 +8,10 @@ from loguru import logger
 from PyQt5.QtWidgets import QApplication
 import sys
 import utils
+import platform
+from packaging.version import Version
+from file import config_center
+from loguru import logger
 
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -15,6 +19,52 @@ from PyQt5.uic import loadUi
 from PyQt5.QtGui import QIcon
 from qfluentwidgets import *
 class Updater(QThread):
+
+def silent_update_check():
+    """
+    后台静默检测更新并自动下载更新包，完成后托盘提示。
+    """
+    import os
+    try:
+        auto_check = config_center.read_conf('Version', 'auto_check_update', '1')
+        if auto_check != '1':
+            logger.info("未开启自动更新检测")
+            return
+        logger.info("后台静默检测更新...")
+        from network_thread import VersionThread, GetUPDPack
+        def on_version(version):
+            channel = int(config_center.read_conf("Version", "version_channel"))
+            server_version = version['version_release' if channel == 0 else 'version_beta']
+            local_version = config_center.read_conf("Version", "version")
+            logger.debug(f"服务端版本: {server_version}，本地版本: {local_version}")
+            if Version(server_version) > Version(local_version):
+                logger.info(f"检测到新版本 {server_version}，自动下载更新包...")
+                release_info = version["releases" if channel == 0 else "releases_beta"]
+                system = platform.system()
+                if system == "Windows":
+                    system = "x64" if platform.architecture()[0] == "64bit" else "x86"
+                elif system == "Darwin":
+                    system = "macOS"
+                if system not in release_info:
+                    logger.info("无可用更新包")
+                    return
+                release_to_upgrade = release_info[system]
+                download_url = release_to_upgrade["url"]
+                files_to_keep = ';'.join(release_to_upgrade["files_to_keep"])
+                executable = os.path.join(os.getcwd(), os.path.split(release_to_upgrade["executable"])[1])
+                updthread = GetUPDPack(download_url, executable, os.getcwd(), files_to_keep, executable)
+                def on_finish(msg):
+                    utils.tray_icon.push_update_notification(f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。")
+                    logger.info(f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。")
+                updthread.finish_signal.connect(on_finish)
+                updthread.start()
+            else:
+                logger.info("当前已是最新版本，无需更新")
+        version_thread = VersionThread()
+        version_thread.version_signal.connect(on_version)
+        version_thread.start()
+    except Exception as e:
+        logger.error(f"自动更新检测异常: {e}")
 
     update_signal = pyqtSignal(list)
     finish_signal = pyqtSignal()
