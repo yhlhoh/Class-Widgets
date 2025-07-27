@@ -2863,7 +2863,7 @@ if __name__ == '__main__':
     updpackage_path = os.path.join(os.getcwd(), "updpackage")
     if os.path.exists(updpackage_path):
         logger.info("检测到更新包目录，自动执行更新流程")
-        upd = updater.Updater()
+        upd = updater.Updater(os.getcwd())
         upd.run()
 
     # 自动更新后台检测功能入口

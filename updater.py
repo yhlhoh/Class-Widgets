@@ -3,18 +3,19 @@ import sys
 import time
 import platform
 import shutil
-import traceback
-import requests
 import zipfile
 import threading
+import json
+import traceback
+import requests
 from loguru import logger
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QThread, pyqtSignal, QObject, QEventLoop
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QIcon
-from packaging.version import Version
 from qfluentwidgets import FluentWindow, FluentIcon, CaptionLabel, ProgressBar
 from file import config_center
+import utils  # 导入utils模块用于托盘通知
 
 class UpdateStatus(QObject):
     status_changed = pyqtSignal(bool, str)
@@ -33,19 +34,17 @@ update_status = UpdateStatus()
 
 class UnifiedUpdateThread(QThread):
     """
-    统一的更新线程，只负责下载和解压，不做备份/覆盖等逻辑。
-    status_signal: (enabled, text) 用于按钮状态同步
-    progress_signal: 进度百分比
-    finish_signal: (ok, msg) 用于通知完成
+    统一的更新线程，负责下载和解压
     """
     progress_signal = pyqtSignal(int)
     status_signal = pyqtSignal(bool, str)
-    finish_signal = pyqtSignal(bool, str)
+    finish_signal = pyqtSignal(bool, str, dict)  # 修改为传递版本信息
 
     def __init__(self, version_info=None, silent=False, parent=None):
         super().__init__(parent)
         self.version_info = version_info
         self.silent = silent
+        self.version_data = None  # 存储版本信息
 
     def run(self):
         self.status_signal.emit(False, "检查更新中...")
@@ -67,7 +66,7 @@ class UnifiedUpdateThread(QThread):
             logger.error(f"更新线程异常: {e}")
             update_status.set(True, "更新失败")
             self.status_signal.emit(True, "更新失败")
-            self.finish_signal.emit(False, str(e))
+            self.finish_signal.emit(False, str(e), {})
 
     def _on_version(self, version):
         try:
@@ -75,11 +74,19 @@ class UnifiedUpdateThread(QThread):
             server_version = version['version_release' if channel == 0 else 'version_beta']
             local_version = config_center.read_conf("Version", "version")
             logger.debug(f"服务端版本: {server_version}，本地版本: {local_version}")
+            
+            # 存储版本信息用于后续处理
+            self.version_data = {
+                "channel": channel,
+                "server_version": server_version,
+                "local_version": local_version
+            }
+            
             if Version(server_version) <= Version(local_version):
                 logger.info("暂无新版本可用")
                 update_status.set(True, "暂无新版本可用")
                 self.status_signal.emit(True, "暂无新版本可用")
-                self.finish_signal.emit(True, "无需更新")
+                self.finish_signal.emit(True, "无需更新", self.version_data)
                 return
 
             release_info = version["releases" if channel == 0 else "releases_beta"]
@@ -88,21 +95,35 @@ class UnifiedUpdateThread(QThread):
                 system = "x64" if platform.architecture()[0] == "64bit" else "x86"
             elif system == "Darwin":
                 system = "macOS"
+                
             if system not in release_info:
                 logger.info("无可用更新包")
                 update_status.set(True, "无可用更新包")
                 self.status_signal.emit(True, "无可用更新包")
-                self.finish_signal.emit(False, "无可用更新包")
+                self.finish_signal.emit(False, "无可用更新包", self.version_data)
                 return
 
             release_to_upgrade = release_info[system]
             download_url = release_to_upgrade["url"]
+            files_to_keep = release_to_upgrade.get("files_to_keep", [])
+            executable_name = release_to_upgrade.get("executable", "")
+            
+            # 存储完整的发布信息
+            self.version_data.update({
+                "release_info": release_to_upgrade,
+                "files_to_keep": files_to_keep,
+                "executable_name": executable_name,
+                "system": system
+            })
+            
             self.status_signal.emit(False, "下载更新包中...")
             update_status.set(False, "下载更新包中...")
+            
             try:
                 r = requests.get(download_url, stream=True)
                 total = int(r.headers.get('content-length', 0))
                 zip_path = os.path.join(os.getcwd(), "updpack.zip")
+                
                 with open(zip_path, 'wb') as f:
                     downloaded = 0
                     for chunk in r.iter_content(chunk_size=8192):
@@ -113,80 +134,371 @@ class UnifiedUpdateThread(QThread):
                         percent = int(downloaded / total * 100) if total else 0
                         self.progress_signal.emit(percent)
                         update_status.set(False, f"下载中 {percent}%")
+                
                 self.status_signal.emit(False, "解压更新包...")
                 update_status.set(False, "解压更新包...")
+                
                 updpackage_path = os.path.join(os.getcwd(), "updpackage")
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(updpackage_path)
+                
                 # 写入 update.json
-                import json
                 update_json_path = os.path.join(os.getcwd(), "update.json")
                 update_data = {
                     "version": server_version,
                     "channel": channel,
                     "download_url": download_url,
                     "updpackage_path": updpackage_path,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
+                    "executable": sys.executable,  # 主程序路径
+                    "files_to_keep": files_to_keep,
+                    "executable_name": executable_name
                 }
+                
                 with open(update_json_path, "w", encoding="utf-8") as f:
                     json.dump(update_data, f, ensure_ascii=False, indent=2)
+                
+                # 删除下载的zip文件
+                os.remove(zip_path)
+                
             except Exception as e:
                 logger.error(f"下载或解压失败: {e}")
                 update_status.set(True, "下载或解压失败")
                 self.status_signal.emit(True, "下载或解压失败")
-                self.finish_signal.emit(False, str(e))
+                self.finish_signal.emit(False, str(e), self.version_data)
                 return
 
             self.status_signal.emit(True, "下载完成")
             update_status.set(True, "下载完成")
-            self.finish_signal.emit(True, "下载完成")
+            self.finish_signal.emit(True, "下载完成", self.version_data)
+            
         except Exception as e:
             logger.error(f"版本处理异常: {e}")
             update_status.set(True, "更新失败")
             self.status_signal.emit(True, "更新失败")
-            self.finish_signal.emit(False, str(e))
+            self.finish_signal.emit(False, str(e), self.version_data)
+
 def start_silent_update_check():
     thread = threading.Thread(target=silent_update_check)
+    thread.daemon = True
     thread.start()
+
 def silent_update_check():
     try:
+        auto_check = config_center.read_conf('Version', 'auto_check_update', '1')
+        if auto_check != '1':
+            logger.info("未开启自动更新检测")
+            return
+            
         update_status.set(False, "静默检测更新...")
         logger.debug("开始静默更新")
+        
         from network_thread import VersionThread
         vt = VersionThread()
         loop = QEventLoop()
-        # thread 必须提升到外部作用域，不能只在 on_version 里声明
+        
         thread_holder = {}
         def on_version(version):
             thread = UnifiedUpdateThread(version_info=version, silent=True)
-            thread_holder['thread'] = thread  # 保证 thread 不会被提前销毁
-            def finish_and_quit(ok, msg):
-                # 如果失败，显示错误信息
-                if not ok:
+            thread_holder['thread'] = thread
+            
+            def finish_and_quit(ok, msg, version_data):
+                if ok and msg == "下载完成":
+                    # 下载成功后发送托盘通知
+                    if version_data and "server_version" in version_data:
+                        server_version = version_data["server_version"]
+                        utils.tray_icon.push_update_notification(
+                            f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。"
+                        )
+                        logger.info(f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。")
+                    update_status.set(True, "更新包已准备")
+                elif not ok:
                     update_status.set(True, f"更新失败：{msg}")
                 else:
                     update_status.set(True, msg)
                 loop.quit()
+            
             thread.status_signal.connect(update_status.set)
             thread.progress_signal.connect(lambda p: update_status.set(False, f"下载中 {p}%"))
             thread.finish_signal.connect(finish_and_quit)
             thread.start()
+        
         vt.version_signal.connect(on_version)
-        vt.finished.connect(lambda: None)  # 不要提前退出 loop
         vt.start()
         loop.exec_()
-        # loop 退出后，确保 thread 已经 finish
+        
+        # 等待线程结束
         thread = thread_holder.get('thread')
-        if thread is not None:
-            thread.wait()  # 等待线程彻底结束
-        # 再次同步按钮状态，防止界面未刷新
+        if thread and thread.isRunning():
+            thread.wait()
+            
+        # 更新状态
         enabled, text = update_status.get()
         update_status.set(enabled, text)
+        
     except Exception as e:
         logger.error(f"后台静默检测更新异常: {e}")
         update_status.set(True, f"更新失败：{e}")
+
+class Updater(QThread):
+    """
+    更新执行线程，负责备份、替换文件和重启应用
+    包含原始版本的回滚机制
+    """
+    update_signal = pyqtSignal(list)
+    finish_signal = pyqtSignal()
+    
+    def __init__(self, source_dir, files_to_keep=None, executable="", parent=None):
+        super().__init__(parent)
+        self.source_dir = source_dir
+        self.files_to_keep = files_to_keep or []
+        self.executable = executable
+        self.stage = 1  # 更新阶段标识
+
+    def backup(self):
+        """备份除特定目录外的所有文件和文件夹"""
+        # 确保备份目录存在
+        backup_dir = os.path.join(self.source_dir, "backup")
+        os.makedirs(backup_dir, exist_ok=True)
         
+        # 获取需要备份的文件列表
+        exclude_dirs = {"backup", "updpackage", ".git"}
+        files_to_backup = [
+            f for f in os.listdir(self.source_dir) 
+            if f not in exclude_dirs and not f.startswith(".")
+        ]
+        
+        total = len(files_to_backup)
+        progress = 0
+        
+        for file in files_to_backup:
+            progress += 1
+            src_path = os.path.join(self.source_dir, file)
+            dst_path = os.path.join(backup_dir, file)
+            
+            try:
+                if os.path.isdir(src_path):
+                    if os.path.exists(dst_path):
+                        shutil.rmtree(dst_path)
+                    shutil.copytree(src_path, dst_path)
+                else:
+                    shutil.copy2(src_path, dst_path)
+                
+                logger.info(f"已备份: {file}")
+            except Exception as e:
+                logger.error(f"备份失败: {file}, {e}")
+            
+            percent = int(progress / total * 50)
+            self.update_signal.emit([f"备份中 {progress}/{total} {file}", percent])
+    
+    def remove_old_files(self):
+        """删除旧文件"""
+        exclude_dirs = {"backup", "updpackage", ".git"}
+        files_to_remove = [
+            f for f in os.listdir(self.source_dir) 
+            if f not in exclude_dirs and not f.startswith(".")
+        ]
+        
+        total = len(files_to_remove)
+        progress = 0
+        
+        for file in files_to_remove:
+            progress += 1
+            file_path = os.path.join(self.source_dir, file)
+            
+            try:
+                if os.path.isdir(file_path):
+                    shutil.rmtree(file_path, ignore_errors=True)
+                else:
+                    os.remove(file_path)
+                logger.info(f"已删除: {file}")
+            except Exception as e:
+                logger.error(f"删除失败: {file}, {e}")
+            
+            percent = 50 + int(progress / total * 25)
+            self.update_signal.emit([f"删除旧文件 {progress}/{total} {file}", percent])
+    
+    def copy_new_files(self):
+        """从更新包复制新文件"""
+        updpackage_dir = os.path.join(self.source_dir, "updpackage")
+        if not os.path.exists(updpackage_dir):
+            raise FileNotFoundError("更新包目录不存在")
+        
+        files_to_copy = [
+            f for f in os.listdir(updpackage_dir) 
+            if f not in {".git"} and not f.startswith(".")
+        ]
+        
+        total = len(files_to_copy)
+        progress = 0
+        
+        for file in files_to_copy:
+            progress += 1
+            src_path = os.path.join(updpackage_dir, file)
+            dst_path = os.path.join(self.source_dir, file)
+            
+            try:
+                if os.path.isdir(src_path):
+                    shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(src_path, dst_path)
+                logger.info(f"已更新: {file}")
+            except Exception as e:
+                logger.error(f"更新失败: {file}, {e}")
+            
+            percent = 75 + int(progress / total * 20)
+            self.update_signal.emit([f"复制新文件 {progress}/{total} {file}", percent])
+    
+    def restore_configs(self):
+        """恢复需要保留的配置文件"""
+        backup_dir = os.path.join(self.source_dir, "backup")
+        total = len(self.files_to_keep)
+        
+        if not total:
+            self.update_signal.emit(["恢复配置 0/0 无配置需要保留", 95])
+            return
+            
+        progress = 0
+        
+        for file in self.files_to_keep:
+            progress += 1
+            src_path = os.path.join(backup_dir, file)
+            dst_path = os.path.join(self.source_dir, file)
+            
+            try:
+                if os.path.exists(src_path):
+                    if os.path.isdir(src_path):
+                        shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(src_path, dst_path)
+                    logger.info(f"已恢复配置: {file}")
+                else:
+                    logger.warning(f"配置不存在: {file}")
+            except Exception as e:
+                logger.error(f"恢复配置失败: {file}, {e}")
+            
+            percent = 95 + int(progress / total * 5)
+            self.update_signal.emit([f"恢复配置 {progress}/{total} {file}", percent])
+    
+    def rollback(self):
+        """更新失败时回滚到备份版本"""
+        backup_dir = os.path.join(self.source_dir, "backup")
+        if not os.path.exists(backup_dir):
+            logger.error("回滚失败: 备份目录不存在")
+            return False
+        
+        # 删除当前所有文件（保留备份和更新包）
+        files_to_remove = [
+            f for f in os.listdir(self.source_dir) 
+            if f not in {"backup", "updpackage"} and not f.startswith(".")
+        ]
+        
+        for file in files_to_remove:
+            file_path = os.path.join(self.source_dir, file)
+            try:
+                if os.path.isdir(file_path):
+                    shutil.rmtree(file_path, ignore_errors=True)
+                else:
+                    os.remove(file_path)
+            except Exception:
+                pass
+        
+        # 从备份恢复所有文件
+        for file in os.listdir(backup_dir):
+            src_path = os.path.join(backup_dir, file)
+            dst_path = os.path.join(self.source_dir, file)
+            
+            try:
+                if os.path.isdir(src_path):
+                    shutil.copytree(src_path, dst_path)
+                else:
+                    shutil.copy2(src_path, dst_path)
+            except Exception:
+                pass
+        
+        logger.info("回滚完成")
+        return True
+    
+    def run(self):
+        """执行更新流程"""
+        try:
+            # 读取update.json获取参数
+            update_json_path = os.path.join(self.source_dir, "update.json")
+            if not os.path.exists(update_json_path):
+                raise FileNotFoundError("未找到update.json")
+            
+            with open(update_json_path, "r", encoding="utf-8") as f:
+                update_data = json.load(f)
+            
+            # 优先使用update.json中的参数
+            self.files_to_keep = update_data.get("files_to_keep", self.files_to_keep)
+            self.executable = update_data.get("executable", self.executable)
+            
+            # 执行更新步骤
+            self.stage = 1
+            self.backup()
+            
+            self.stage = 2
+            self.remove_old_files()
+            
+            self.stage = 3
+            self.copy_new_files()
+            
+            self.stage = 4
+            self.restore_configs()
+            
+            # 更新完成
+            self.update_signal.emit(["更新完成，即将重启软件", 100])
+            time.sleep(2)
+            
+            # 删除更新包
+            updpackage_dir = os.path.join(self.source_dir, "updpackage")
+            if os.path.exists(updpackage_dir):
+                shutil.rmtree(updpackage_dir, ignore_errors=True)
+            
+            # 删除update.json
+            if os.path.exists(update_json_path):
+                os.remove(update_json_path)
+            
+            self.finish_signal.emit()
+            
+            # 重启应用
+            if self.executable and os.path.exists(self.executable):
+                os.execv(self.executable, [self.executable])
+            else:
+                logger.error("无法重启: 可执行文件不存在")
+        
+        except Exception as e:
+            logger.error(f"更新失败: {e}")
+            logger.error(traceback.format_exc())
+            
+            # 根据阶段执行回滚
+            if self.stage >= 2:  # 如果在删除旧文件阶段或之后失败
+                self.update_signal.emit(["更新失败，正在回滚...", 100])
+                if self.rollback():
+                    self.update_signal.emit(["已回滚到之前版本", 100])
+                else:
+                    self.update_signal.emit(["回滚失败，请手动恢复", 100])
+            else:
+                self.update_signal.emit(["更新失败", 100])
+            
+            # 清理临时文件
+            try:
+                updpackage_dir = os.path.join(self.source_dir, "updpackage")
+                if os.path.exists(updpackage_dir):
+                    shutil.rmtree(updpackage_dir, ignore_errors=True)
+                
+                update_json_path = os.path.join(self.source_dir, "update.json")
+                if os.path.exists(update_json_path):
+                    os.remove(update_json_path)
+            except Exception:
+                pass
+            
+            time.sleep(3)
+            self.finish_signal.emit()
+
 class UpgradeProgressWindow(FluentWindow):
+    """更新进度窗口"""
     def __init__(self, worker, parent=None):
         super().__init__(parent)
         self.worker = worker
@@ -197,130 +509,87 @@ class UpgradeProgressWindow(FluentWindow):
         self.setWindowTitle("更新中")
         self.upgradeprograsslabel = self.findChild(CaptionLabel, "updprogresslabel")
         self.prograssbar = self.findChild(ProgressBar, "progressBar")
+        
     def showEvent(self, event):
         super().showEvent(event)
         if not hasattr(self, '_initialized'):
             self._initialized = True
             self.do_upgrade()
+            
     def do_upgrade(self):
-        self.worker.status_signal.connect(self.update_status)
-        self.worker.progress_signal.connect(self.update_progress)
+        self.worker.update_signal.connect(self.update_status)
         self.worker.finish_signal.connect(self.finish)
         self.worker.start()
-    def update_status(self, enabled, text):
-        self.upgradeprograsslabel.setText(text)
-    def update_progress(self, percent):
-        self.prograssbar.setValue(percent)
-    def finish(self, ok, msg):
-        # 更新完成后关闭窗口，确保线程已结束
-        if self.worker.isRunning():
-            self.worker.quit()
-            self.worker.wait()
+        
+    def update_status(self, message):
+        self.upgradeprograsslabel.setText(message[0])
+        self.prograssbar.setValue(message[1])
+        
+    def finish(self):
         self.close()
-
+        
     def closeEvent(self, event):
-        # 用户直接关闭窗口时也要确保线程安全结束，但不提前退出更新流程
         if hasattr(self, "worker") and self.worker.isRunning():
-            self.worker.quit()
+            self.worker.terminate()
             self.worker.wait()
         super().closeEvent(event)
 
-class Updater(QThread):
-    update_signal = pyqtSignal(list)
-    finish_signal = pyqtSignal()
-    def __init__(self, source_dir, files_to_keep='', executable = ""):
-        super().__init__()
-        self.source_dir = source_dir
-        self.logger = logger
-        self.files_to_keep = files_to_keep.split(';')
-        self.executable = executable
-    def backup(self):
-        files_to_backup = [dir for dir in os.listdir(self.source_dir) if (dir != "backup" and dir != "updpackage" and dir != ".git")]
-        total = len(files_to_backup)
-        progress = 1
-        shutil.rmtree(os.path.join(self.source_dir, "backup"), ignore_errors=True)
-        for file in files_to_backup:
-            progress += 1
-            file_path = os.path.join(self.source_dir, file)
-            if os.path.isdir(file_path):
-                backup_path = os.path.join(self.source_dir, "backup", file)
-                if not os.path.exists(backup_path):
-                    shutil.copytree(file_path, backup_path)
-            elif os.path.isfile(file_path):
-                backup_path = os.path.join(self.source_dir, "backup", file)
-                if not os.path.exists(backup_path):
-                    shutil.copy2(file_path, backup_path)
-            self.update_signal.emit([f"备份中{progress}/{total} {file}",progress/total*50])
-        files_to_remove = [dir for dir in os.listdir(self.source_dir) if (dir != "backup" and dir != "updpackage" and dir != ".git")]
-        self.total_1 = len(files_to_remove)
-        self.progress_1 = 1
-        for file in files_to_remove:
-            self.progress_1 += 1
-            file_path = os.path.join(self.source_dir, file)
-            if os.path.isdir(file_path):
-                shutil.rmtree(file_path, ignore_errors=True)
-            elif os.path.isfile(file_path):
-                os.remove(file_path)
-            self.update_signal.emit([f"删除旧文件：{self.progress_1}/{self.total_1} {file}", (self.progress_1 / self.total_1 * 25)+50])
-        files_to_copy = [dir for dir in os.listdir(os.path.join(self.source_dir, "updpackage")) if (dir != "backup" and dir != ".git")]
-        self.total_2 = len(files_to_copy)
-        self.progress_2 = 1
-        for file in files_to_copy:
-            self.progress_2 += 1
-            src_path = os.path.join(self.source_dir, "updpackage", file)
-            dst_path = os.path.join(self.source_dir, file)
-            if os.path.isdir(src_path):
-                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
-            elif os.path.isfile(src_path):
-                shutil.copy2(src_path, dst_path)
-            self.update_signal.emit([f"复制新文件:{self.progress_2}/{self.total_2} {file}", (self.progress_2 / self.total_2 * 20)+75])
-        self.total_3 = len(self.files_to_keep) + 1
-        self.progress_3 = 1
-        for file in self.files_to_keep:
-            self.progress_3 += 1
-            try:
-                shutil.copy(os.path.join(self.source_dir, file), os.path.join(self.source_dir, "backup", file))
-                self.update_signal.emit([f"迁入配置:{self.progress_3}/{self.total_3} {file}", (self.progress_3 / self.total_3 * 5)+95])
-            except:
-                pass
-        self.logger.info("更新完成")
-        self.update_signal.emit(["更新完成，即将重启软件",100])
-        time.sleep(3)
-        self.finish_signal.emit()
-        os.execv(self.executable, [self.executable, "--finish-update"])
-    def run(self):
-        # 检查 update.json 是否存在，读取参数
-        import json
-        update_json_path = os.path.join(self.source_dir, "update.json")
-        if not os.path.exists(update_json_path):
-            self.logger.error("未找到 update.json，无法启动更新！")
-            self.update_signal.emit(["未找到 update.json，无法启动更新！", 0])
-            self.finish_signal.emit()
-            return
-        try:
-            with open(update_json_path, "r", encoding="utf-8") as f:
-                update_data = json.load(f)
-            # 可以根据 update_data 内容做自定义处理
-            self.backup()
-        except Exception as e:
-            self.logger.error("更新失败！")
-            logger.error(traceback.format_exc(limit=1))
-            self.update_signal.emit([f"更新失败：{e}", 0])
-            self.finish_signal.emit()
+def do_upgrade(version_info=None):
+    """启动更新流程"""
+    if version_info:
+        # 手动触发更新
+        thread = UnifiedUpdateThread(version_info=version_info)
+        
+        def on_finish(ok, msg, version_data):
+            if ok and msg == "下载完成":
+                # 下载完成后启动更新程序
+                start_update_process()
+            else:
+                update_status.set(True, msg)
+        
+        thread.status_signal.connect(update_status.set)
+        thread.progress_signal.connect(lambda p: update_status.set(False, f"下载中 {p}%"))
+        thread.finish_signal.connect(on_finish)
+        thread.start()
+    else:
+        # 直接启动更新程序
+        start_update_process()
 
-def do_upgrade(version_info):
-    thread = UnifiedUpdateThread(version_info=version_info, silent=False)
-    # 直接用按钮显示进度，不弹窗
-    thread.status_signal.connect(update_status.set)
-    thread.progress_signal.connect(lambda p: update_status.set(False, f"下载中 {p}%"))
-    def finish_and_quit(ok, msg):
-        update_status.set(True, msg)
-    thread.finish_signal.connect(finish_and_quit)
-    thread.start()
+def start_update_process():
+    """启动更新二阶段（文件替换）"""
+    # 创建更新器
+    updater = Updater(
+        source_dir=os.getcwd(),
+        executable=sys.executable
+    )
+    
+    # 创建并显示进度窗口
+    app = QApplication.instance() or QApplication(sys.argv)
+    window = UpgradeProgressWindow(worker=updater)
+    window.show()
+    
+    # 如果是独立的更新进程，启动事件循环
+    if not QApplication.instance():
+        app.exec_()
 
 def post_upgrade():
-    shutil.rmtree("updpackage", ignore_errors=True)
-    shutil.rmtree("backup", ignore_errors=True)
+    """更新后清理"""
+    try:
+        shutil.rmtree("updpackage", ignore_errors=True)
+        shutil.rmtree("backup", ignore_errors=True)
+        
+        update_json_path = os.path.join(os.getcwd(), "update.json")
+        if os.path.exists(update_json_path):
+            os.remove(update_json_path)
+    except Exception as e:
+        logger.error(f"清理失败: {e}")
 
 if __name__ == "__main__":
-    do_upgrade(None)
+    # 处理命令行参数
+    if "--finish-update" in sys.argv:
+        # 启动更新二阶段
+        start_update_process()
+    else:
+        # 正常启动应用
+        from main import main
+        main()
