@@ -254,7 +254,7 @@ class VersionThread(QThread):  # 获取最新版本号
 
     @staticmethod
     def get_latest_version() -> Dict[str, Any]:
-        url = "https://app.yhlgo.xyz/version.json"  #测试用，正式版改成官网URL！！！
+        url = "http://localhost:5000/version.json"  #测试用，正式版改成官网URL！！！
         try:
             logger.info(f"正在获取版本信息")
             response = requests.get(url, proxies=proxies, timeout=30)
@@ -312,15 +312,16 @@ class GetUPDPack(QThread):  # 下载并解压更新包
         self.params = params
     def run(self) -> None:
         try:
-            os.makedirs(self.extract_dir, exist_ok=True)
             self.update_signal.emit(["下载中",0])
             self.download_file(self.zip_path)
+            os.makedirs(self.extract_dir, exist_ok=True)
             self.update_signal.emit(["解压中",50])
             self.extract_zip(self.zip_path)
             os.remove(self.zip_path)
         except Exception as e:
             self.update_signal.emit([f"错误: {e}",100])
             logger.error(f"更新包下载/解压失败: {e}")
+            shutil.rmtree(self.extract_dir, ignore_errors=True)
 
     def stop(self) -> None:
         self.terminate()

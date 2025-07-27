@@ -2871,10 +2871,7 @@ if __name__ == '__main__':
         updater.do_upgrade(os.getcwd(), '', os.path.join(os.getcwd(), 'ClassWidgets.exe'))
 
     # 自动更新后台检测功能入口
-    try:
-        updater.silent_update_check()
-    except Exception as e:
-        logger.error(f"自动更新检测异常: {e}")
+
 
     if config_center.read_conf('Other', 'multiple_programs') != '1':
         if not utils.guard.try_acquire():
@@ -2900,7 +2897,10 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-
+    try:
+        updater.start_silent_update_check()
+    except Exception as e:
+        logger.error(f"自动更新检测异常: {e}")
     global_i18n_manager = I18nManager()
     global_i18n_manager.init_from_config()
     

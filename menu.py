@@ -17,7 +17,7 @@ from PyQt5 import uic, QtCore
 from PyQt5.QtCore import Qt, QTime, QUrl, QDate, pyqtSignal, QSize, QThread, QTranslator, QObject, QTimer
 from PyQt5.QtGui import QIcon, QDesktopServices, QColor
 # from PyQt5.QtPrintSupport import QPrinter
-from PyQt5.QtCore import Qt, pyqtSignal, QRectF
+from PyQt5.QtCore import Qt, pyqtSignal, QRectF, QEventLoop
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QApplication, QHeaderView, QTableWidgetItem, QLabel, QHBoxLayout, QSizePolicy, \
     QSpacerItem, QFileDialog, QVBoxLayout, QScroller, QWidget, QFrame, QListWidgetItem, QWidget, QStyle
@@ -41,6 +41,7 @@ import list_ as list_
 import tip_toast
 import utils
 from utils import time_manager, TimeManagerFactory
+from updater import update_status,silent_update_check
 import weather
 import weather as wd
 from conf import base_directory, load_theme_config
@@ -2069,7 +2070,17 @@ class SettingsMenu(FluentWindow):
             lambda: config_center.write_conf("Version", "version_channel", self.version_channel.currentIndex())
         )  # 版本更新通道
         self.do_upgrade_button = self.findChild(PrimaryPushButton,"do_upgrade")
-        self.do_upgrade_button.clicked.connect(self.do_upgrade)
+        self.do_upgrade_button.clicked.connect(silent_update_check)
+        # 初始化时同步按钮状态
+        enabled, text = update_status.get()
+        self.do_upgrade_button.setEnabled(enabled)
+        self.do_upgrade_button.setText(text)
+        # 监听 update_status.status_changed 信号，实时刷新按钮
+        update_status.status_changed.connect(self._on_update_status_changed)
+
+    def _on_update_status_changed(self, enabled, text):
+        self.do_upgrade_button.setEnabled(enabled)
+        self.do_upgrade_button.setText(text)
 
         github_page = self.findChild(PushButton, "button_github")
         github_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
@@ -4407,51 +4418,6 @@ class SettingsMenu(FluentWindow):
                 self.stackedWidget.currentChanged.connect(self._on_page_changed)
             except AttributeError:
                 pass
-    def do_upgrade(self):# 手动更新
-        system=platform.system()
-        if system == "Windows":
-            system = "x64" if platform.architecture()[0]=="64bit" else "x86"
-        if system == 'Darwin':
-            system = 'macOS'
-        channel = int(config_center.read_conf("Version", "version_channel"))
-        if channel == 0:
-            release_info = self.version_info["releases"]
-        else:
-            release_info = self.version_info["releases_beta"]
-        if not system in release_info:  # 没有更新包，退出
-            logger.info("无可用更新包")
-            self.do_upgrade_button.setEnabled(False)
-            self.do_upgrade_button.setText("没有可用的自动更新包，请手动更新")
-            InfoBar.error(
-                title='更新失败',
-                content=f"无可用更新包",
-                parent=self,
-                isClosable=True,
-                orient=Qt.Horizontal,
-                position=InfoBarPosition.TOP,
-                duration=2000
-            )
-        else:
-            self.do_upgrade_button.setEnabled(False)
-            self.do_upgrade_button.setText("正在更新")
-            release_to_upgrade = release_info[system]
-            logger.info(f"开始更新，更新频道：{channel}，系统：{system}")
-            download_url = release_to_upgrade["url"]
-            logger.debug(f"下载更新包：{download_url}，系统：{system}")
-            params = []
-            params.append("--do-upgrade")
-            params.append(os.getcwd())
-            params.append(';'.join(release_to_upgrade["files_to_keep"]))
-            params.append( #运行参数
-                os.path.join(
-                    os.getcwd(),
-                    os.path.split(release_to_upgrade["executable"])[1]
-                )
-            )
-            logger.debug(f"传入参数：{params}")
-            updthread = GetUPDPack(download_url,os.path.join(os.getcwd(),release_to_upgrade["executable"],),*params)
-            updwindow = updater.UpgradeProgressWindow(updthread,self)
-            updwindow.show()
     def init_window(self):
         self.stackedWidget.setCurrentIndex(0)  # 设置初始页面
         self.load_all_item()
