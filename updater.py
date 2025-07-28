@@ -195,7 +195,7 @@ def silent_update_check(onstart=False):
     try:
         if not update_status.getBusy():
             update_status.setBusy(True)
-            auto_check = config_center.read_conf('Version', 'auto_check_update', '1')
+            auto_check = config_center.read_conf('Version', 'auto_upgrade', '1')
             if auto_check != '1' and onstart == True:
                 logger.info("未开启自动更新检测")
                 update_status.setBusy(False)
