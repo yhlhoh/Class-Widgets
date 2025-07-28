@@ -88,7 +88,7 @@
   "Version": {
     "version": "v1.1.7.2",
     "version_channel": "0",
-    "auto_check_update": "1",
+    "auto_check_update": "0",
     "cses_version": "1",
     "build_time": "__BUILD_TIME__",
     "build_commit": "__BUILD_COMMIT__",

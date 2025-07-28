@@ -50,7 +50,7 @@ from generate_speech import get_tts_voices
 import generate_speech
 from file import config_center, schedule_center
 import file
-from network_thread import VersionThread, scheduleThread, GetUPDPack
+from network_thread import VersionThread, scheduleThread
 from plugin import p_loader
 from plugin_plaza import PluginPlaza
 
@@ -2077,27 +2077,9 @@ class SettingsMenu(FluentWindow):
         self.do_upgrade_button.setText(text)
         # 监听 update_status.status_changed 信号，实时刷新按钮
         update_status.status_changed.connect(self._on_update_status_changed)
-
     def _on_update_status_changed(self, enabled, text):
         self.do_upgrade_button.setEnabled(enabled)
         self.do_upgrade_button.setText(text)
-
-        github_page = self.findChild(PushButton, "button_github")
-        github_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
-            self.tr('https://github.com/RinLit-233-shiroko/Class-Widgets'))))
-
-        bilibili_page = self.findChild(PushButton, 'button_bilibili')
-        bilibili_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
-            self.tr('https://space.bilibili.com/569522843'))))
-
-        license_button = self.findChild(PushButton, 'button_show_license')
-        license_button.clicked.connect(self.show_license)
-
-        thanks_button = self.findChild(PushButton, 'button_thanks')
-        thanks_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
-            self.tr('https://github.com/RinLit-233-shiroko/Class-Widgets?tab=readme-ov-file#致谢'))))
-
-        self.check_update()
 
     def setup_advance_interface(self):
         adv_scroll = self.adInterface.findChild(SmoothScrollArea, 'adv_scroll')  # 触摸屏适配

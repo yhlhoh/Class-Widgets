@@ -771,7 +771,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>暂无新版本可用</string>
+               <string>尝试自动更新！</string>
               </property>
              </widget>
             </item>

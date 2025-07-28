@@ -24,13 +24,18 @@ class UpdateStatus(QObject):
     def __init__(self):
         super().__init__()
         self.enabled = True
-        self.text = "检查更新"
+        self.busy = False
+        self.text = "尝试自动更新！"
     def set(self, enabled, text):
         self.enabled = enabled
         self.text = text
         self.status_changed.emit(enabled, text)
     def get(self):
         return self.enabled, self.text
+    def setBusy(self,value):
+        self.busy = value
+    def getBusy(self):
+        return self.busy
 
 update_status = UpdateStatus()
 
@@ -51,6 +56,7 @@ class UnifiedUpdateThread(QThread):
     def run(self):
         self.status_signal.emit(False, "检查更新中...")
         update_status.set(False, "检查更新中...")
+        logger.debug("检查更新中")
         try:
             if self.version_info is None:
                 from network_thread import VersionThread
@@ -182,66 +188,70 @@ class UnifiedUpdateThread(QThread):
             self.finish_signal.emit(False, str(e), self.version_data)
 
 def start_silent_update_check():
-    thread = threading.Thread(target=silent_update_check)
-    thread.daemon = True
+    thread = threading.Thread(target=silent_update_check,args=(True,))
     thread.start()
 
-def silent_update_check():
+def silent_update_check(onstart=False):
     try:
-        auto_check = config_center.read_conf('Version', 'auto_check_update', '1')
-        if auto_check != '1':
-            logger.info("未开启自动更新检测")
-            return
+        if not update_status.getBusy():
+            update_status.setBusy(True)
+            auto_check = config_center.read_conf('Version', 'auto_check_update', '1')
+            if auto_check != '1' and onstart == True:
+                logger.info("未开启自动更新检测")
+                update_status.setBusy(False)
+                return
+                
+            update_status.set(False, "静默检测更新...")
+            logger.debug("开始静默更新")
             
-        update_status.set(False, "静默检测更新...")
-        logger.debug("开始静默更新")
-        
-        from network_thread import VersionThread
-        vt = VersionThread()
-        loop = QEventLoop()
-        
-        thread_holder = {}
-        def on_version(version):
-            thread = UnifiedUpdateThread(version_info=version, silent=True)
-            thread_holder['thread'] = thread
+            from network_thread import VersionThread
+            vt = VersionThread()
+            loop = QEventLoop()
             
-            def finish_and_quit(ok, msg, version_data):
-                if ok and msg == "下载完成":
-                    # 下载成功后发送托盘通知
-                    if version_data and "server_version" in version_data:
-                        server_version = version_data["server_version"]
-                        utils.tray_icon.push_update_notification(
-                            f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。"
-                        )
-                        logger.info(f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。")
-                    update_status.set(True, "更新包已准备")
-                elif not ok:
-                    update_status.set(True, f"更新失败：{msg}")
-                else:
-                    update_status.set(True, msg)
-                loop.quit()
+            thread_holder = {}
+            def on_version(version):
+                thread = UnifiedUpdateThread(version_info=version, silent=True)
+                thread_holder['thread'] = thread
+                logger.debug("下载中")
+                def finish_and_quit(ok, msg, version_data):
+                    if ok and msg == "下载完成":
+                        # 下载成功后发送托盘通知
+                        if version_data and "server_version" in version_data:
+                            server_version = version_data["server_version"]
+                            utils.tray_icon.push_update_notification(
+                                f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。"
+                            )
+                            logger.info(f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。")
+                        update_status.set(True, "更新包已准备")
+                    elif not ok:
+                        update_status.set(True, f"更新失败：{msg}")
+                    else:
+                        update_status.set(True, msg)
+                    loop.quit()
+                
+                thread.status_signal.connect(update_status.set)
+                thread.progress_signal.connect(lambda p: update_status.set(False, f"下载中 {p}%"))
+                thread.finish_signal.connect(finish_and_quit)
+                thread.start()
             
-            thread.status_signal.connect(update_status.set)
-            thread.progress_signal.connect(lambda p: update_status.set(False, f"下载中 {p}%"))
-            thread.finish_signal.connect(finish_and_quit)
-            thread.start()
-        
-        vt.version_signal.connect(on_version)
-        vt.start()
-        loop.exec_()
-        
-        # 等待线程结束
-        thread = thread_holder.get('thread')
-        if thread and thread.isRunning():
-            thread.wait()
-            
-        # 更新状态
-        enabled, text = update_status.get()
-        update_status.set(enabled, text)
+            vt.version_signal.connect(on_version)
+            vt.start()
+            loop.exec_()
+            update_status.setBusy(False)
+
+            # 等待线程结束
+            thread = thread_holder.get('thread')
+            if thread and thread.isRunning():
+                thread.wait()
+                
+            # 更新状态
+            enabled, text = update_status.get()
+            update_status.set(enabled, text)
         
     except Exception as e:
         logger.error(f"后台静默检测更新异常: {e}")
         update_status.set(True, f"更新失败：{e}")
+        update_status.setBusy(False)
 
 class Updater(QThread):
     """
