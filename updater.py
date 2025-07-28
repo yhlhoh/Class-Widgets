@@ -8,6 +8,7 @@ import threading
 import json
 import traceback
 import requests
+import subprocess
 from loguru import logger
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QThread, pyqtSignal, QObject, QEventLoop
@@ -15,6 +16,7 @@ from PyQt5.uic import loadUi
 from PyQt5.QtGui import QIcon
 from qfluentwidgets import FluentWindow, FluentIcon, CaptionLabel, ProgressBar
 from file import config_center
+from packaging.version import Version
 import utils  # 导入utils模块用于托盘通知
 
 class UpdateStatus(QObject):
@@ -142,7 +144,7 @@ class UnifiedUpdateThread(QThread):
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(updpackage_path)
                 
-                # 写入 update.json
+                # 写入 update.json，设置 stage=0
                 update_json_path = os.path.join(os.getcwd(), "update.json")
                 update_data = {
                     "version": server_version,
@@ -152,7 +154,8 @@ class UnifiedUpdateThread(QThread):
                     "timestamp": time.time(),
                     "executable": sys.executable,  # 主程序路径
                     "files_to_keep": files_to_keep,
-                    "executable_name": executable_name
+                    "executable_name": executable_name,
+                    "stage": 0  # 添加 stage 字段
                 }
                 
                 with open(update_json_path, "w", encoding="utf-8") as f:
@@ -433,40 +436,54 @@ class Updater(QThread):
             # 优先使用update.json中的参数
             self.files_to_keep = update_data.get("files_to_keep", self.files_to_keep)
             self.executable = update_data.get("executable", self.executable)
+            stage = update_data.get("stage", 0)
             
-            # 执行更新步骤
-            self.stage = 1
-            self.backup()
-            
-            self.stage = 2
-            self.remove_old_files()
-            
-            self.stage = 3
-            self.copy_new_files()
-            
-            self.stage = 4
-            self.restore_configs()
-            
-            # 更新完成
-            self.update_signal.emit(["更新完成，即将重启软件", 100])
-            time.sleep(2)
-            
-            # 删除更新包
-            updpackage_dir = os.path.join(self.source_dir, "updpackage")
-            if os.path.exists(updpackage_dir):
-                shutil.rmtree(updpackage_dir, ignore_errors=True)
-            
-            # 删除update.json
-            if os.path.exists(update_json_path):
-                os.remove(update_json_path)
-            
-            self.finish_signal.emit()
-            
-            # 重启应用
-            if self.executable and os.path.exists(self.executable):
-                os.execv(self.executable, [self.executable])
-            else:
-                logger.error("无法重启: 可执行文件不存在")
+            if stage == 2:
+                # 阶段2：执行文件替换
+                logger.info("执行文件替换操作")
+                
+                # 执行更新步骤
+                self.stage = 1
+                self.backup()
+                
+                self.stage = 2
+                self.remove_old_files()
+                
+                self.stage = 3
+                self.copy_new_files()
+                
+                self.stage = 4
+                self.restore_configs()
+                
+                # 更新stage为3
+                update_data["stage"] = 3
+                with open(update_json_path, "w", encoding="utf-8") as f:
+                    json.dump(update_data, f, ensure_ascii=False, indent=2)
+                
+                # 启动父目录中的新程序
+                executable_name = update_data.get("executable_name", "").lstrip('/')
+                new_executable = os.path.join(self.source_dir, executable_name)
+                
+                # 确保文件存在
+                if not os.path.exists(new_executable):
+                    raise FileNotFoundError(f"未找到新程序: {new_executable}")
+                
+                # 设置执行权限（Linux/Mac）
+                if platform.system() != "Windows":
+                    os.chmod(new_executable, 0o755)
+                
+                # 启动新程序
+                subprocess.Popen([new_executable])
+                
+                # 退出当前程序
+                self.finish_signal.emit()
+                return
+                
+                # 重启应用
+                if self.executable and os.path.exists(self.executable):
+                    os.execv(self.executable, [self.executable])
+                else:
+                    logger.error("无法重启: 可执行文件不存在")
         
         except Exception as e:
             logger.error(f"更新失败: {e}")
@@ -584,12 +601,87 @@ def post_upgrade():
     except Exception as e:
         logger.error(f"清理失败: {e}")
 
-if __name__ == "__main__":
-    # 处理命令行参数
-    if "--finish-update" in sys.argv:
-        # 启动更新二阶段
-        start_update_process()
-    else:
-        # 正常启动应用
-        from main import main
-        main()
+def handle_update_args():
+    """
+    处理更新相关的参数和状态
+    需要在main.py的主函数开始处调用
+    """
+    # 检查update.json是否存在
+    update_json_path = os.path.join(os.getcwd(), "update.json")
+    if not os.path.exists(update_json_path):
+        return False
+    
+    try:
+        with open(update_json_path, "r", encoding="utf-8") as f:
+            update_data = json.load(f)
+        
+        stage = update_data.get("stage", 0)
+        
+        if stage == 0:
+            # 阶段1：准备调用updpackage中的程序
+            logger.info("进入更新阶段1：准备调用updpackage程序")
+            
+            # 更新stage为2
+            update_data["stage"] = 2
+            with open(update_json_path, "w", encoding="utf-8") as f:
+                json.dump(update_data, f, ensure_ascii=False, indent=2)
+            
+            # 复制update.json到updpackage目录
+            updpackage_json_path = os.path.join(os.getcwd(), "updpackage", "update.json")
+            shutil.copy(update_json_path, updpackage_json_path)
+            
+            # 启动updpackage中的程序
+            executable_name = update_data.get("executable_name", "").lstrip('/')
+            updpackage_executable = os.path.join(os.getcwd(), "updpackage", executable_name)
+            
+            # 确保文件存在
+            if not os.path.exists(updpackage_executable):
+                raise FileNotFoundError(f"未找到更新程序: {updpackage_executable}")
+            
+            # 设置执行权限（Linux/Mac）
+            if platform.system() != "Windows":
+                os.chmod(updpackage_executable, 0o755)
+            
+            # 启动新程序
+            subprocess.Popen([updpackage_executable])
+            
+            # 退出当前程序
+            return True
+            
+        elif stage == 2:
+            # 阶段2：updpackage中的程序执行更新
+            logger.info("进入更新阶段2：执行文件替换")
+            
+            # 创建并显示更新窗口
+            from updater import Updater, UpgradeProgressWindow
+            app = QApplication.instance() or QApplication(sys.argv)
+            upd = Updater(os.getcwd())
+            progress_window = UpgradeProgressWindow(upd)
+            progress_window.show()
+            
+            if not QApplication.instance():
+                app.exec_()
+            
+            return True
+            
+        elif stage == 3:
+            # 阶段3：新程序清理updpackage
+            logger.info("进入更新阶段3：清理updpackage")
+            
+            # 清理updpackage目录
+            updpackage_dir = os.path.join(os.getcwd(), "updpackage")
+            if os.path.exists(updpackage_dir):
+                shutil.rmtree(updpackage_dir, ignore_errors=True)
+                logger.info("已清理updpackage目录")
+            
+            # 删除update.json
+            if os.path.exists(update_json_path):
+                os.remove(update_json_path)
+                logger.info("已删除update.json")
+            
+            return False
+    
+    except Exception as e:
+        logger.error(f"更新流程处理异常: {e}")
+        logger.error(traceback.format_exc())
+        return False

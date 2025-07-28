@@ -2854,21 +2854,6 @@ def setup_signal_handlers_optimized(app: QApplication) -> None:
 
 if __name__ == '__main__':
     utils.guard = utils.SingleInstanceGuard("ClassWidgets.lock")
-    # 启动参数处理
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "--finish-update":
-            logger.debug("自动更新收尾")
-            updater.post_upgrade()
-    # 启动时检测 updpackage 文件夹自动更新
-    updpackage_path = os.path.join(os.getcwd(), "updpackage")
-    if os.path.exists(updpackage_path):
-        logger.info("检测到更新包目录，自动执行更新流程")
-        upd = updater.Updater(os.getcwd())
-        upd.run()
-
-    # 自动更新后台检测功能入口
-
-
     if config_center.read_conf('Other', 'multiple_programs') != '1':
         if not utils.guard.try_acquire():
             if (info:=utils.guard.get_lock_info()):
@@ -2886,7 +2871,8 @@ if __name__ == '__main__':
                 dlg.setFixedWidth(550)
                 dlg.exec()
                 sys.exit(0)
-
+    if updater.handle_update_args():
+        sys.exit(0)
     scale_factor = float(config_center.read_conf('General', 'scale'))
     os.environ['QT_SCALE_FACTOR'] = str(scale_factor)
     logger.info(f"当前缩放系数：{scale_factor * 100}%")
