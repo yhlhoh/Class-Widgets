@@ -653,15 +653,12 @@ def handle_update_args():
             logger.info("进入更新阶段2：执行文件替换")
             
             # 创建并显示更新窗口
-            from updater import Updater, UpgradeProgressWindow
-            app = QApplication.instance() or QApplication(sys.argv)
+            app = QApplication(sys.argv)
             upd = Updater(os.getcwd())
-            progress_window = UpgradeProgressWindow(upd)
+            progress_window = UpgradeProgressWindow(upd,parent=app)
             progress_window.show()
             
-            if not QApplication.instance():
-                app.exec_()
-            
+            app.exec_()
             return True
             
         elif stage == 3:
