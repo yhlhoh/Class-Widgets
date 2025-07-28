@@ -626,10 +626,6 @@ def handle_update_args():
             with open(update_json_path, "w", encoding="utf-8") as f:
                 json.dump(update_data, f, ensure_ascii=False, indent=2)
             
-            # 复制update.json到updpackage目录
-            updpackage_json_path = os.path.join(os.getcwd(), "updpackage", "update.json")
-            shutil.copy(update_json_path, updpackage_json_path)
-            
             # 启动updpackage中的程序
             executable_name = update_data.get("executable_name", "").lstrip('/')
             updpackage_executable = os.path.join(os.getcwd(), "updpackage", executable_name)
@@ -652,10 +648,19 @@ def handle_update_args():
             # 阶段2：updpackage中的程序执行更新
             logger.info("进入更新阶段2：执行文件替换")
             
+            # 从update.json中读取必要参数
+            files_to_keep = update_data.get("files_to_keep", [])
+            executable = update_data.get("executable", sys.executable)
+            
             # 创建并显示更新窗口
             app = QApplication(sys.argv)
-            upd = Updater(os.getcwd())
-            progress_window = UpgradeProgressWindow(upd,parent=app)
+            # 将参数传递给Updater
+            upd = Updater(
+                source_dir=os.getcwd(),
+                files_to_keep=files_to_keep,
+                executable=executable
+            )
+            progress_window = UpgradeProgressWindow(upd)
             progress_window.show()
             
             app.exec_()
