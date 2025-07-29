@@ -41,7 +41,7 @@ import list_ as list_
 import tip_toast
 import utils
 from utils import time_manager, TimeManagerFactory
-from updater import update_status,silent_update_check
+from updater import update_status, silent_update_check
 import weather
 import weather as wd
 from conf import base_directory, load_theme_config
@@ -268,7 +268,6 @@ class I18nManager:
             logger.error(f"从配置初始化语言时出错: {e}")
             self.load_language_view('zh_CN')
 
-import updater
 
 # 适配高DPI缩放
 QApplication.setHighDpiScaleFactorRoundingPolicy(

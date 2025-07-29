@@ -1,22 +1,24 @@
-import os
-import sys
-import time
-import platform
-import shutil
-import zipfile
-import threading
 import json
-import traceback
-import requests
+import os
+import platform
+import time
+import shutil
 import subprocess
+import sys
+import threading
+import traceback
+import zipfile
+
 from loguru import logger
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QThread, pyqtSignal, QObject, QEventLoop
-from PyQt5.uic import loadUi
-from PyQt5.QtGui import QIcon
-from qfluentwidgets import FluentWindow, FluentIcon, CaptionLabel, ProgressBar
-from file import config_center
 from packaging.version import Version
+from PyQt5.QtCore import QThread, pyqtSignal, QObject, QEventLoop
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication
+from PyQt5.uic import loadUi
+from qfluentwidgets import FluentWindow, FluentIcon, CaptionLabel, ProgressBar
+import requests
+
+from file import config_center
 import utils  # 导入utils模块用于托盘通知
 
 class UpdateStatus(QObject):

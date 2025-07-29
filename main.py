@@ -9,7 +9,6 @@ import sys
 import psutil
 import signal
 import traceback
-import updater
 from shutil import copy
 from typing import Optional, Dict, List, Any, Union, Tuple
 
@@ -28,8 +27,6 @@ from qfluentwidgets import Theme, setTheme, setThemeColor, SystemTrayMenu, Actio
 
 from PyQt5.QtGui import QCloseEvent, QShowEvent, QHideEvent, QMouseEvent, QFocusEvent
 from PyQt5.QtCore import QCoreApplication
-import updater
-
 
 import conf
 import list_
@@ -48,6 +45,7 @@ from network_thread import check_update
 from plugin import p_loader
 from utils import restart, stop, update_timer, DarkModeWatcher, TimeManagerFactory
 from file import config_center, schedule_center
+import updater
 
 if os.name == 'nt':
     import pygetwindow
