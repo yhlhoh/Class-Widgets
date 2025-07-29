@@ -2128,10 +2128,10 @@ class SettingsMenu(FluentWindow):
         thanks_button = self.findChild(PushButton, 'button_thanks')
         thanks_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
             self.tr('https://github.com/RinLit-233-shiroko/Class-Widgets?tab=readme-ov-file#致谢'))))
-
+        self.auto_upgrade_thread = updater.AutomaticUpdateThread()
         self.check_update()
         self.do_upgrade_button = self.findChild(PrimaryPushButton,"do_upgrade")
-        self.do_upgrade_button.clicked.connect(silent_update_check)
+        self.do_upgrade_button.clicked.connect(self.auto_upgrade_thread.start)
         # 初始化时同步按钮状态
         enabled, text = update_status.get()
         self.do_upgrade_button.setEnabled(enabled)
