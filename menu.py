@@ -2112,6 +2112,24 @@ class SettingsMenu(FluentWindow):
         self.version_channel.currentIndexChanged.connect(
             lambda: config_center.write_conf("Version", "version_channel", self.version_channel.currentIndex())
         )  # 版本更新通道
+        github_page = self.findChild(PushButton, "button_github")
+
+
+        github_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
+            self.tr('https://github.com/RinLit-233-shiroko/Class-Widgets'))))
+
+        bilibili_page = self.findChild(PushButton, 'button_bilibili')
+        bilibili_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
+            self.tr('https://space.bilibili.com/569522843'))))
+
+        license_button = self.findChild(PushButton, 'button_show_license')
+        license_button.clicked.connect(self.show_license)
+
+        thanks_button = self.findChild(PushButton, 'button_thanks')
+        thanks_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
+            self.tr('https://github.com/RinLit-233-shiroko/Class-Widgets?tab=readme-ov-file#致谢'))))
+
+        self.check_update()
         self.do_upgrade_button = self.findChild(PrimaryPushButton,"do_upgrade")
         self.do_upgrade_button.clicked.connect(silent_update_check)
         # 初始化时同步按钮状态
