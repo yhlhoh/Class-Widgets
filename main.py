@@ -2883,10 +2883,6 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    try:
-        updater.start_silent_update_check()
-    except Exception as e:
-        logger.error(f"自动更新检测异常: {e}")
     global_i18n_manager = I18nManager()
     global_i18n_manager.init_from_config()
     
@@ -2967,7 +2963,11 @@ if __name__ == '__main__':
     # w.exec()
     if config_center.read_conf('Version', 'auto_check_update', '1') == '1':
         check_update()
-
+    try:
+        upgrade_thread = updater.AutomaticUpdateThread(onstart=True)
+        upgrade_thread.start()
+    except Exception as e:
+        logger.error(f"自动更新检测异常: {e}")
     status = app.exec()
 
     utils.stop(status)

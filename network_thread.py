@@ -26,7 +26,7 @@ headers = {"User-Agent": "Mozilla/5.0", "Cache-Control": "no-cache"}  # 设置�
 proxies = {"http": None, "https": None}
 
 MIRROR_PATH = f"{base_directory}/config/mirror.json"
-PLAZA_REPO_URL = "https://raw.bgithub.xyz/Class-Widgets/plugin-plaza/"
+PLAZA_REPO_URL = "https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/"
 PLAZA_REPO_DIR = "https://api.github.com/repos/Class-Widgets/plugin-plaza/contents/"
 threads = []
 
@@ -50,7 +50,7 @@ class getRepoFileList(QThread):  # 获取仓库文件目录
     repo_signal = pyqtSignal(dict)
 
     def __init__(
-            self, url: str = 'https://raw.bgithub.xyz/Class-Widgets/plugin-plaza/main/Banner/banner.json'
+            self, url: str = 'https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Banner/banner.json'
     ) -> None:
         super().__init__()
         self.download_url = url
@@ -82,7 +82,7 @@ class getPluginInfo(QThread):  # 获取插件信息(json)
     repo_signal = pyqtSignal(dict)
 
     def __init__(
-            self, url: str = 'https://raw.bgithub.xyz/Class-Widgets/plugin-plaza/main/Plugins/plugin_list.json'
+            self, url: str = 'https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Plugins/plugin_list.json'
     ) -> None:
         super().__init__()
         self.download_url = url
@@ -114,7 +114,7 @@ class getTags(QThread):  # 获取插件标签(json)
     repo_signal = pyqtSignal(dict)
 
     def __init__(
-            self, url: str = 'https://raw.bgithub.xyz/Class-Widgets/plugin-plaza/main/Plugins/plaza_detail.json'
+            self, url: str = 'https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Plugins/plaza_detail.json'
     ) -> None:
         super().__init__()
         self.download_url = url
@@ -145,7 +145,7 @@ class getTags(QThread):  # 获取插件标签(json)
 class getImg(QThread):  # 获取图片
     repo_signal = pyqtSignal(bytes)
 
-    def __init__(self, url: str = 'https://raw.bgithub.xyz/Class-Widgets/plugin-plaza/main/Banner/banner_1.png') -> None:
+    def __init__(self, url: str = 'https://raw.githubusercontent.com/Class-Widgets/plugin-plaza/main/Banner/banner_1.png') -> None:
         super().__init__()
         self.download_url = url
 
@@ -178,7 +178,7 @@ class getImg(QThread):  # 获取图片
 class getReadme(QThread):  # 获取README
     html_signal = pyqtSignal(str)
 
-    def __init__(self, url: str = 'https://raw.bgithub.xyz/Class-Widgets/Class-Widgets/main/README.md') -> None:
+    def __init__(self, url: str = 'https://raw.githubusercontent.com/Class-Widgets/Class-Widgets/main/README.md') -> None:
         super().__init__()
         self.download_url = url
 
