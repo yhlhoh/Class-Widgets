@@ -110,6 +110,7 @@ class UnifiedUpdateThread(QThread):
             release_to_upgrade = release_info[system]
             download_url = release_to_upgrade["url"]
             files_to_keep = release_to_upgrade.get("files_to_keep", [])
+            base_dir = release_to_upgrade.get("base_dir","")
             executable_name = release_to_upgrade.get("executable", "")
             
             # 存储完整的发布信息
@@ -117,6 +118,7 @@ class UnifiedUpdateThread(QThread):
                 "release_info": release_to_upgrade,
                 "files_to_keep": files_to_keep,
                 "executable_name": executable_name,
+                "pack_basedir": base_dir,
                 "system": system
             })
             
@@ -142,10 +144,13 @@ class UnifiedUpdateThread(QThread):
                 self.status_signal.emit(False, "解压更新包...")
                 update_status.set(False, "解压更新包...")
                 
-                updpackage_path = os.path.join(os.getcwd(), "updpackage")
+                temp_path = os.path.join(os.getcwd(), "temp")
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                    zip_ref.extractall(updpackage_path)
-                
+                    zip_ref.extractall(temp_path)
+                os.rename(os.path.join(temp_path,base_dir),os.path.join(temp_path,"updpackage"))
+                shutil.copytree(os.path.join(temp_path,"updpackage"), os.getcwd(), dirs_exist_ok=True)
+                shutil.rmtree(temp_path)
+
                 # 写入 update.json，设置 stage=0
                 update_json_path = os.path.join(os.getcwd(), "update.json")
                 update_data = {
