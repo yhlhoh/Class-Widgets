@@ -5,7 +5,6 @@ import zipfile  # 解压插件zip
 from datetime import datetime
 from typing import Optional, Union, List, Tuple, Dict, Any
 import platform
-import updater
 
 import requests
 from PyQt5.QtCore import QThread, pyqtSignal, QEventLoop
