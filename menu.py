@@ -53,6 +53,7 @@ import file
 from network_thread import VersionThread, scheduleThread
 from plugin import p_loader
 from plugin_plaza import PluginPlaza
+import updater
 
 from PyQt5.QtCore import QCoreApplication
 from qfluentwidgets import FluentTranslator
