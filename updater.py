@@ -150,7 +150,7 @@ class UnifiedUpdateThread(QThread):
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(temp_path)
                 os.rename(os.path.join(temp_path,base_dir),os.path.join(temp_path,"updpackage"))
-                shutil.copytree(os.path.join(temp_path,"updpackage"), os.path.join(os.getcwd(),"updpackage") dirs_exist_ok=True)
+                shutil.copytree(os.path.join(temp_path,"updpackage"), os.path.join(os.getcwd(),"updpackage"),dirs_exist_ok=True)
                 shutil.rmtree(temp_path)
 
                 # 写入 update.json，设置 stage=0
