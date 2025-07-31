@@ -27,7 +27,7 @@ class UpdateStatus(QObject):
         super().__init__()
         self.enabled = True
         self.busy = False
-        self.text = "尝试自动更新！"
+        self.text = "检查更新"
     def set(self, enabled, text):
         self.enabled = enabled
         self.text = text
@@ -125,10 +125,11 @@ class UnifiedUpdateThread(QThread):
             })
             
             self.status_signal.emit(False, "下载更新包中...")
-            update_status.set(False, "下载更新包中...")
+            update_status.set(False,"正在更新")
             
             try:
                 r = requests.get(download_url, stream=True)
+                r.raise_for_status()
                 total = int(r.headers.get('content-length', 0))
                 zip_path = os.path.join(os.getcwd(), "updpack.zip")
                 
@@ -141,10 +142,8 @@ class UnifiedUpdateThread(QThread):
                         downloaded += len(chunk)
                         percent = int(downloaded / total * 100) if total else 0
                         self.progress_signal.emit(percent)
-                        update_status.set(False, f"下载中 {percent}%")
                 
                 self.status_signal.emit(False, "解压更新包...")
-                update_status.set(False, "解压更新包...")
                 
                 temp_path = os.path.join(os.getcwd(), "temp")
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -152,7 +151,7 @@ class UnifiedUpdateThread(QThread):
                 os.rename(os.path.join(temp_path,base_dir),os.path.join(temp_path,"updpackage"))
                 shutil.copytree(os.path.join(temp_path,"updpackage"), os.path.join(os.getcwd(),"updpackage"),dirs_exist_ok=True)
                 shutil.rmtree(temp_path)
-
+                updpackage_path = os.path.join(os.getcwd(), "updpackage")
                 # 写入 update.json，设置 stage=0
                 update_json_path = os.path.join(os.getcwd(), "update.json")
                 update_data = {
@@ -175,48 +174,47 @@ class UnifiedUpdateThread(QThread):
                 
             except Exception as e:
                 logger.error(f"下载或解压失败: {e}")
-                update_status.set(True, "下载或解压失败")
                 self.status_signal.emit(True, "下载或解压失败")
                 self.finish_signal.emit(False, str(e), self.version_data)
+                update_status.set(False,"更新错误")
                 return
 
             self.status_signal.emit(True, "下载完成")
-            update_status.set(True, "下载完成")
+            update_status.set(False,"重启应用\n完成更新")
             self.finish_signal.emit(True, "下载完成", self.version_data)
             
         except Exception as e:
             logger.error(f"版本处理异常: {e}")
-            update_status.set(True, "更新失败")
             self.status_signal.emit(True, "更新失败")
             self.finish_signal.emit(False, str(e), self.version_data)
+            update_status.set("更新失败")
 
 class AutomaticUpdateThread(QThread):
     """
     自动更新线程，定时检查更新
     """
-    def __init__(self,onstart=False, parent=None):
+    def __init__(self,onstart=False, parent=None,version_info=None):
         super().__init__(parent)
         self.onstart = onstart
+        self.version_info = version_info
+
     def run(self):
         try:
-            silent_update_check(onstart=self.onstart)
+            silent_update_check(onstart=self.onstart, version_info=self.version_info)
         except Exception as e:
             logger.error(f"自动更新异常: {e}")
 
-def silent_update_check(onstart=False):
+def silent_update_check(onstart=False,version_info=None):
     try:
         auto_check = config_center.read_conf('Version', 'auto_upgrade', '1')
         if auto_check != '1' and onstart == True:
             logger.info("未开启自动更新")
             return
             
-        update_status.set(False, "检测更新...")
         logger.debug("开始更新")
         
         from network_thread import VersionThread
-        vt = VersionThread()
-        loop = QEventLoop()
-        
+
         thread_holder = {}
         def on_version(version):
             thread = UnifiedUpdateThread(version_info=version, silent=True)
@@ -231,34 +229,27 @@ def silent_update_check(onstart=False):
                             f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。"
                         )
                         logger.info(f"新版本 {server_version} 的更新已经准备好，重启应用即可自动更新。")
-                    update_status.set(False , "更新包已准备，重启后自动更新")
-                elif not ok:
-                    update_status.set(True, f"更新失败：{msg}")
-                else:
-                    update_status.set(True, msg)
                 loop.quit()
             
-            thread.status_signal.connect(update_status.set)
-            thread.progress_signal.connect(lambda p: update_status.set(False, f"下载中 {p}%"))
             thread.finish_signal.connect(finish_and_quit)
             thread.start()
-        
-        vt.version_signal.connect(on_version)
-        vt.start()
-        loop.exec_()
+        if not version_info:
 
+            vt = VersionThread()
+            loop = QEventLoop()
+            vt.version_signal.connect(on_version)
+            vt.start()
+            loop.exec_()
+        else:
+            on_version(version_info)
         # 等待线程结束
         thread = thread_holder.get('thread')
         if thread and thread.isRunning():
             thread.wait()
             
-        # 更新状态
-        enabled, text = update_status.get()
-        update_status.set(enabled, text)
     
     except Exception as e:
         logger.error(f"更新异常: {e}")
-        update_status.set(True, f"更新失败：{e}")
 
 class Updater(QThread):
     """
@@ -567,27 +558,6 @@ class UpgradeProgressWindow(FluentWindow):
             self.worker.terminate()
             self.worker.wait()
         super().closeEvent(event)
-
-def do_upgrade(version_info=None):
-    """启动更新流程"""
-    if version_info:
-        # 手动触发更新
-        thread = UnifiedUpdateThread(version_info=version_info)
-        
-        def on_finish(ok, msg, version_data):
-            if ok and msg == "下载完成":
-                # 下载完成后启动更新程序
-                start_update_process()
-            else:
-                update_status.set(True, msg)
-        
-        thread.status_signal.connect(update_status.set)
-        thread.progress_signal.connect(lambda p: update_status.set(False, f"下载中 {p}%"))
-        thread.finish_signal.connect(on_finish)
-        thread.start()
-    else:
-        # 直接启动更新程序
-        start_update_process()
 
 def start_update_process():
     """启动更新二阶段（文件替换）"""

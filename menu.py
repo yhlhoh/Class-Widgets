@@ -41,7 +41,7 @@ import list_ as list_
 import tip_toast
 import utils
 from utils import time_manager, TimeManagerFactory
-from updater import update_status, silent_update_check
+from updater import update_status, silent_update_check, AutomaticUpdateThread
 import weather
 import weather as wd
 from conf import base_directory, load_theme_config
@@ -53,7 +53,6 @@ import file
 from network_thread import VersionThread, scheduleThread
 from plugin import p_loader
 from plugin_plaza import PluginPlaza
-import updater
 
 from PyQt5.QtCore import QCoreApplication
 from qfluentwidgets import FluentTranslator
@@ -2085,9 +2084,9 @@ class SettingsMenu(FluentWindow):
 
         self.version = self.findChild(BodyLabel, 'version')
 
-        check_update_btn = self.findChild(PrimaryPushButton, 'check_update')
-        check_update_btn.setIcon(fIcon.SYNC)
-        check_update_btn.clicked.connect(self.check_update)
+        self.check_update_btn = self.findChild(PrimaryPushButton, 'check_update')
+        self.check_update_btn.setIcon(fIcon.SYNC)
+        self.check_update_btn.clicked.connect(self.check_update)
 
         self.auto_check_update = self.ifInterface.findChild(SwitchButton, 'auto_check_update')
         self.auto_check_update.setChecked(int(config_center.read_conf("Version", "auto_check_update", "1")))
@@ -2128,19 +2127,16 @@ class SettingsMenu(FluentWindow):
         thanks_button = self.findChild(PushButton, 'button_thanks')
         thanks_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(
             self.tr('https://github.com/RinLit-233-shiroko/Class-Widgets?tab=readme-ov-file#致谢'))))
-        self.auto_upgrade_thread = updater.AutomaticUpdateThread()
+        self.update_thread = AutomaticUpdateThread()
         self.check_update()
-        self.do_upgrade_button = self.findChild(PrimaryPushButton,"do_upgrade")
-        self.do_upgrade_button.clicked.connect(self.auto_upgrade_thread.start)
         # 初始化时同步按钮状态
         enabled, text = update_status.get()
-        self.do_upgrade_button.setEnabled(enabled)
-        self.do_upgrade_button.setText(text)
+        self._on_update_status_changed(enabled,text)
         # 监听 update_status.status_changed 信号，实时刷新按钮
         update_status.status_changed.connect(self._on_update_status_changed)
     def _on_update_status_changed(self, enabled, text):
-        self.do_upgrade_button.setEnabled(enabled)
-        self.do_upgrade_button.setText(text)
+        self.check_update_btn.setEnabled(enabled)
+        self.check_update_btn.setText(text)
 
     def setup_advance_interface(self):
         adv_scroll = self.adInterface.findChild(SmoothScrollArea, 'adv_scroll')  # 触摸屏适配
@@ -3316,8 +3312,10 @@ class SettingsMenu(FluentWindow):
             if utils.tray_icon:
                 utils.tray_icon.push_update_notification(self.tr("新版本速递：{new_version}").format(new_version=new_version))
             if config_center.read_conf("Version","auto_upgrade"):
-                self.do_upgrade_button.setEnabled(True)
-                self.do_upgrade_button.setText("立即更新")
+                self.check_update_btn.setText("立即更新")
+                self.check_update_btn.disconnect()
+                self.update_thread.version_info = version
+                self.check_update_btn.clicked.connect(self.update_thread.start)
         self.version_info = version
     def cf_import_schedule_cses(self, file_path):  # 导入课程表（CSES）
         if file_path:
