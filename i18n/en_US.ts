@@ -103,18 +103,18 @@ You can add more voice in system settings (*≧▽≦)</translation>
         <translation>Till {cd_text}</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2330"/>
-        <location filename="../main.py" line="2351"/>
+        <location filename="../main.py" line="2332"/>
+        <location filename="../main.py" line="2353"/>
         <source>预警</source>
         <translation>Alert</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2353"/>
+        <location filename="../main.py" line="2355"/>
         <source>{data}预警</source>
         <translation>{data} alert</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2475"/>
+        <location filename="../main.py" line="2487"/>
         <source>{city} · 未知</source>
         <translation>{city} · Unknown</translation>
     </message>
@@ -3344,11 +3344,14 @@ Error occurred while switching component language: {e}</translation>
 - `{title}`: 通知标题 (例如：重要通知) *其他
 - `{content}`: 通知内容 (例如：这是一条测试通知) *其他
 </source>
-        <translation>Information can be inserted dynamically using the following placeholders:
-- &apos;{lesson_name}&apos; : start &amp; end &amp; next course name (e.g. Information Technology)
-- &apos;{minutes}&apos; : Number of minutes (ex: 5) * Other
-- &apos;{title}&apos; : notification title (e.g. important notification) * others
-- &apos;{content}&apos; : the content of the notification (ex: it&apos;s a test notification) * others
+        <translation>You can use placeholders to insert dynamic information.
+This placeholder apply to all notifications:
+- &apos;{lesson_name}&apos; : Name of upcoming course (e.g. Information Technology)
+This placeholder apply only to the “Preparation Bell” and “Other Notifications”:
+- &apos;{minutes}&apos; : Minutes displayed on Countdown (e.g. 5)
+These placeholders apply only to the “Other Notifications”:
+- &apos;{title}&apos; : Title of the notification (e.g. Important notification)
+- &apos;{content}&apos; : Content of the notification (e.g. It&apos;s a test notification)
 </translation>
     </message>
     <message>
@@ -3503,42 +3506,42 @@ Error occurred while switching component language: {e}</translation>
         <translation>{section}.{key}</translation>
     </message>
     <message>
-        <location filename="../file.py" line="454"/>
+        <location filename="../file.py" line="455"/>
         <source>General.schedule</source>
         <translation>New schedule - 1</translation>
     </message>
     <message>
-        <location filename="../file.py" line="455"/>
+        <location filename="../file.py" line="456"/>
         <source>TTS.language</source>
         <translation>en-US</translation>
     </message>
     <message>
-        <location filename="../file.py" line="456"/>
+        <location filename="../file.py" line="457"/>
         <source>TTS.attend_class</source>
         <translation>Class begins, {lesson_name}</translation>
     </message>
     <message>
-        <location filename="../file.py" line="457"/>
+        <location filename="../file.py" line="458"/>
         <source>TTS.finish_class</source>
         <translation>Class is over. Next class: {lesson_name}</translation>
     </message>
     <message>
-        <location filename="../file.py" line="458"/>
+        <location filename="../file.py" line="459"/>
         <source>TTS.prepare_class</source>
         <translation>Class is about to begin. Next class: {lesson_name}</translation>
     </message>
     <message>
-        <location filename="../file.py" line="459"/>
+        <location filename="../file.py" line="460"/>
         <source>TTS.after_school</source>
         <translation>School is over</translation>
     </message>
     <message>
-        <location filename="../file.py" line="460"/>
+        <location filename="../file.py" line="461"/>
         <source>Weather.api</source>
         <translation>Weather.api</translation>
     </message>
     <message>
-        <location filename="../file.py" line="461"/>
+        <location filename="../file.py" line="462"/>
         <source>Plugin.mirror</source>
         <translation>original</translation>
     </message>
@@ -3894,37 +3897,37 @@ Error message: {e}</translation>
     <message>
         <location filename="../list_.py" line="17"/>
         <source>周一</source>
-        <translation>Monday</translation>
+        <translation>Mon</translation>
     </message>
     <message>
         <location filename="../list_.py" line="17"/>
         <source>周二</source>
-        <translation>Tuesday</translation>
+        <translation>Tue</translation>
     </message>
     <message>
         <location filename="../list_.py" line="17"/>
         <source>周三</source>
-        <translation>Wednesday</translation>
+        <translation>Wed</translation>
     </message>
     <message>
         <location filename="../list_.py" line="17"/>
         <source>周四</source>
-        <translation>Thursday</translation>
+        <translation>Thu</translation>
     </message>
     <message>
         <location filename="../list_.py" line="17"/>
         <source>周五</source>
-        <translation>Friday</translation>
+        <translation>Fri</translation>
     </message>
     <message>
         <location filename="../list_.py" line="17"/>
         <source>周六</source>
-        <translation>Saturday</translation>
+        <translation>Sat</translation>
     </message>
     <message>
         <location filename="../list_.py" line="18"/>
         <source>周日</source>
-        <translation>Sunday</translation>
+        <translation>Sun</translation>
     </message>
     <message>
         <location filename="../list_.py" line="19"/>
@@ -3984,7 +3987,7 @@ Error message: {e}</translation>
     <message>
         <location filename="../list_.py" line="20"/>
         <source>单周</source>
-        <translation>odd week</translation>
+        <translation>Odd week</translation>
     </message>
     <message>
         <location filename="../list_.py" line="20"/>
@@ -3994,7 +3997,7 @@ Error message: {e}</translation>
     <message>
         <location filename="../list_.py" line="21"/>
         <source>双周</source>
-        <translation>even week</translation>
+        <translation>Even week</translation>
     </message>
     <message>
         <location filename="../list_.py" line="21"/>
@@ -4360,25 +4363,25 @@ Error message: {e}</translation>
         <translation>This is a example notification</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2507"/>
-        <location filename="../main.py" line="2536"/>
+        <location filename="../main.py" line="2519"/>
+        <location filename="../main.py" line="2548"/>
         <source>上课时自动隐藏</source>
         <translation>Auto hide when having classes</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2508"/>
-        <location filename="../main.py" line="2537"/>
+        <location filename="../main.py" line="2520"/>
+        <location filename="../main.py" line="2549"/>
         <source>窗口最大化时隐藏</source>
         <translation>Auto Hide when maximizing the window</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2509"/>
-        <location filename="../main.py" line="2538"/>
+        <location filename="../main.py" line="2521"/>
+        <location filename="../main.py" line="2550"/>
         <source>暂时无法变更“状态”</source>
         <translation>Unable to change &apos;status&apos; temporarily</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2512"/>
+        <location filename="../main.py" line="2524"/>
         <source>您正在使用 {hide_mode_text} 模式，无法变更隐藏状态
 若变更状态，将修改隐藏模式“灵活隐藏” (您稍后可以在“设置”中更改此选项)
 您确定要隐藏组件吗?</source>
@@ -4387,19 +4390,19 @@ If changing hiding status, we will change hiding mode to &quot;Flexible hiding&q
 Do you want to hide the widget?</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2516"/>
-        <location filename="../main.py" line="2545"/>
+        <location filename="../main.py" line="2528"/>
+        <location filename="../main.py" line="2557"/>
         <source>确定</source>
         <translation>Confirm</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2518"/>
-        <location filename="../main.py" line="2547"/>
+        <location filename="../main.py" line="2530"/>
+        <location filename="../main.py" line="2559"/>
         <source>取消</source>
         <translation>Cancel</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2541"/>
+        <location filename="../main.py" line="2553"/>
         <source>您正在使用 {hide_mode_text} 模式，无法变更隐藏状态
 若变更状态，将修改隐藏模式“灵活隐藏” (您可以在“设置”中更改此选项)
 您确定要隐藏组件吗?</source>
@@ -4408,32 +4411,32 @@ If changing hiding status, we will change hiding mode to &quot;Flexible hiding&q
 Do you want to hide the widget?</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2865"/>
+        <location filename="../main.py" line="2877"/>
         <source>Class Widgets 正在运行</source>
         <translation>Class Widgets is running now</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2868"/>
+        <location filename="../main.py" line="2880"/>
         <source>Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。
 (若您需要打开多个实例，请在“设置”-&gt;“高级选项”中启用“允许程序多开”)</source>
         <translation>Class Widgets is running now! Do not start multiple instance,or it will cause unknown problems.
 (If you need to start multiple instance,Please enable&quot;Allow multiple instances&quot; In &quot;Settings&quot; -&gt; &quot;Advanced Options&quot;)</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2901"/>
+        <location filename="../main.py" line="2913"/>
         <source>缩放系数过大</source>
         <translation>The scaling factor is too large</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2902"/>
+        <location filename="../main.py" line="2914"/>
         <source>当前缩放系数为 {scale_factor}%，可能导致显示异常。
 建议将缩放系数设置为 100% 到 180% 之间。</source>
         <translation>Current scaling factor is {scale_factor}% now, and it may cause display problems.
 It is recommended to set the scaling factor to a value between 100% and 180%.</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2869"/>
-        <location filename="../main.py" line="2903"/>
+        <location filename="../main.py" line="2881"/>
+        <location filename="../main.py" line="2915"/>
         <source>好</source>
         <translation>OK</translation>
     </message>
