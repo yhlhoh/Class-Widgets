@@ -99,18 +99,18 @@
         <translation>距離 {cd_text} 還有</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2330"/>
-        <location filename="../main.py" line="2351"/>
+        <location filename="../main.py" line="2332"/>
+        <location filename="../main.py" line="2353"/>
         <source>预警</source>
         <translation>預警</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2353"/>
+        <location filename="../main.py" line="2355"/>
         <source>{data}预警</source>
         <translation>{data}預警</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2475"/>
+        <location filename="../main.py" line="2487"/>
         <source>{city} · 未知</source>
         <translation>{city} · 未知</translation>
     </message>
@@ -120,42 +120,42 @@
     <message>
         <location filename="../generate_speech.py" line="378"/>
         <source>文本内容不能为空</source>
-        <translation type="unfinished"></translation>
+        <translation>文本内容不能为空</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="380"/>
         <source>语音ID不能为空</source>
-        <translation type="unfinished"></translation>
+        <translation>語音 ID 不能為空</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="388"/>
         <source>语音文件生成失败，文件不存在</source>
-        <translation type="unfinished"></translation>
+        <translation>語音檔案生成失敗，檔案不存在</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="390"/>
         <source>语音文件生成失败，文件为空</source>
-        <translation type="unfinished"></translation>
+        <translation>語音檔案生成失敗，檔案為空</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="396"/>
         <source>Edge TTS服务未返回音频数据,可能是网络问题或语音参数错误。语音ID: {}</source>
-        <translation type="unfinished"></translation>
+        <translation>Edge TTS 服務未返回音訊資料， 可能是網路問題或語音參數錯誤。語音ID: {}</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="398"/>
         <source>连接问题,可能是代理设置导致: {}</source>
-        <translation type="unfinished"></translation>
+        <translation>連線問題，可能是代理設定導致： {}</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="400"/>
         <source>超时,请检查网络连接: {}</source>
-        <translation type="unfinished"></translation>
+        <translation>超時，請檢查網路連線： {}</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="402"/>
         <source>Edge TTS合成失败: {}</source>
-        <translation type="unfinished"></translation>
+        <translation>Edge TTS 合成失敗： {}</translation>
     </message>
 </context>
 <context>
@@ -1091,7 +1091,7 @@
     <message>
         <location filename="../view/menu/custom.ui" line="944"/>
         <source>*在 高德天气/腾讯天气 和 小米天气/和风天气 间切换后，需要重新选择城市</source>
-        <translation>*於高德天氣/騰訊天氣與小米天氣/和風天氣之間切換後，需重新選擇城市。</translation>
+        <translation>*於高德天氣/騰訊天氣與小米天氣/和風天氣之間切換後，需重新選擇城市</translation>
     </message>
     <message>
         <location filename="../view/menu/custom.ui" line="994"/>
@@ -1995,8 +1995,7 @@ https://classwidgets.rinlit.cn/docs-user/</translation>
         <source>Edge TTS 需要联网才能正常发声哦~
 请确保网络连接,不然会说不出话来(&gt;﹏&lt;)
 * 可能会有一定的延迟,耐心等待一下~</source>
-        <translation>Edge TTS需要連結互聯網才能發出聲音喔～
-Edge TTS 需要連接互聯網才能正常發聲喔～
+        <translation>Edge TTS 需要連接互聯網才能正常發聲喔～
 請確保網絡已連接，否則將無法發聲 (&gt;﹏&lt;)
 ＊可能會有少許延遲，請耐心等候一下～</translation>
     </message>
@@ -3316,7 +3315,7 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
     <message>
         <location filename="../generate_speech.py" line="498"/>
         <source>热芝士: TTSManager.get_instance() 获取实例</source>
-        <translation type="unfinished"></translation>
+        <translation>熱芝士： TTSManager.get_instance() 獲取實例</translation>
     </message>
 </context>
 <context>
@@ -3324,12 +3323,12 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
     <message>
         <location filename="../generate_speech.py" line="648"/>
         <source>热芝士: 使用 TTSService.get_instance() 获取实例</source>
-        <translation type="unfinished"></translation>
+        <translation>熱芝士： 使用 TTSManager.get_instance() 獲取實例</translation>
     </message>
     <message>
         <location filename="../generate_speech.py" line="696"/>
         <source>当前系统不支持Pyttsx3</source>
-        <translation type="unfinished"></translation>
+        <translation>當前系統不支持 Pyttsx3</translation>
     </message>
 </context>
 <context>
@@ -3407,8 +3406,7 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
     <message>
         <location filename="../menu.py" line="1464"/>
         <source>启动TTS预览时出错: {e}</source>
-        <translation>TTSSettings
-啟動 TTS 預覽時出錯: {e}</translation>
+        <translation>啟動 TTS 預覽時出錯: {e}</translation>
     </message>
     <message>
         <location filename="../menu.py" line="1472"/>
@@ -3418,8 +3416,7 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
     <message>
         <location filename="../menu.py" line="1473"/>
         <source>生成或播放语音时出错: {error_message}</source>
-        <translation>TTSSettings
-產生或播放語音時出錯: {error_message}</translation>
+        <translation>產生或播放語音時出錯: {error_message}</translation>
     </message>
 </context>
 <context>
@@ -3513,42 +3510,42 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
         <translation>这个不需要翻译！</translation>
     </message>
     <message>
-        <location filename="../file.py" line="454"/>
+        <location filename="../file.py" line="455"/>
         <source>General.schedule</source>
         <translation>新課程時間表 - 1</translation>
     </message>
     <message>
-        <location filename="../file.py" line="455"/>
+        <location filename="../file.py" line="456"/>
         <source>TTS.language</source>
         <translation>zh-CN</translation>
     </message>
     <message>
-        <location filename="../file.py" line="456"/>
+        <location filename="../file.py" line="457"/>
         <source>TTS.attend_class</source>
         <translation>依家開始{lesson_name}課</translation>
     </message>
     <message>
-        <location filename="../file.py" line="457"/>
+        <location filename="../file.py" line="458"/>
         <source>TTS.finish_class</source>
         <translation>活動結束，下一堂課: {lesson_name}</translation>
     </message>
     <message>
-        <location filename="../file.py" line="458"/>
+        <location filename="../file.py" line="459"/>
         <source>TTS.prepare_class</source>
         <translation>活動即將開始，下一堂課: {lesson_name}</translation>
     </message>
     <message>
-        <location filename="../file.py" line="459"/>
+        <location filename="../file.py" line="460"/>
         <source>TTS.after_school</source>
         <translation>所有活動已結束</translation>
     </message>
     <message>
-        <location filename="../file.py" line="460"/>
+        <location filename="../file.py" line="461"/>
         <source>Weather.api</source>
         <translation>xiaomi_weather</translation>
     </message>
     <message>
-        <location filename="../file.py" line="461"/>
+        <location filename="../file.py" line="462"/>
         <source>Plugin.mirror</source>
         <translation>original</translation>
     </message>
@@ -4370,25 +4367,25 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
         <translation>這是一則通知範例</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2507"/>
-        <location filename="../main.py" line="2536"/>
+        <location filename="../main.py" line="2519"/>
+        <location filename="../main.py" line="2548"/>
         <source>上课时自动隐藏</source>
         <translation>上堂時自動隱藏</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2508"/>
-        <location filename="../main.py" line="2537"/>
+        <location filename="../main.py" line="2520"/>
+        <location filename="../main.py" line="2549"/>
         <source>窗口最大化时隐藏</source>
         <translation>窗口最大化時隱藏</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2509"/>
-        <location filename="../main.py" line="2538"/>
+        <location filename="../main.py" line="2521"/>
+        <location filename="../main.py" line="2550"/>
         <source>暂时无法变更“状态”</source>
         <translation>暫時無法變更&quot;狀態&quot;</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2512"/>
+        <location filename="../main.py" line="2524"/>
         <source>您正在使用 {hide_mode_text} 模式，无法变更隐藏状态
 若变更状态，将修改隐藏模式“灵活隐藏” (您稍后可以在“设置”中更改此选项)
 您确定要隐藏组件吗?</source>
@@ -4397,19 +4394,19 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
 您確定要隱藏此組件嗎？</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2516"/>
-        <location filename="../main.py" line="2545"/>
+        <location filename="../main.py" line="2528"/>
+        <location filename="../main.py" line="2557"/>
         <source>确定</source>
         <translation>確定</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2518"/>
-        <location filename="../main.py" line="2547"/>
+        <location filename="../main.py" line="2530"/>
+        <location filename="../main.py" line="2559"/>
         <source>取消</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2541"/>
+        <location filename="../main.py" line="2553"/>
         <source>您正在使用 {hide_mode_text} 模式，无法变更隐藏状态
 若变更状态，将修改隐藏模式“灵活隐藏” (您可以在“设置”中更改此选项)
 您确定要隐藏组件吗?</source>
@@ -4418,32 +4415,32 @@ CSES 通用課程時間表交換文件(*.yaml)</translation>
 你確定要隱藏此組件嗎？</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2865"/>
+        <location filename="../main.py" line="2877"/>
         <source>Class Widgets 正在运行</source>
         <translation>Class Widgets 正在運行</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2868"/>
+        <location filename="../main.py" line="2880"/>
         <source>Class Widgets 正在运行！请勿打开多个实例，否则将会出现不可预知的问题。
 (若您需要打开多个实例，请在“设置”-&gt;“高级选项”中启用“允许程序多开”)</source>
         <translation>Class Widgets 正在運行！請勿開啟多個實例，否則可能會出現不可預知的問題。
 （若您需要開啟多個實例，請於「設定」→「進階選項」中啟用「允許程式多開」）</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2901"/>
+        <location filename="../main.py" line="2913"/>
         <source>缩放系数过大</source>
         <translation>縮放係數過大</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2902"/>
+        <location filename="../main.py" line="2914"/>
         <source>当前缩放系数为 {scale_factor}%，可能导致显示异常。
 建议将缩放系数设置为 100% 到 180% 之间。</source>
         <translation>當前縮放係數為 {scale_factor}%，可能導致顯示異常。
 建議將縮放係數設定於 100% 至 180% 之間。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2869"/>
-        <location filename="../main.py" line="2903"/>
+        <location filename="../main.py" line="2881"/>
+        <location filename="../main.py" line="2915"/>
         <source>好</source>
         <translation>好</translation>
     </message>
