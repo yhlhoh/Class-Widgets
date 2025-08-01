@@ -42,7 +42,6 @@ from menu import open_plaza, I18nManager
 from weather import WeatherReportThread as weatherReportThread
 from weather import get_unified_weather_alerts, get_alert_image
 from network_thread import check_update
-from play_audio import play_audio
 from plugin import p_loader
 from utils import restart, stop, update_timer, DarkModeWatcher, TimeManagerFactory
 from file import config_center, schedule_center
@@ -619,8 +618,8 @@ class ErrorDialog(Dialog):  # 重大错误提示框
             stop()
         
         super().__init__(
-            self.tr('Class Widgets 崩溃报告'),
-            self.tr('抱歉！Class Widgets 发生了严重的错误从而无法正常运行。您可以保存下方的错误信息并向他人求助。'
+            QCoreApplication.translate('ErrorDialog', 'Class Widgets 崩溃报告'),
+            QCoreApplication.translate('ErrorDialog', '抱歉！Class Widgets 发生了严重的错误从而无法正常运行。您可以保存下方的错误信息并向他人求助。'
             '若您认为这是程序的Bug，请点击“报告此问题”或联系开发者。'),
             parent
         )
@@ -849,14 +848,19 @@ class PluginMethod:  # 插件方法
         """
         播放音频文件
 
-        参数：
+        Args:
         file_path (str): 要播放的音频文件路径
         tts_delete_after (bool): 播放后是否删除文件（默认True）
 
-        说明：
+        Note:
         - 删除操作有重试机制（3次尝试）
         """
-        play_audio(file_path, tts_delete_after)
+        if tts_delete_after:
+            from play_audio import play_audio_async
+            play_audio_async(file_path, cleanup_callback=True)
+        else:
+            from play_audio import play_audio
+            play_audio(file_path)
 
 
 class WidgetsManager:
@@ -2144,6 +2148,8 @@ class DesktopWidget(QWidget):  # 主要小组件
 
     def toggle_weather_alert(self) -> None:
         """在温度和预警之间切换显示"""
+        SWITCH_INTERVAL = 6000  # 6秒切换间隔
+        
         if self.showing_temperature:
             self._fade_to_alert()
         else:
@@ -2157,6 +2163,10 @@ class DesktopWidget(QWidget):  # 主要小组件
                     self._cycle_to_next_alert_with_animation()
             else:
                 self._fade_to_temperature()
+        
+        # 统一重置定时器
+        if hasattr(self, 'weather_alert_timer'):
+            self.weather_alert_timer.start(SWITCH_INTERVAL)
     
     def _fade_to_alert(self) -> None:
         """从温度渐变到预警显示"""
@@ -2206,8 +2216,6 @@ class DesktopWidget(QWidget):  # 主要小组件
             self.weather_alert_text.show()
             self.alert_icon.show()
             self.fade_in_group.start()
-            if hasattr(self, 'weather_info_timer'):
-                self.weather_info_timer.start(3000)
         try: 
             self.fade_out_group.finished.disconnect()
         except TypeError: 
@@ -2305,8 +2313,6 @@ class DesktopWidget(QWidget):  # 主要小组件
             self.fade_in_group.addAnimation(alert_text_fade_in)
             self.fade_in_group.addAnimation(alert_icon_fade_in)
             self.fade_in_group.start()
-            if hasattr(self, 'weather_info_timer'):
-                self.weather_info_timer.start(3000)
         try: 
             self.fade_out_group.finished.disconnect()
         except TypeError: 
@@ -2323,12 +2329,27 @@ class DesktopWidget(QWidget):  # 主要小组件
         if self.current_alert_index >= len(self.current_alerts):
             self.current_alert_index = 0
         current_alert = self.current_alerts[self.current_alert_index]
-        alert_text = self._simplify_alert_text(current_alert.get('title', self.tr('预警')))
+
+        alert_title = self._simplify_alert_text(current_alert.get('title'))
+        if len(alert_title) > 6:
+            alert_text = alert_title  # 极端情况去除预警二字
+        else:
+            alert_text = alert_title + '预警'
+
+        char_count = len(alert_text)  # 动态调整宽度
+        if char_count > 5:
+            new_width = min(80 + (char_count - 5) * 14, 118)  # 计算宽度
+            self.weather_alert_text.setFixedWidth(new_width)
+        else:
+            self.weather_alert_text.setFixedWidth(80)  # 默认
+
         font = self.weather_alert_text.font()
         if len(alert_text) <= 4:
             font.setPointSize(14)
-        elif len(alert_text) <= 8:
+        elif len(alert_text) <= 7:
             font.setPointSize(12)
+        elif len(alert_text) == 8:
+            font.setPointSize(11)
         else:
             font.setPointSize(10)
         self.weather_alert_text.setFont(font)
@@ -2346,7 +2367,7 @@ class DesktopWidget(QWidget):  # 主要小组件
             return self.tr('预警')
         match = re.search(r'(发布|升级为)(\w+)(蓝色|黄色|橙色|红色)预警', text)
         if match:
-            return self.tr("{data}预警").format(data=match.group(2))
+            return self.tr("{data}").format(data=match.group(2))  # 简化至仅剩预警类别，如“暴雨” “雷暴大风”
         return '未知预警'
 
     def _get_alert_icon_by_severity(self, severity: Union[str, int]) -> str:
@@ -2363,7 +2384,7 @@ class DesktopWidget(QWidget):  # 主要小组件
 
     def _reset_weather_alert_state(self) -> None:
         """重置天气预警显示状态"""
-        for timer_name in ['weather_alert_timer', 'weather_info_timer']:
+        for timer_name in ['weather_alert_timer']:
             timer = getattr(self, timer_name, None)
             if timer:
                 timer.stop()
@@ -2402,13 +2423,27 @@ class DesktopWidget(QWidget):  # 主要小组件
             weather_data_temp = weather_data
             self._reset_weather_alert_state()
             try:
+                # 获取预警数据
                 unified_alert_data = get_unified_weather_alerts(original_weather_data)
-                self.current_alerts = unified_alert_data.get('all_alerts', [])
+                all_alerts = unified_alert_data.get('all_alerts', [])
+                
+                # 过滤相同预警
+                seen_titles = set()
+                unique_alerts = []
+                for alert in all_alerts:
+                    title = alert.get("title", "")
+                    if title not in seen_titles:
+                        seen_titles.add(title)
+                        unique_alerts.append(alert)
+                
+                self.current_alerts = unique_alerts
                 self.current_alert_index = 0
-                logger.debug(f'获取到 {len(self.current_alerts)} 个天气预警')
+                logger.debug(f'获取到 {len(self.current_alerts)} 个天气预警（去重后）')
+                
                 if self.current_alerts:
                     for i, alert in enumerate(self.current_alerts):
                         logger.debug(f'预警 {i+1}: {alert.get("title", "未知")}')
+
             except Exception as e:
                 logger.warning(f'获取预警数据失败：{e}')
                 self.current_alerts = []
@@ -2433,11 +2468,7 @@ class DesktopWidget(QWidget):  # 主要小组件
                     if not hasattr(self, 'weather_alert_timer') or not self.weather_alert_timer:
                         self.weather_alert_timer = QTimer(self)
                         self.weather_alert_timer.timeout.connect(self.toggle_weather_alert)
-                    self.weather_alert_timer.start(6000)  # 6秒切换一次
-                    if not hasattr(self, 'weather_info_timer') or not self.weather_info_timer:
-                        self.weather_info_timer = QTimer(self)
-                        self.weather_info_timer.timeout.connect(self.toggle_weather_alert)
-                        self.weather_info_timer.setSingleShot(True)
+                    self.weather_alert_timer.start(6000)  # 6秒切换间隔
                 else:
                     self.weather_alert_text.hide()
                     self.alert_icon.hide()
